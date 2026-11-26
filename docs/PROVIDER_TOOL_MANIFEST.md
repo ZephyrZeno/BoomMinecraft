@@ -2,7 +2,9 @@
 
 生产 `runtime-provider-source.py` 已将工具列表和身份委托给独立 helper，当前107项。原 I/O、源码读取和基础校验函数的执行 AST 保持相同；旧文件和证明没有改写。Named producer 现在封存原9项加 helper 整文件，共10项；native frame 的原7项也追加 helper，共8项。新的 VM 入口构建／校验同样把 S 和 helper 的全部字节列入输入，数据清单自身仍属于完整 provider 身份。
 
-首次切换后重新生成并实际完整验证 `.boom/named-module-batches/v156-jdwp-manifest107-a`，完整回执 SHA256 为 `dbe4b8f4ef535c10550c04452172b8adb4a4547d176fa804d44ebd3053ec99c7`。再用严格的完整等价路径迁移原31包：原 Java、类型、模块、ASM／COFF 字节不变，全部旧包与 frame 用当前源模型重验，生成0个新族。313.594秒后发布 `.boom/formal-native-transitions/manifest107-31-v157-a/pending-state.json`，SHA256 为 `edb4dc1c1a117415f6291189dc50c64721aa802695d7f221ffa43262ccd2fce4`。状态仍为 `pending_runtime_acceptance`，不继承旧工具来源下的运行验收。
+首次切换后重新生成并实际完整验证 `.boom/named-module-batches/v156-jdwp-manifest107-a`，完整回执 SHA256 为 `dbe4b8f4ef535c10550c04452172b8adb4a4547d176fa804d44ebd3053ec99c7`。再用严格的完整等价路径迁移原31包：原 Java、类型、模块、ASM／COFF 字节不变，全部旧包与 frame 用当前源模型重验，生成0个新族。313.594秒后发布 `.boom/formal-native-transitions/manifest107-31-v157-a/pending-state.json`，SHA256 为 `edb4dc1c1a117415f6291189dc50c64721aa802695d7f221ffa43262ccd2fce4`。该记录保持 `pending_runtime_acceptance`，不继承旧工具来源下的运行验收。
+
+随后在当前107源下完成新的完整 Main 源选择、标准 native31 构建／独立验证／真实执行，另行发布 `.boom/accepted-main-prefix-v167-31.json`，SHA256 为 `7105962aef19b42a88d20bc633dc44c4dfe81289f62c1f3269d5c65f823218cf`。新运行完成 System 三阶段，到达原 Main 日志初始化的 getDeclaredMethods0 缺口，并完成根快照及退出清理；Main 方法体、help 和游戏仍未完成。新验收检查实际报告和440个产物，保留30份源快照；[完整范围与摘要](NATIVE_RUNTIME_31.md)单独记录，未修改旧 pending／accepted 收据。
 
 接线后的33项清单边界测试、独立数据追加身份实验及572项完整 Python 回归通过，11项 skip。以下保留独立候选及其历史验证记录；工具图证明本身仍不验证 native 语义、实际游戏执行或完整启动。snapshot 中的 `production_sources_modified_by_this_tool=false` 只表示只读工具不修改生产文件，不是对调用者当前接线状态的猜测。
 

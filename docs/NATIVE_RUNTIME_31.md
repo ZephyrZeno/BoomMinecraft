@@ -1,6 +1,23 @@
 # 31 包正常入口与原 Main 日志初始化前缀
 
-本轮正常原生进程使用当前 105 工具来源下重新完整验证的 65 槽 batch，以及全部 31 个提供器。原 System.initPhase1／2／3 均返回，VM 级别到达 4；ASM 构造正常 String[] `['--help']`，原 Main 类的日志初始化实际执行后停在尚未提供的 `Class.getDeclaredMethods0(Z)[Method;`。Main 方法体未调用，帮助输出未完成，完整游戏和世界仍未启动。
+当前 107 工具来源已重新完整校验 65 槽 batch、全部 31 包和新的原 Main 源选择，并实际重建／验证／执行标准原生入口。原 System.initPhase1／2／3 均返回，VM 级别到达 4；ASM 构造正常 String[] `['--help']`，原 Main 类的日志初始化实际执行后停在尚未提供的 `Class.getDeclaredMethods0(Z)[Method;`。Main 方法体未调用，帮助输出未完成，完整游戏和世界仍未启动。
+
+当前源选择为 `.boom/diagnostic-startup/v161-main-cp-source-a/round-000`，包含 8652 类、71771 个原 Java 方法、192724 个汇编函数及 26929 格静态／初始化失败根。独立源校验自然退出 0，用时 870.015 秒。[新增原始源依赖](VM_ADDITIONAL_SOURCE_ROOTS.md)保留真实 ConstantPool、Tag、Option 等布局和初始化器，不把源预选计作执行。
+
+原生目录为 `.boom/vm-entry-images/v161-main-cp-original31-a`，实际 stop 是源行 107300、native 方法 41459、原 Java caller 41471／PC19。ABI14、完整根快照 2534 个非空项、Parker 开关、IO 空闲、两个后台 worker 退出／回收及清理标志 7 均与先前有界运行一致。没有穷尽执行全部 native，没有自动／并发 GC 或完整游戏成功标志。
+
+```text
+source proof  ba0cb2612c0a8a285014cb8cad96d0124713ca5471c6c4a673a8f224afb1d676
+native proof  689d00d36d82ccbfa5c929a1dc049636074cfd8d7711775a40b443b7afbaacd6
+execution     f66c26295418686618830e558811ea74b1d3fc275ad0367ea717be1a1a6d8850
+ABI14 report  8b21a3b662e59415f4fc3047785bf9cd9fa01c9b712b6cb91c4b9c2cd7a74454
+```
+
+新的有界状态 `.boom/accepted-main-prefix-v167-31.json`，SHA256 为 `7105962aef19b42a88d20bc633dc44c4dfe81289f62c1f3269d5c65f823218cf`。发布前两遍检查 440 个实际产物，归档 30 份源工具／内核；验收范围仍为这些输入下的 System 三阶段、argv、日志前缀、根传递和退出清理。原 pending31 与旧 accepted31 的字节均未修改。
+
+## 先前 105 工具来源的独立历史
+
+下述旧运行使用 105 工具来源下完整验证的 65 槽 batch 和原 31 包。旧证据保留，不作为新工具来源的运行收据。
 
 源选择 `.boom/diagnostic-startup/v150-server-main-5fe1492128ac4697b3a7c51336826a7e/round-000` 包含 8175 类、65348 个原 Java 方法、173820 个汇编函数及 25368 格静态／初始化失败根。完整独立源校验自然退出 0，用时 659.187 秒；数量只代表来源与链接范围，不能视为全部已执行。
 
