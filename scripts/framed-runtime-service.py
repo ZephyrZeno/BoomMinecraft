@@ -5,6 +5,7 @@ import zipfile
 
 
 FAMILIES = {
+    'normal-class-loader-assertions-v1': ('class-loader-assertions-source.py','class_loader_assertions','class_loader_assertions.asm.inc'),
     'normal-boot-unnamed-module-v1': ('boot-unnamed-source.py','boot_unnamed','boot_unnamed_normal.asm.inc'),
     'normal-object-wait-v1': ('object-wait-source.py','object_wait','object_wait.asm.inc'),
     'normal-reference-processing-v1': ('reference-processing-source.py','reference_processing','reference_processing.asm.inc'),

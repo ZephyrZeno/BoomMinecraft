@@ -14,7 +14,15 @@
 
 九组执行记录在 `.boom/class-loader-assertions/execution-v145-b/result.json`，SHA256 为 `90f2dabfe291202a31572d7382db4c3d83a8a7871c78862a005730b47e32273c`。候选不会调用这个 VM 分配对象的 Java 构造器。
 
-正式 source 模型另行声明所需的 AssertionStatusDirectives、Class 和 ClassLoader，使常规选择器真正纳入描述符与根。预检产出的指令、数据、unwind 及按名称归一化的重定位与已执行候选相同，仅规范化 CodeView 中的对象路径。该模型尚未登记为正式 provider family。
+正式 source 模型另行声明所需的 AssertionStatusDirectives、Class 和 ClassLoader，使常规选择器真正纳入描述符与根。预检产出的指令、数据、unwind 及按名称归一化的重定位与已执行候选相同，仅规范化 CodeView 中的对象路径。该模型现已登记为 `normal-class-loader-assertions-v1`。
+
+## 正式第 23 包验收
+
+新帧、22 个旧包的当前源码重验和新 ClassLoader 包的独立验证全部通过，原 Java 批次及运行时 DLL 未重建。accepted23 状态为 `.boom/pending-native-class-loader-v145-23-23a1a5d3dc5646749ab64939274c821d.json`，SHA256 为 `a1250a1205e74deb37aae6f8a86e4308f60feef31e9f073b5dcad8ac2a8ae680`。
+
+正式冷测另建 1,018 类／4,444 个 Java 方法的源镜像，从 23 包清单实际选入 18 包。AssertionStatusDirectives 由 provider 依赖选入，未放入手工类根或 admitted_classes；其失败根位于正常 3,102 格静态根 bank。完整源码／ASM／COFF 校验后，四种默认值、八个 OS 线程、异常／重复调用、OOM 和实际 GC 共八组全部通过；没有 scratch 补充或手写类初始化状态。
+
+执行记录在 `.boom/class-loader-assertions/formal-execution-v145-23-exports-23a1a5d3dc5646749ab64939274c821d/result.json`，SHA256 为 `081bc4c080b3276d5c5f2c06baecd741ad1a0b1df9427cdf0bfdbcafbb208cfd`。首次尝试缺少只读观察导出，日志保留；后续独立链接先复现已验证基线，再仅增加三个观察导出，源码和 COFF 输入均未改。
 
 ## 原版进程前沿与范围
 
@@ -22,4 +30,4 @@
 
 这个旧入口仍保留旧引用服务和 Object.wait 缺口，没有完成整套选择复验，也没有将补充类失败根接入旧入口的标准根跨度；该进程不执行自动 GC。独立候选的 GC 测试与此进程前沿分别记录。
 
-独立冷初始化基线未选入 Java initializeJavaAssertionMaps／desiredAssertionStatus 两个调用者，因此不宣称验证了 Java 断言 Map API、完整 System 或 Minecraft 启动。较大的正式 22 包启动镜像及第 23 包的正式接线继续独立验收。
+独立冷初始化基线未执行 Java initializeJavaAssertionMaps／desiredAssertionStatus 的完整接收者调用流程，因此不宣称验证了 Java 断言 Map API、完整 System 或 Minecraft 启动。正式 23 包冷测与完整原生初始化进程的后续合流分别验收。

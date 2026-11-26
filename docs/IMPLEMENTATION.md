@@ -2,11 +2,11 @@
 
 ## ClassLoader 断言快照候选（2026-11-26）
 
-原始 ClassLoader 的两个 native 已由汇编实现登记与无覆盖规则的断言快照。九组执行覆盖原始冷初始化、四种启动默认值、八个 OS 线程、错误／重复调用、真实堆耗尽及正常根图 GC；两个配置单元测试通过。源模型预检的指令、数据、unwind 与命名重定位和已执行候选一致，正式 family 尚未登记。详见[正常 ClassLoader 候选](CLASS_LOADER_ASSERTIONS.md)。
+原始 ClassLoader 的两个 native 已由汇编实现登记与无覆盖规则的断言快照。九组候选执行及正式第 23 包的八组冷测覆盖原始初始化、四种启动默认值、八个 OS 线程、错误／重复调用、真实堆耗尽及正常根图 GC；两个配置单元测试通过。正式 source 选择由依赖纳入 AssertionStatusDirectives 及标准失败根，没有 scratch。详见[正常 ClassLoader 实现与验收](CLASS_LOADER_ASSERTIONS.md)。
 
 开发拥有进程已实际从 ClassLoader.registerNatives 推进到 WeakHashMap.isEmpty 的源方法选择缺口，Phase1 返回、Phase2 进入及清理标志均有原生报告。它保留旧入口及未完成的选择／GC 根合流范围，完整游戏仍未启动；正式 22 包启动链继续单独验收。
 
-正式 22 包启动链随后完成独立来源／ASM／COFF 校验和实际执行：4,055 类、37,546 个选入 Java 方法；Phase1 返回、Phase2 调用后停在尚未接入该镜像的 41548。两名后台工作者原始 exit 和回收成功，共享等待域关闭，失败状态与监视器持有均为零，清理标志为 7。ClassLoader 第 23 包的正式接线继续推进，当前 Python 322 项、Rust 200 项单元检查通过。
+正式 22 包启动链完成独立来源／ASM／COFF 校验和实际执行：4,055 类、37,546 个选入 Java 方法；Phase1 返回、Phase2 调用后停在尚未接入该镜像的 41548。两名后台工作者原始 exit 和回收成功，共享等待域关闭，失败状态与监视器持有均为零，清理标志为 7。第 23 包正式冷测已另行通过，完整原生初始化进程继续合流；Python 322 项、Rust 200 项单元检查通过。
 
 ## 正常 BootLoader 模块发布 v145（2026-11-26）
 

@@ -1,6 +1,18 @@
 {
   "schema": 1,
   "families": {
+    "normal-class-loader-assertions-v1": {
+      "owner": "java/lang/ClassLoader",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/class_loader_assertions.asm.inc",
+      "pool": "boom_class_loader_assertions_pool",
+      "service": "boom_class_loader_assertions",
+      "methods": [
+        { "name": "registerNatives", "descriptor": "()V", "access": 266, "operation": 0 },
+        { "name": "retrieveDirectives", "descriptor": "()Ljava/lang/AssertionStatusDirectives;", "access": 266, "operation": 1 }
+      ]
+    },
     "normal-boot-unnamed-module-v1": {
       "owner": "jdk/internal/loader/BootLoader",
       "loader": "bootstrap",
