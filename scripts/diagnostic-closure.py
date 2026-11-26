@@ -83,9 +83,12 @@ def constructor_selection(provider_packs,selected_packs,selected_classes,selecte
     return text,methods,classes,proof
 
 
-def globals_index(batch,summary,runtime,coff,provider_packs=None):
+def globals_index(batch,summary,runtime,coff,provider_packs=None,plan=None):
     frame_runtime_identity(summary,runtime)
     batch,runtime=Path(batch),Path(runtime);known=pe_exports(runtime);providers={};objects=[]
+    spec=importlib.util.spec_from_file_location('diagnostic_batch_artifacts',Path(__file__).with_name('closure-batch-artifacts.py'))
+    artifacts=importlib.util.module_from_spec(spec);spec.loader.exec_module(artifacts)
+    sparse=artifacts.configure(coff,batch,summary,plan)
     def read(record,module):
         p=coff.artifact(batch,record,module);objects.append(dict(path=str(p),sha256=hashlib.sha256(p.read_bytes()).hexdigest()))
         return coff.coff_symbols(p,{'WaitOnAddress','WakeByAddressAll'} if module=='string-literals' else frozenset())[0]
@@ -98,19 +101,19 @@ def globals_index(batch,summary,runtime,coff,provider_packs=None):
             p=checked_provider_record(overlay['object']);known.update(coff.coff_symbols(p)[0])
             objects.append(dict(path=str(p),sha256=overlay['object']['digest']['sha256']))
         else:known.update(read(summary['frames']['units'][0]['object'],'frames'))
-        with zipfile.ZipFile(summary['frames']['index']['path']) as z:frame_natives=[json.loads(l) for l in z.read('natives.jsonl').splitlines()]
+        with zipfile.ZipFile(coff.artifact(batch,summary['frames']['index'],'frames')) as z:frame_natives=[json.loads(l) for l in z.read('natives.jsonl').splitlines()]
         for symbol in read(summary['frames']['units'][1]['object'],'frames'):providers.setdefault(symbol,min(m['method'] for m in frame_natives))
-    record=summary['numeric_kernel_object'];p=Path(record['path']);check(coff.file_digest(p)==record['digest'],'Numeric runtime object changed')
+    record=summary['numeric_kernel_object'];p=coff.artifact(batch,record)
     known.update(coff.coff_symbols(p)[0]);objects.append(dict(path=str(p),sha256=hashlib.sha256(p.read_bytes()).hexdigest()))
     for key,path in [('system_natives','system-natives'),('class_literals','class-literals'),('string_intern','string-intern'),('properties','properties'),('class_bootstrap','class-bootstrap')]:
-        with zipfile.ZipFile(summary[key]['index']['path']) as z:methods=[json.loads(l) for l in z.read('methods.jsonl').splitlines()]
+        with zipfile.ZipFile(coff.artifact(batch,summary[key]['index'],path)) as z:methods=[json.loads(l) for l in z.read('methods.jsonl').splitlines()]
         representative=min(m['method'] for m in methods)
         for unit in summary[key]['units']:
             for symbol in read(unit['object'],path):providers.setdefault(symbol,representative)
     for schema,key,directory in [(16,'unsafe_bootstrap','unsafe-bootstrap'),(17,'vm_registration','vm-registration'),(18,'runtime_resources','runtime-resources'),(19,'bitcasts','bitcasts'),(20,'unsafe_fields','unsafe-fields'),(21,'unsafe_memory','unsafe-memory'),(22,'class_lookup','class-lookup')]:
         if summary['schema']<schema:continue
         module=summary[key]
-        with zipfile.ZipFile(module['index']['path']) as z:methods=[json.loads(l) for l in z.read('methods.jsonl').splitlines()]
+        with zipfile.ZipFile(coff.artifact(batch,module['index'],directory)) as z:methods=[json.loads(l) for l in z.read('methods.jsonl').splitlines()]
         representative=min(m['method'] for m in methods)
         for unit in module['units']:
             if key=='class_lookup' and unit['id']==1:continue
@@ -125,6 +128,7 @@ def globals_index(batch,summary,runtime,coff,provider_packs=None):
             check(not definitions&known and not definitions&set(providers),'Provider conflicts with runtime/base definitions')
             known.update(definitions);objects.append(dict(path=str(p),sha256=record['digest']['sha256']))
     identity=dict(runtime_dll=str(runtime.resolve()),runtime_sha256=hashlib.sha256(runtime.read_bytes()).hexdigest(),objects=objects)
+    if sparse:identity['sparse_artifact_source']=sparse
     if provider_packs:identity['runtime_provider_packs']=[dict(manifest=p['reference'],verification=p['verification']) for p in provider_packs]
     if summary['schema']>=23 and overlay:identity['native_frame_overlay']=overlay
     return known,providers,identity

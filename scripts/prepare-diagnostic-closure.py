@@ -22,7 +22,7 @@ def prepare(batch,plan,output,class_roots,entries,admit=(),runtime=None,receiver
     summary=json.loads((Path(batch)/'summary.json').read_text(encoding='utf-8'))
     provider_module=module('diagnostic_separate_providers','verify-runtime-provider-pack.py') if provider_paths else None
     packs=provider_module.load_packs(batch,plan,provider_paths) if provider_paths else []
-    known,providers,identity=model.globals_index(batch,summary,runtime,coff,packs)
+    known,providers,identity=model.globals_index(batch,summary,runtime,coff,packs,plan)
     manifest=m.prepare(batch,plan,output,class_roots,entries,diagnostic=dict(admit_methods=list(admit),admit_classes=list(admit_classes),known_symbols=known,data_providers=providers,global_identity=identity),provider_packs=provider_paths,verified_provider_packs=packs)
     manifest['exports'].append('boom_java_string_literal_root_count')
     if receiver:

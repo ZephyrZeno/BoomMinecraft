@@ -18,6 +18,11 @@ def verify(directory,allow_diagnostics=False):
           'Diagnostic fail-stop image is not a complete source closure')
     batch=Path(manifest['batch']);summary=json.loads((batch/'summary.json').read_text(encoding='utf-8'))
     plan=Path(manifest['plan']);plan_summary=json.loads((plan/'summary.json').read_text(encoding='utf-8'))
+    spec=importlib.util.spec_from_file_location('selected_coff_verifier',Path(__file__).with_name('verify-batch-assembly.py'))
+    coff=importlib.util.module_from_spec(spec);spec.loader.exec_module(coff)
+    spec=importlib.util.spec_from_file_location('selected_batch_artifacts',Path(__file__).with_name('closure-batch-artifacts.py'))
+    artifacts=importlib.util.module_from_spec(spec);spec.loader.exec_module(artifacts)
+    artifacts.configure(coff,batch,summary,plan)
     source_artifacts={};checked_sources=set()
     def collect_source_units(value):
         if isinstance(value,dict):
@@ -40,26 +45,26 @@ def verify(directory,allow_diagnostics=False):
         with (plan/'classes.jsonl').open('rb') as stream:classes_sha=hashlib.file_digest(stream,'sha256').hexdigest()
         check(manifest['source_input_fingerprint']==summary['input_fingerprint'] and manifest['batch_ir_identity']==summary['ir_identity']
               and classes_sha==manifest['source_classes_sha256']==plan_summary['artifacts']['classes']['digest']['sha256'],'Selected source plan or IR identity changed')
-    with zipfile.ZipFile(summary['class_state']['index']['path']) as bundle:
+    with zipfile.ZipFile(coff.artifact(batch,summary['class_state']['index'],'class-state')) as bundle:
         classes={s['class_id']:s for s in map(json.loads,bundle.read('classes.jsonl').splitlines())}
     selected={s['class_id']:s for s in manifest['selected_classes']}
     contracts=manifest.get('selected_array_clone_contracts',{})
     sites=manifest.get('selected_dispatch_sites',{});tables=manifest.get('selected_dispatch_tables',{})
     concat_sites=manifest.get('selected_String_concat_sites',{})
     if concat_sites:
-        with zipfile.ZipFile(summary['string_concat']['index']['path']) as bundle:
+        with zipfile.ZipFile(coff.artifact(batch,summary['string_concat']['index'],'string-concat')) as bundle:
             original={r['label']:r for r in map(json.loads,bundle.read('sites.jsonl').splitlines()) if r['label'] in concat_sites}
         check(concat_sites==original and all(r['plan'] is not None and r['diagnostic'] is None for r in original.values()),'Selected concat source plan differs')
     if sites or tables:
         check(not manifest.get('dispatch_rows_pruned',False),'Source closure silently pruned receiver rows')
         check({str(s['table']) for s in sites.values()}==set(tables),'Selected dispatch site/table coverage differs')
-        with zipfile.ZipFile(summary['dispatch']['index']['path']) as bundle:
+        with zipfile.ZipFile(coff.artifact(batch,summary['dispatch']['index'],'dispatch')) as bundle:
             original_sites={row['label']:row for line in bundle.open('sites.jsonl') if (row:=json.loads(line))['label'] in sites}
             original_tables={str(row['id']):row for line in bundle.open('tables.jsonl') if str((row:=json.loads(line))['id']) in tables}
         check(sites==original_sites and tables==original_tables,'Selected dispatch plan differs from bulk source')
         check(all(s['diagnostic'] is None for s in sites.values()) and all(t['diagnostic'] is None for t in tables.values()),'Selected unavailable dispatch contract')
     if contracts:
-        with zipfile.ZipFile(summary['array_clone']['index']['path']) as bundle:
+        with zipfile.ZipFile(coff.artifact(batch,summary['array_clone']['index'],'array-clone')) as bundle:
             clone_sites={s['label']:s for s in map(json.loads,bundle.read('sites.jsonl').splitlines())}
         check(all(clone_sites.get(label)==row for label,row in contracts.items()),'Selected array clone contract differs from bulk source')
     check(all(classes[id_]==state and not state['diagnostic'] for id_,state in selected.items()),'Selected class source plan differs')
@@ -72,7 +77,7 @@ def verify(directory,allow_diagnostics=False):
     for shard in summary['shards']:
         needed={m['class_id'] for m in manifest['selected_methods'].values()}-set(class_results)
         if not needed:break
-        with zipfile.ZipFile(shard['zip']['path']) as bundle:
+        with zipfile.ZipFile(coff.artifact(batch,shard['zip'],'shards')) as bundle:
             entries=set(bundle.namelist())
             for id_ in needed:
                 name=f'classes/{id_:06}.json'
@@ -158,8 +163,6 @@ def verify(directory,allow_diagnostics=False):
         check(sources.class_descriptor(path,id_)==closure_sources.class_descriptor(closure_path,id_),'Selected class descriptor was changed')
     check(expected_roots in assembly and f'boom_probe_static_root_count QWORD {root_cells}' in assembly,'Selected root region differs')
     check(set(re.findall(r'(?m)^(boom_s\d+_\d+) QWORD \?$',assembly))==expected_fields,'Selected static cells differ')
-    spec=importlib.util.spec_from_file_location('selected_coff_verifier',Path(__file__).with_name('verify-batch-assembly.py'))
-    coff=importlib.util.module_from_spec(spec);spec.loader.exec_module(coff)
     native_exports=set();frame_exports=set();selected_native=manifest.get('selected_native_methods',{})
     if summary['schema']>=23:
         check(manifest.get('source_frame_abi')==3,'Selected source frame ABI missing')

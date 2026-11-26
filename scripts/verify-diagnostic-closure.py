@@ -40,14 +40,14 @@ def verify_stops(directory,manifest,summary,coff,verified_provider_packs=None):
             reuse=load('diagnostic_verified_provider_handoff','provider-verification-reuse.py')
             packs=reuse.reuse(provider_module,batch,manifest['plan'],paths,verified_provider_packs)
         check(provider_module.references(packs)==manifest['runtime_provider_packs'],'Diagnostic provider identities changed')
-    known,providers,actual_identity=model.globals_index(batch,summary,global_identity['runtime_dll'],coff,packs)
+    known,providers,actual_identity=model.globals_index(batch,summary,global_identity['runtime_dll'],coff,packs,manifest['plan'])
     check(actual_identity==global_identity,'Diagnostic runtime/global provider artifacts changed')
     receiver=manifest.get('diagnostic_receiver')
     if receiver:
         check(receiver['fixture_only'] is True and receiver['constructor_executed'] is False and receiver['class_initialization_executed'] is False
               and not manifest['requested_class_roots'] and len(manifest['requested_method_roots'])==1,'Prepared receiver fixture scope differs')
         entry=manifest['requested_method_roots'][0];check(entry['descriptor']=='()Z','Prepared receiver entry signature differs')
-        with zipfile.ZipFile(summary['runtime_metadata']['index']['path']) as z:
+        with zipfile.ZipFile(coff.artifact(batch,summary['runtime_metadata']['index'],'runtime-metadata')) as z:
             types=[json.loads(l) for l in z.read('types.jsonl').splitlines()]
         typ=next((t for t in types if t['id']==receiver['type_id']),None)
         check(typ is not None and typ['kind']==1 and typ['name']==receiver['name'] and typ['defining_loader']==receiver['loader']
@@ -62,7 +62,7 @@ def verify_stops(directory,manifest,summary,coff,verified_provider_packs=None):
         else:raise ValueError('Prepared receiver method is missing from source plan')
     for shard in summary['shards']:
         if not needed:break
-        with zipfile.ZipFile(shard['zip']['path']) as z:
+        with zipfile.ZipFile(coff.artifact(batch,shard['zip'],'shards')) as z:
             for name in z.namelist():
                 id_=int(Path(name).stem)
                 if id_ not in needed:continue
@@ -74,7 +74,7 @@ def verify_stops(directory,manifest,summary,coff,verified_provider_packs=None):
     check(not needed,'Diagnostic source class results missing')
     row_class_ids={r['class_id'] for r in rows};selected_class_ids={c['class_id'] for c in manifest['selected_classes']}
     plan=Path(manifest['plan']);class_hashes={c['id']:c['origin']['sha256'] for l in (plan/'classes.jsonl').open(encoding='utf-8') if (c:=json.loads(l))['id'] in row_class_ids}
-    with zipfile.ZipFile(summary['class_state']['index']['path']) as z:initializations={r['class_id']:r for r in map(json.loads,z.read('classes.jsonl').splitlines())}
+    with zipfile.ZipFile(coff.artifact(batch,summary['class_state']['index'],'class-state')) as z:initializations={r['class_id']:r for r in map(json.loads,z.read('classes.jsonl').splitlines())}
     lazy_targets={f"boom_m{target}" for t in manifest['selected_dispatch_tables'].values()
                   for target in [t['array_target'],*[r['target'] for r in t['rows']]] if target is not None}
     site_data,pending_methods,_,site_proof=model.constructor_selection(packs,set(manifest.get('selected_runtime_provider_packs',[])),
