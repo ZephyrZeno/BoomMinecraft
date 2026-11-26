@@ -1,6 +1,6 @@
 # 自研原生库装载生命周期
 
-原始 WindowsNativeDispatcher 初始化在登记引导模块之后会请求 `net` 和 `nio`。直接 Dispatcher 边界探针已命中 NativeLibraries.findBuiltinLib；首份正式 22 包的严格初始化记录先停在 Phase1 的 CharsetEncoder.isLegalReplacement 源方法选择。以下装载协议尚待实现；已有文件查询和网络可用性内核不能单独充当装载成功。
+原始 WindowsNativeDispatcher 初始化在登记引导模块之后会请求 `net` 和 `nio`。直接 Dispatcher 边界探针已命中 NativeLibraries.findBuiltinLib；严格 NIO 初始化记录仍有 Phase1 源方法选择缺口。独立汇编候选已验证已知 net／nio 的原始 native 装载与卸载，正式启动链合流仍待验收；文件查询和网络能力探测分别保留自身范围。
 
 ## 锁定的原始入口
 
@@ -52,3 +52,17 @@ Winsock 必须在真实拥有者的有效生命周期内保持初始化。现有
 `scripts/test-builtin-module-context.py` 已通过八个 OS 线程的真实附着／脱离、与主线程同时九条记录、原始 Thread.currentThread native 的身份一致性和异常保留检查。主 agent 独立复跑记录在 `.boom/builtin-module-context-tests/root-v145-independent/result.json`，SHA256 为 `896d374463878e155cfba0633caed3b08d6da41e1427211f96a3a6aab0fe3fb5`。
 
 本测试的 Thread 接收者使用明确的源布局存储夹具，未执行 Java 构造器。这个内部 ABI 不提供 JavaVM／JNIEnv 函数表或标准 JNI 函数地址；版本返回值不代表完整 JNI 兼容。原始 NativeLibraries 装载、Java 属性回调和字段发布仍待单独接入。
+
+## 原始 NativeLibraries native 候选
+
+`native_library_lifecycle.asm.inc` 及配套生成器绑定原始 findBuiltinLib、load、unload 和 findEntry0 声明与源 native 帧。已知 net／nio 描述关联实际拥有者映像；GetModuleHandleEx 取得的真实 HMODULE 引用由本模块跟踪，最后一次卸载时平衡 FreeLibrary。回调在 SRW 锁外执行，其他装载者等待实际状态变化；相同 OS 线程的递归转换明确拒绝。
+
+实际 nio 回调通过源线程附着检查，成功核对版本后才发布原始 NativeLibraryImpl.handle／jniVersion。八个 OS 线程同时持有八个源布局接收者，共用一份实际模块引用，最终引用数归零。未附着者不能复用已就绪模块；未知模块、错误句柄、未提供的标准 JNI 地址及已有异常分别检查。这里不提供 JavaVM／JNIEnv 函数表或外部 JNI 装载。
+
+net 正向测试使用原始 Properties 初始化器、构造器和 setProperty，再调用原始 System.setProperties 发布属性；Boolean.getBoolean 在实际回调中读取 false／true，两种结果均影响真实 Winsock 拥有者与 IPv6 能力。System.setProperties（43941）由原批次精确抽取 wrapper／body，18 个字节码 PC、全部原分支及异常表均保留；System.props 仍位于原静态根 bank，没有由测试宿主直接写该槽。
+
+独立错误版本测试将测试 DLL 的 nio 回调改为返回 1.2，实际构造原始 UnsatisfiedLinkError 及消息，两份源字段不发布，模块引用归零。生产候选回调不受该注入影响。
+
+主 agent 独立复跑记录在 `.boom/native-library-lifecycle/root-independent-positive/execution.json` 与 `.boom/native-library-lifecycle/root-independent-bad-version/execution.json`。生成器与 API 提取器为 `scripts/native-library-lifecycle-candidate.py`、`scripts/native-library-api-source.py`，执行检查为 `scripts/test-native-library-lifecycle.py`。
+
+Thread 和 NativeLibraryImpl 接收者仍是明确的源布局存储夹具，未执行其 Java 构造器；属性准备属于 Java API 夹具。以上结果不表示完整 Phase1、NativeLibraries 的 Java 冷初始化、正式 family 注册或 Minecraft 启动已经完成。
