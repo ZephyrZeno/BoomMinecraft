@@ -11,14 +11,14 @@ spec.loader.exec_module(M)
 S = M.S
 
 
-def build(directory, accepted_sha, output, assembler, linker, synchronization, kernel32, include_system, construct_child=False, start_child=False, child_task_main_thread=False, signal_control=False, system_phase2=False, parallel_assembly=False):
+def build(directory, accepted_sha, output, assembler, linker, synchronization, kernel32, include_system, construct_child=False, start_child=False, child_task_main_thread=False, signal_control=False, system_phase2=False, parallel_assembly=False, system_phase3=False):
     directory, output = Path(directory).resolve(), Path(output).resolve()
     S.check(output.is_relative_to(S.ART/'vm-entry-images') and not output.exists(), 'Use a fresh native entry output directory')
     closure, proof, old = M.accepted(directory, accepted_sha)
     selected_families={S.read(S.checked(closure['runtime_provider_packs'][i]['manifest']))['family']
         for i in closure.get('selected_runtime_provider_packs',[])}
     winsock='normal-native-libraries-v1' in selected_families
-    model = M.binding_model(closure, include_system, construct_child, start_child, child_task_main_thread, signal_control, system_phase2)
+    model = M.binding_model(closure, include_system, construct_child, start_child, child_task_main_thread, signal_control, system_phase2, system_phase3)
     original_objects = M.source_objects(closure)
     runtime = Path(old['runtime']).resolve()
     runtime_metadata = S.read(runtime.with_name('runtime.json'))
@@ -35,6 +35,7 @@ def build(directory, accepted_sha, output, assembler, linker, synchronization, k
         inputs.append(S.artifact(directory/'execution.json'))
     inputs += [S.artifact(p) for p in (runtime, runtime_lib, runtime.with_name('runtime.json'),
         assembler, linker, synchronization, kernel32, Path(__file__), M.ROOT/'scripts/vm-entry-source.py',
+        M.ROOT/'scripts/Run-VmEntry.ps1', M.ROOT/'scripts/decode-vm-entry-report.py',
         M.ROOT/'scripts/verify-vm-entry.py', M.ROOT/'scripts/canonical-link-response.py', M.ROOT/'native/entry/vm_process.asm.inc')]
     winsock_libraries=[]
     if winsock:
@@ -50,8 +51,14 @@ def build(directory, accepted_sha, output, assembler, linker, synchronization, k
         inputs += [model['object_wait']['manifest'],model['object_wait']['metadata']]
     if model.get('winnt_filesystem'):
         inputs += [model['winnt_filesystem']['manifest'],model['winnt_filesystem']['metadata']]
+    if model.get('provider_native_root_spans'):
+        inputs += [S.artifact(M.ROOT/'scripts/provider-native-roots.py'),S.artifact(M.ROOT/'native/kernels/provider_native_root_snapshot.asm.inc')]
+        for key in ('unsafe_park','file_input'):
+            if model.get(key):inputs += [model[key]['manifest'],model[key]['metadata']]
     if system_phase2:
         inputs += [S.artifact(M.ROOT/p) for p in ('scripts/vm-system-phase2.py','native/entry/system_phase2.asm.inc')]
+    if system_phase3:
+        inputs += [S.artifact(M.ROOT/p) for p in ('scripts/vm-system-phase3.py','native/entry/system_phase3.asm.inc')]
     output.mkdir(parents=True)
     source, imports = M.assembly(model)
     (output/'vm-entry.asm').write_text(source, encoding='utf-8')
@@ -87,7 +94,7 @@ def build(directory, accepted_sha, output, assembler, linker, synchronization, k
            '/DYNAMICBASE', '/NXCOMPAT', '/HIGHENTROPYVA', '/BREPRO', '/STACK:8388608', '/OUT:"'+str(target)+'"']
     link_objects = [r['path'] for r in reused+objects+original_objects]
     rsp += ['"'+p+'"' for p in link_objects+[str(runtime_lib), str(synchronization), str(kernel32)]+[r['path'] for r in winsock_libraries]]
-    rsp += ['/EXPORT:'+s for s in sorted(set(closure['exports']) | M.EXPORTS)]
+    rsp += ['/EXPORT:'+s for s in sorted(set(closure['exports']) | M.entry_exports(model))]
     (output/'link.rsp').write_text('\n'.join(rsp)+'\n', encoding='utf-8')
     with (output/'link.log').open('wb') as log:
         r = subprocess.run([str(linker), '@'+str(output/'link.rsp')], stdout=log, stderr=subprocess.STDOUT)
@@ -100,7 +107,7 @@ def build(directory, accepted_sha, output, assembler, linker, synchronization, k
         include_System_phase1=include_system, construct_child=construct_child, start_child=start_child,
         child_task_main_thread=child_task_main_thread,
         signal_control=signal_control,
-        system_phase2=system_phase2, execution_report_bytes=M.report_layout(model)[0],
+        system_phase2=system_phase2, system_phase3=system_phase3, execution_report_bytes=M.report_layout(model)[0],
         execution_report_abi=M.report_layout(model)[1],
         binding_model=model, original_source_objects=original_objects,
         inputs=inputs, tools=tools, reassembled_objects=objects, reused_closure_objects=reused, original_assembly_read_in_place=True,
@@ -126,6 +133,7 @@ if __name__ == '__main__':
     p.add_argument('--child-task-main-thread', action='store_true')
     p.add_argument('--signal-control', action='store_true')
     p.add_argument('--system-phase2', action='store_true')
+    p.add_argument('--system-phase3', action='store_true')
     p.add_argument('--parallel-assembly',action='store_true')
     a = p.parse_args()
-    build(a.directory, a.accepted_verification_sha256, a.output, a.assembler, a.linker, a.synchronization, a.kernel32, not a.constructor_only, a.construct_child, a.start_child, a.child_task_main_thread, a.signal_control or a.system_phase2, a.system_phase2,a.parallel_assembly)
+    build(a.directory, a.accepted_verification_sha256, a.output, a.assembler, a.linker, a.synchronization, a.kernel32, not a.constructor_only, a.construct_child, a.start_child, a.child_task_main_thread, a.signal_control or a.system_phase2 or a.system_phase3, a.system_phase2 or a.system_phase3,a.parallel_assembly,a.system_phase3)

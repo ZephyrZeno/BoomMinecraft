@@ -2,7 +2,13 @@
 
 `Build-VmEntry.ps1` 把已独立校验的原始 Java 汇编、运行时提供者对象和新生成的 VM 绑定表链接为原生 `boom-vm-entry.exe`。游戏执行路径不加载 C#／CLR、JVM 或 CRT。Python 只在构建时读取锁定输入，PowerShell 只构建、启动隔离进程和读取验证记录。
 
-## v149 原版 System 第一、二阶段正常返回
+## v150 原版 System 三阶段正常返回
+
+[第三阶段](SYSTEM_PHASE3.md)已在同一独立完整验证的 29 组源选择上实际完成。新的原生入口及 Report544/ABI13 解码器分别封存、独立校验后，原 System.initPhase1／2／3 正常返回，VM 级别到达 4；进程退出码 0、主 Context 0／depth0、两个后台线程退出并回收，清理标志 7。没有重新生成原 Java Code、赋写 VM 级别或用 JVM／CLR 执行。
+
+实际入口 `.boom/vm-entry-images/v149-phase3-sealed-b` 的执行回执 SHA256 为 `007971a9a797da52215771f37e16d1c2112b15a27a0edb8827fd639554dd9da2`。Scoped 验收 `.boom/accepted-system-phase3-v150.json` 的 SHA256 为 `4850a6478d3a9f9be8868984478b724144811eb981ba0956c12d30f5220d3897`，286 个实际产物核对两遍，并归档 15 份工具／入口源。该状态仅证明原 System 三阶段在此前 29 组选择上的执行；未验收 31 组、Minecraft 入口、世界、完整 VM 或游戏优化性能。
+
+## v149 原版 System 第一、二阶段正常返回（历史记录）
 
 [正式 29 组输入](NATIVE_RUNTIME_29.md)的完整原生进程已正常完成原始 System.initPhase1 和 initPhase2，VM 初始化级别由 1 到达 2，主 Context 为 0，进程退出码为 0。完整选择含 5818 类、56665 个原 Java 方法与 149383 个汇编函数；独立来源校验自然退出 0，用时 626.968 秒。这些选择数量不计作全部都已执行。
 

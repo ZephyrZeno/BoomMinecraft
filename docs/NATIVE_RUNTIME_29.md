@@ -45,4 +45,6 @@ ABI11 report  323ef50feaa5e0be74300949effcf2f55f1ba16ca05c58d02f2f2692f98e04a7
 
 已发布 `.boom/accepted-native-modules-v149-29.json`，SHA256 `99f48017acc81733bab549d19b953588c1010cae8d098b500c4fda580077afea`；444 个实际产物在发布前各核对两遍。仅新 accepted 视图把成功 producer 引用指向原字节相同的归档，原 pending、旧记录和位置记录均保留。范围是当前 29 组输入与原版 System 前两个阶段，没有宣称每个 native 均穷尽执行。
 
-旧 64 槽十四项增量探针在原 Module 构造器的 Context 20 失败仍作为历史记录保留，不能只凭构造器 PC 推断当时是哪次模块定义或具体原因。第三阶段、完整 VM、Minecraft 入口和世界未完成。[文件输入](FILE_INPUT_READONLY.md)与 [park/unpark](UNSAFE_PARK.md)已经完成独立有界候选验证，[原生根完整 ASM 快照](PROVIDER_NATIVE_ROOTS.md)也已通过独立复验；正式根区传递和 VM 生命周期接线正在推进，未计入这 29 包。全套当前 Python 测试含新增 21 项根检查，共 408 项通过。
+旧 64 槽十四项增量探针在原 Module 构造器的 Context 20 失败保留为历史记录。后续只读 ASM 诊断已实际确定：第 43 次 define 的原名字为 `jdk.jdwp.agent`，在 64 槽 named-key 查找中未命中；构造器 PC81 不能单独说明是哪次定义。诊断回执 `.boom/module-context20-diagnostics/sealed-583c27d9078048f3b4d83169bfefe243/result.json` 的 SHA256 为 `9e04c561ed0ca92ebb330996cfc1d6a449a4b614cae78f9eda6b023145af69da`，未改原 Java 状态或旧证明。
+
+后续已在相同原源选择上单独验收 [System 第三阶段](SYSTEM_PHASE3.md)，VM 到达 4；本页 accepted29 输入状态仍保留第一、二阶段的原范围。完整 VM、Minecraft 入口和世界未完成。[文件输入](FILE_INPUT_READONLY.md)与 [park/unpark](UNSAFE_PARK.md)已经完成独立有界候选验证，[原生根完整 ASM 快照](PROVIDER_NATIVE_ROOTS.md)也已通过独立复验；31 组另有新的输入与执行验收链，不混入这 29 包。该检查点全套 Python 测试含新增 21 项根检查，共 408 项通过。

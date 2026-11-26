@@ -27,7 +27,8 @@ CLASS_NAMES = ('java/lang/Thread', 'java/lang/ThreadGroup', 'java/security/Acces
                'java/lang/Thread$FieldHolder', 'jdk/internal/misc/VM', 'java/lang/String')
 
 
-def prepare(batch, plan, runtime, output, profile, provider_paths, continue_system=False, construct_child=False, start_child=False, child_task_main_thread=False, system_phase2=False):
+def prepare(batch, plan, runtime, output, profile, provider_paths, continue_system=False, construct_child=False, start_child=False, child_task_main_thread=False, system_phase2=False, system_phase3=False):
+    S.check(not system_phase3 or system_phase2, 'Original phase 3 requires original module bootstrap')
     S.check(not system_phase2 or continue_system, 'Module bootstrap needs System phase 1')
     S.check(not start_child or construct_child, 'Starting a child requires original child construction')
     S.check(not child_task_main_thread or start_child, 'Runnable task verification requires a started child')
@@ -89,11 +90,14 @@ def prepare(batch, plan, runtime, output, profile, provider_paths, continue_syst
         entries.append(('bootstrap', 'java/lang/System', 'initPhase1', '()V'))
     if system_phase2:
         entries.append(('bootstrap', 'java/lang/System', 'initPhase2', '(ZZ)I'))
+    if system_phase3:
+        entries.append(('bootstrap', 'java/lang/System', 'initPhase3', '()V'))
     manifest = source.prepare(batch, plan, output, class_roots, entries,
         diagnostic=dict(admit_methods=p['admitted_methods'], admit_classes=p.get('admitted_classes', []),
             known_symbols=known, data_providers=providers, global_identity=identity,context_rows=system_phase2),
         provider_packs=provider_paths, verified_provider_packs=packs)
-    manifest['exports'].append('boom_java_string_literal_root_count')
+    if 'boom_java_string_literal_root_count' not in manifest['exports']:
+        manifest['exports'].append('boom_java_string_literal_root_count')
     manifest['exports'].extend(f"boom_layout{owners[n]['id']}" for n in CLASS_NAMES[:3])
     # Selection is still being prepared here; no verification/execution receipt
     # exists yet. Complete the manifest before the independent build verifies it.
@@ -130,8 +134,9 @@ if __name__ == '__main__':
     p.add_argument('--provider-pack', action='append', type=Path, required=True)
     p.add_argument('--continue-system-phase1', action='store_true')
     p.add_argument('--system-phase2', action='store_true')
+    p.add_argument('--system-phase3', action='store_true')
     p.add_argument('--construct-child', action='store_true')
     p.add_argument('--start-child', action='store_true')
     p.add_argument('--child-task-main-thread', action='store_true')
     a = p.parse_args()
-    prepare(a.batch, a.plan, a.runtime, a.output, a.profile, a.provider_pack, a.continue_system_phase1 or a.system_phase2, a.construct_child, a.start_child, a.child_task_main_thread, a.system_phase2)
+    prepare(a.batch, a.plan, a.runtime, a.output, a.profile, a.provider_pack, a.continue_system_phase1 or a.system_phase2 or a.system_phase3, a.construct_child, a.start_child, a.child_task_main_thread, a.system_phase2 or a.system_phase3, a.system_phase3)

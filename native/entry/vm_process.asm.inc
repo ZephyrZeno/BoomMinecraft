@@ -34,6 +34,11 @@ boom_vm_entry_context QWORD 4 DUP(?)
 PUBLIC boom_vm_entry_report
 boom_vm_entry_report BYTE VM_ENTRY_REPORT_BYTES DUP(?)
 boom_vm_entry_written DWORD ?
+IFDEF VM_ENTRY_NATIVE_ROOTS
+ALIGN 8
+; Native scratch vector, never an oop root bank. No collection is triggered.
+vpe_native_root_vector QWORD 1048576 DUP(?)
+ENDIF
 .const
 boom_vm_entry_report_name WORD 118,109,45,101,110,116,114,121,45,115,116,97,116,117,115,46,98,105,110,0
 .code
@@ -49,6 +54,9 @@ boom_process_entry PROC FRAME
  mov DWORD PTR [boom_vm_entry_report],052454D56h
  mov DWORD PTR [boom_vm_entry_report+4],VM_ENTRY_REPORT_ABI
  mov DWORD PTR [boom_vm_entry_report+80],70
+IFDEF VM_ENTRY_NATIVE_ROOTS
+ mov DWORD PTR [boom_vm_entry_report+460],0FFFFFFFFh
+ENDIF
  mov ecx,134217728
  call boom_heap_create
  test rax,rax
@@ -86,6 +94,13 @@ IFDEF VM_ENTRY_SYSTEM_PHASE2
  lea rcx,boom_vm_entry_context
  lea rdx,boom_vm_entry_report
  call boom_vm_call_system_phase2
+ test eax,eax
+ jz vpe_capture
+ENDIF
+IFDEF VM_ENTRY_SYSTEM_PHASE3
+ lea rcx,boom_vm_entry_context
+ lea rdx,boom_vm_entry_report
+ call boom_vm_call_system_phase3
  test eax,eax
  jz vpe_capture
 ENDIF
@@ -220,6 +235,21 @@ IFDEF VM_ENTRY_REFERENCE_PROCESSING
  jne vpe_reference_capture
  cmp DWORD PTR [boom_vm_entry_report+324],1
  jne vpe_reference_capture
+IFDEF VM_ENTRY_UNSAFE_PARK
+ ; This block is after the existing successful worker join/error guard.
+ cmp DWORD PTR [boom_vm_entry_report+448],1
+ jne vpe_after_park_close
+ lea rcx,boom_provider_unsafe_park_pool
+ call boom_provider_unsafe_park_close
+ test eax,eax
+ jz vpe_park_closed
+ mov DWORD PTR [boom_vm_entry_report+456],eax
+ mov DWORD PTR [rsp+72],eax
+ jmp vpe_reference_capture
+vpe_park_closed:
+ mov DWORD PTR [boom_vm_entry_report+452],1
+vpe_after_park_close:
+ENDIF
 IFDEF VM_ENTRY_OBJECT_WAIT
  cmp DWORD PTR [boom_vm_entry_report+404],1
  jne vpe_after_wait_close
@@ -381,6 +411,78 @@ IF VM_ENTRY_START_REQUESTED OR VM_ENTRY_SIGNAL_REQUESTED
  mov DWORD PTR [boom_vm_entry_report+80],70
  jmp vpe_report
 vpe_all_workers_joined:
+ENDIF
+IFDEF VM_ENTRY_NATIVE_ROOTS
+ ; Every worker has joined. Read complete source/native banks into ASM scratch.
+ ; This records a bounded snapshot only; pending exceptions/active frames are
+ ; not collected here and no game state is changed by this process owner.
+ lea rcx,vpe_native_root_vector
+ mov edx,1048576
+ lea r8,[boom_vm_entry_report+504]
+ call boom_provider_native_roots_full_snapshot
+ mov DWORD PTR [boom_vm_entry_report+460],eax
+ test eax,eax
+ jnz vpe_native_owner_error
+IFDEF VM_ENTRY_UNSAFE_PARK
+ mov eax,DWORD PTR [boom_provider_unsafe_park_pool+12]
+ mov DWORD PTR [boom_vm_entry_report+464],eax
+ mov rax,QWORD PTR [boom_unsafe_park_counters+72]
+ cmp rax,16384
+ ja vpe_native_owner_busy
+ mov DWORD PTR [boom_vm_entry_report+468],eax
+ xor ecx,ecx
+ xor edx,edx
+ lea r8,boom_unsafe_park_gate_roots
+vpe_park_roots_count:
+ cmp QWORD PTR [r8+rcx*8],0
+ je vpe_park_root_empty
+ inc rdx
+vpe_park_root_empty:
+ inc ecx
+ cmp ecx,16384
+ jb vpe_park_roots_count
+ mov QWORD PTR [boom_vm_entry_report+472],rdx
+ or eax,DWORD PTR [boom_vm_entry_report+464]
+ or rax,rdx
+ jnz vpe_native_owner_busy
+ mov ecx,DWORD PTR [boom_vm_entry_report+448]
+ cmp ecx,1
+ ja vpe_native_owner_busy
+ cmp ecx,DWORD PTR [boom_vm_entry_report+452]
+ jne vpe_native_owner_busy
+ENDIF
+IFDEF VM_ENTRY_FILE_INPUT
+ mov rax,QWORD PTR [boom_file_input_live_handles]
+ mov QWORD PTR [boom_vm_entry_report+480],rax
+ mov rax,QWORD PTR [boom_file_input_owned_buffers]
+ mov QWORD PTR [boom_vm_entry_report+488],rax
+ xor ecx,ecx
+ xor edx,edx
+ lea r8,boom_file_input_owner_roots
+vpe_io_roots_count:
+ cmp QWORD PTR [r8+rcx*8],0
+ je vpe_io_root_empty
+ inc rdx
+vpe_io_root_empty:
+ inc ecx
+ cmp ecx,4096
+ jb vpe_io_roots_count
+ mov QWORD PTR [boom_vm_entry_report+496],rdx
+ or rax,QWORD PTR [boom_vm_entry_report+480]
+ or rax,rdx
+ jnz vpe_native_owner_busy
+ENDIF
+ jmp vpe_native_owners_clear
+vpe_native_owner_busy:
+ mov eax,170
+vpe_native_owner_error:
+ ; Keep all VM memory alive for process teardown if a native owner remains.
+ mov DWORD PTR [boom_vm_entry_report+68],eax
+ cmp DWORD PTR [boom_vm_entry_report+80],86
+ je vpe_report
+ mov DWORD PTR [boom_vm_entry_report+80],70
+ jmp vpe_report
+vpe_native_owners_clear:
 ENDIF
  ; This is process teardown for an incomplete bootstrap, not Thread.exit.
  mov rcx,QWORD PTR [boom_provider_thread_registry]

@@ -31,6 +31,8 @@ def verify(directory):
             'Native entry scope differs')
     for record in manifest['inputs']:
         S.check(S.artifact(record['path']) == record, 'Native entry input changed: '+record['path'])
+    for name in ('scripts/Run-VmEntry.ps1','scripts/decode-vm-entry-report.py'):
+        S.check(S.artifact(M.ROOT/name) in manifest['inputs'],'Native entry omitted its sealed execution/report decoder')
     closure, proof, old = M.accepted(manifest['baseline_directory'], manifest['accepted_source_verification_sha256'])
     selected_families={S.read(S.checked(closure['runtime_provider_packs'][i]['manifest']))['family']
         for i in closure.get('selected_runtime_provider_packs',[])}
@@ -43,9 +45,19 @@ def verify(directory):
     S.check(manifest.get('supplemental_system_import_libraries',[])==extra_libraries and all(r in manifest['inputs'] for r in extra_libraries),
             'Native entry omitted or added a system import library outside the selected source family')
     model = M.binding_model(closure, manifest['include_System_phase1'], manifest['construct_child'],
-                            manifest.get('start_child', False), manifest.get('child_task_main_thread', False), manifest.get('signal_control', False), manifest.get('system_phase2',False))
+                            manifest.get('start_child', False), manifest.get('child_task_main_thread', False), manifest.get('signal_control', False), manifest.get('system_phase2',False), manifest.get('system_phase3',False))
     S.check(model == manifest['binding_model'] and M.source_objects(closure) == manifest['original_source_objects'],
             'Native entry binding or original source object identity differs')
+    if model.get('provider_native_root_spans'):
+        for name in ('scripts/provider-native-roots.py','native/kernels/provider_native_root_snapshot.asm.inc'):
+            S.check(S.artifact(M.ROOT/name) in manifest['inputs'],'Missing sealed root consumer input')
+        for key in ('unsafe_park','file_input'):
+            if model.get(key):
+                S.check(all(model[key][name] in manifest['inputs'] for name in ('manifest','metadata')),
+                        'Missing sealed native owner lifecycle input')
+    if model.get('system_phase3'):
+        for name in ('scripts/vm-system-phase3.py','native/entry/system_phase3.asm.inc'):
+            S.check(S.artifact(M.ROOT/name) in manifest['inputs'],'Missing original System phase 3 source contract')
     expected, imports = M.assembly(model)
     S.check(S.checked(manifest['assembly']).read_text(encoding='utf-8') == expected, 'Native binding/process MASM differs')
     coff = M.module('native_vm_entry_coff_check', 'verify-batch-assembly.py')
@@ -69,10 +81,10 @@ def verify(directory):
     S.check(set(objects) == ({'vm-entry'} if reused else {'initialization-closure','diagnostic-stops','vm-entry'}),
             'Native entry contains extra/missing objects')
     assembly_inputs=[r['path'] for r in reused+manifest['reassembled_objects']+manifest['original_source_objects']]
-    verify_link(manifest,old['runtime'],set(closure['exports']) | M.EXPORTS,assembly_inputs,
+    verify_link(manifest,old['runtime'],set(closure['exports']) | M.entry_exports(model),assembly_inputs,
         sealed if proof.get('verified_assembly_objects',{}).get('schema')==2 else None,winsock=winsock)
     defined, undefined = coff.coff_symbols(objects['vm-entry'], allowed_foreign=M.FOREIGN | ({'Sleep','GetTickCount64'} if model['child_start'] or model.get('signal_reference') else set()))
-    S.check(defined == M.EXPORTS and undefined == imports, 'Native entry actual COFF definitions/imports differ')
+    S.check(defined == M.entry_exports(model) and undefined == imports, 'Native entry actual COFF definitions/imports differ')
     if not manifest.get('original_assembly_read_in_place'):
         for n in ('initialization-closure','diagnostic-stops'):
             S.check((directory/(n+'.asm')).read_bytes() == (Path(manifest['baseline_directory'])/(n+'.asm')).read_bytes(),
@@ -99,7 +111,7 @@ def verify(directory):
     S.check(all(n in system_modules or n.startswith('api-ms-win-') for n in runtime_modules),
             'Assembly runtime unexpectedly imports a managed/foreign runtime')
     exports = M.module('native_vm_entry_exports_check', 'diagnostic-closure.py').pe_exports(image)
-    S.check(exports == set(closure['exports']) | M.EXPORTS, 'Native executable exports differ from selected source and VM entry')
+    S.check(exports == set(closure['exports']) | M.entry_exports(model), 'Native executable exports differ from selected source and VM entry')
     result=dict(verified=True, scope='source_bound_native_VM_process_prefix_only',
         original_Java_methods=proof['Java_methods'], original_Java_source_unchanged=True,
         compiler_generated_VM_binding_pool=True, assembly_process_entry=True,

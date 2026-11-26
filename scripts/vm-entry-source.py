@@ -69,7 +69,8 @@ def accepted(directory, proof_sha):
     return closure, proof, old
 
 
-def binding_model(closure, include_system, construct_child=False, start_child=False, child_task_main_thread=False, signal_control=False, system_phase2=False):
+def binding_model(closure, include_system, construct_child=False, start_child=False, child_task_main_thread=False, signal_control=False, system_phase2=False, system_phase3=False):
+    S.check(not system_phase3 or system_phase2, 'System phase 3 requires the complete original phase 2')
     S.check(not system_phase2 or (include_system and signal_control), 'System phase 2 requires phase 1 and the native signal lifecycle')
     S.check(not start_child or construct_child, 'Native Thread start requires original child construction')
     S.check(not child_task_main_thread or (construct_child and start_child),
@@ -160,6 +161,9 @@ def binding_model(closure, include_system, construct_child=False, start_child=Fa
         phases=module('native_phase2_original_source','vm-system-phase2.py')
         model['system_phase2']=phases.bind(closure,summary,owners['java/lang/System'],S,R)
         model['phase2_context_rows']=closure.get('diagnostic_context_rows',False)
+    if system_phase3:
+        phases=module('native_phase3_original_source','vm-system-phase3.py')
+        model['system_phase3']=phases.bind(closure,summary,owners['java/lang/System'],S,R)
     if signal_control:
         found = [(i, ref, S.read(S.checked(ref['manifest']))) for i, ref in enumerate(closure['runtime_provider_packs'])
                  if S.read(S.checked(ref['manifest']))['family'] == 'normal-signal-control-v1']
@@ -194,10 +198,35 @@ def binding_model(closure, include_system, construct_child=False, start_child=Fa
             S.check(len(windows)==1,'Ambiguous Windows filesystem provider')
             ref,p=windows[0]
             model['winnt_filesystem']=dict(manifest=ref['manifest'],metadata=p['winnt_filesystem_metadata'])
+    # Proposed family/key names must agree with the future formal registry.
+    native_roots=closure.get('selected_provider_native_root_spans',[])
+    if native_roots:
+        S.check(signal_control or start_child,'Native owners require the normal worker shutdown boundary')
+        N=module('vm_native_roots','provider-native-roots.py')
+        N.directory_assembly(native_roots)
+        model['provider_native_root_spans']=native_roots
+        model['root_source_exports']=sorted(set(closure['exports'])|EXPORTS)
+        selected=[(ref,S.read(S.checked(ref['manifest']))) for i,ref in enumerate(closure['runtime_provider_packs'])
+                  if i in closure['selected_runtime_provider_packs']]
+        for family,key in [('normal-unsafe-park-v1','unsafe_park'),('normal-file-input-readonly-v1','file_input')]:
+            found=[(ref,p) for ref,p in selected if p['family']==family]
+            S.check(len(found)<=1,'Duplicate native owner lifecycle family')
+            if found:
+                ref,p=found[0];model[key]=dict(manifest=ref['manifest'],metadata=p[key+'_metadata'])
+        if model.get('unsafe_park'):
+            S.check(model.get('object_wait') and model.get('reference_processing'),'Parker needs selected OWAI/RPR')
     return model
 
 
+def entry_exports(model):
+    return EXPORTS | ({'boom_provider_native_roots_snapshot','boom_provider_native_roots_full_snapshot',
+        'boom_selected_provider_root_spans','boom_selected_provider_root_span_count','boom_selected_provider_root_cell_count'}
+        if model.get('provider_native_root_spans') else set())
+
+
 def report_layout(model):
+    if model.get('system_phase3'):return 544,13
+    if model.get('provider_native_root_spans'):return 512,12
     if model.get('object_wait'):return 448,11
     if model.get('winnt_filesystem'):return 400,10
     if model.get('reference_processing'):return 384,9
@@ -217,6 +246,8 @@ def assembly(model):
         proc.add(model['system_entry']['symbol'])
     if model.get('system_phase2'):
         proc.add(model['system_phase2']['symbol'])
+    if model.get('system_phase3'):
+        proc.add(model['system_phase3']['symbol'])
     if model['child_constructor']:
         proc.update({model['child_constructor']['symbol'], 'boom_object_new', 'boom_threads_current'})
     if model['child_start']:
@@ -239,6 +270,17 @@ def assembly(model):
         data.add('boom_diagnostic_context_map')
         proc.add('boom_diagnostic_context_map_row')
     data.update(f'boom_class{i}' for i in model['prerequisite_classes'])
+    root_text=''
+    if model.get('unsafe_park'):
+        data.update(('boom_provider_unsafe_park_pool','boom_unsafe_park_counters','boom_unsafe_park_gate_roots'))
+        proc.update(('boom_provider_unsafe_park_open','boom_provider_unsafe_park_close'))
+    if model.get('file_input'):
+        data.update(('boom_file_input_owner_roots','boom_file_input_live_handles','boom_file_input_owned_buffers'))
+    if model.get('provider_native_root_spans'):
+        N=module('vm_complete_native_root_consumer','provider-native-roots.py')
+        root_text,root_imports=N.complete_consumer_assembly(model['provider_native_root_spans'],source_exports=model['root_source_exports'])
+        root_text=re.sub(r'(?m)^EXTERN \w+:\w+\n','',root_text)
+        data.update(root_imports-{'boom_vm_thread_root_cells','boom_vm_thread_root_count'})
     template = (ROOT/'native/entry/vm_process.asm.inc').read_text(encoding='utf-8')
     externals = dict(re.findall(r'(?m)^EXTERN (\w+):(\w+)$', template))
     if not model['child_start'] and not model.get('signal_reference'):
@@ -258,6 +300,11 @@ def assembly(model):
         if model.get('phase2_context_rows'):phase2_definitions+='VM_ENTRY_MAIN_SOURCE_ROW EQU 1\n'
     if model.get('reference_processing'):phase2_definitions+='VM_ENTRY_REFERENCE_PROCESSING EQU 1\n'
     if model.get('object_wait'):phase2_definitions+='VM_ENTRY_OBJECT_WAIT EQU 1\n'
+    if model.get('unsafe_park'):phase2_definitions+='VM_ENTRY_UNSAFE_PARK EQU 1\n'
+    if model.get('file_input'):phase2_definitions+='VM_ENTRY_FILE_INPUT EQU 1\n'
+    if model.get('provider_native_root_spans'):phase2_definitions+='VM_ENTRY_NATIVE_ROOTS EQU 1\n'
+    if model.get('system_phase3'):
+        phase2_definitions+=f"VM_ENTRY_SYSTEM_PHASE3 EQU 1\nORIGINAL_SYSTEM_PHASE3 TEXTEQU <{model['system_phase3']['symbol']}>\n"
     if model.get('winnt_filesystem'):phase2_definitions+='VM_ENTRY_WINNT_FILESYSTEM EQU 1\n'
     out = (f"option casemap:none\nVM_ENTRY_CHILD_REQUESTED EQU {int(model['child_constructor'] is not None)}\n"
         f"VM_ENTRY_START_REQUESTED EQU {int(model['child_start'] is not None)}\n"
@@ -282,6 +329,10 @@ def assembly(model):
         out += (' lea rcx,boom_provider_object_wait_pool\n call boom_provider_object_wait_open\n test eax,eax\n jz vbm_wait_ready\n'
                 ' mov DWORD PTR [boom_vm_entry_report+412],eax\n mov DWORD PTR [rbx],7\n jmp vbm_zero\n'
                 'vbm_wait_ready:\n mov DWORD PTR [boom_vm_entry_report+400],1\n')
+    if model.get('unsafe_park'):
+        out += (' lea rcx,boom_provider_unsafe_park_pool\n call boom_provider_unsafe_park_open\n test eax,eax\n jz vbm_park_ready\n'
+                ' mov DWORD PTR [boom_vm_entry_report+456],eax\n mov DWORD PTR [rbx],7\n jmp vbm_zero\n'
+                'vbm_park_ready:\n mov DWORD PTR [boom_vm_entry_report+448],1\n')
     if model['child_constructor']:
         out += (f" mov rcx,QWORD PTR [boom_heap_ptr]\n lea rdx,boom_layout{c['java/lang/Thread']}\n mov r8,rbx\n call boom_object_new\n"
             ' test rax,rax\n jz vbm_zero\n mov QWORD PTR [boom_vm_thread_root_cells+40],rax\n mov QWORD PTR [rsp+32],rax\n'
@@ -337,6 +388,9 @@ def assembly(model):
     out += ' mov rax,QWORD PTR [boom_vm_thread_root_cells]\n jmp vbm_done\nvbm_zero:\n xor eax,eax\nvbm_done:\n add rsp,64\n pop rbx\n ret\nboom_vm_bootstrap_main ENDP\n'
     if model.get('system_phase2'):
         out += (ROOT/'native/entry/system_phase2.asm.inc').read_text(encoding='utf-8')+'\n'
+    if model.get('system_phase3'):
+        out += (ROOT/'native/entry/system_phase3.asm.inc').read_text(encoding='utf-8')+'\n'
+    if root_text:out += root_text+(ROOT/'native/kernels/provider_native_root_snapshot.asm.inc').read_text(encoding='utf-8')+'\n'
     out += template+'\nEND\n'
     return out, set(externals)
 
