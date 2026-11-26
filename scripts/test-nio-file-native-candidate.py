@@ -102,6 +102,30 @@ def run(candidate_file,config_file,boundary=None):
     checked(candidate['base_proof'])
     for artifact in candidate['source_inputs']+candidate['generated_assembly']:
         checked(artifact)
+    if candidate.get('formal_provider_selection'):
+        if candidate.get('formal_provider_input_state'):
+            checked(candidate['formal_provider_input_state'])
+        summary=read(checked(candidate['source_batch']))
+        check(read(checked(candidate['source_batch_verification']))['verified'] and
+              candidate['unsafe_carrier'] is None and candidate['boot_unnamed_candidate'] is None,
+              'Formal NIO must use the verified batch without previous carrier or JCLS overlays')
+        source=read(Path(candidate['selection_directory'])/'closure.json')
+        check(source['runtime_provider_packs']==candidate['formal_provider_selection'] and
+              candidate['boot_unnamed_provider'] in candidate['formal_provider_selection'],
+              'Formal NIO provider list differs from the source-verified selection')
+        for record in candidate['formal_provider_selection']:
+            pack=checked(record['manifest'])
+            proof=read(checked(record['verification']))
+            check(proof['verified'] and proof['provider_manifest_sha256']==sha(pack),
+                  'Formal NIO provider receipt differs')
+        boot=read(checked(candidate['boot_unnamed_metadata']))
+        check(boot['slot']==summary['class_literals']['bootstrap_unnamed_module_slot'] and
+              boot['strong_roots']==summary['class_literals']['root_cells'],
+              'Formal NIO changed the original JCLS root layout')
+        jcls=checked(candidate['jcls_object'])
+        check(not candidate['jcls_object_replaced'] and
+              checked(candidate['link_response']).read_text().splitlines().count('"'+str(jcls)+'"')==1,
+              'Formal NIO must link the verified JCLS COFF exactly once without replacement')
     runtime=Path(candidate['runtime'])
     check(sha(runtime/'boom-runtime.dll')==read(runtime/'runtime.json')['sha256'],'Assembly runtime changed')
     with os.add_dll_directory(str(runtime)):
@@ -174,15 +198,19 @@ def run(candidate_file,config_file,boundary=None):
     def finish_boundary(observed):
         live_count=Q.from_address(pool+40).value
         observed['native_buffer_allocations_remaining']=live_count
-        if candidate.get('boot_unnamed_candidate'):
-            boot=read(checked(candidate['boot_unnamed_candidate']))
-            info=boot['contract']
-            slot=info['module_slot']
+        if candidate.get('boot_unnamed_candidate') or candidate.get('boot_unnamed_provider'):
+            if candidate.get('boot_unnamed_provider'):
+                info=read(checked(candidate['boot_unnamed_metadata']))
+                slot,owner,index,expected_roots=info['slot'],info['owner'],info['static_field'],info['strong_roots']
+            else:
+                boot=read(checked(candidate['boot_unnamed_candidate']))
+                info=boot['contract']
+                slot,owner,index,expected_roots=info['module_slot'],info['owner'],info['static_index'],boot['gc_roots_after']
             roots=addr(im,'boom_java_class_module_roots')
             installed=P.from_address(roots+slot*8).value
-            static_root=P.from_address(addr(im,f"boom_s{info['owner']}_{info['static_index']}")).value
+            static_root=P.from_address(addr(im,f"boom_s{owner}_{index}")).value
             count=U.from_address(addr(im,'boom_java_class_root_count')).value
-            check(count==boot['gc_roots_after'] and (not installed or installed==static_root),
+            check(count==expected_roots and (not installed or installed==static_root),
                   'Installed bootstrap module root does not match original Java static')
             observed['boot_unnamed_module']=dict(module_slot=slot,gc_root_count=count,
                 source_static_published=bool(static_root),normal_module_root_published=bool(installed))
@@ -252,6 +280,8 @@ def run(candidate_file,config_file,boundary=None):
                     '(Ljava/nio/file/Path;[Ljava/nio/file/LinkOption;)Z']
                 result=call(files,path_ctx,[original_path,options])
                 observed=boundary_result('Files.isRegularFile',path_ctx,result)
+            observed['filesystem_receiver_fixture']=dict(source_layout_provider_reference_assigned=True,
+                original_filesystem_constructor_called=False,default_filesystem_startup_completed=False)
             break
         name=must(java_alloc,[unsafe,len(encoded)+2])
         output=must(java_alloc,[unsafe,36])
@@ -551,6 +581,8 @@ def run(candidate_file,config_file,boundary=None):
                 win32_failure_tested=True,WindowsException_lastError=raised,raw_junction_reparse_bit_preserved=True,
                 original_Reference_get0=referent_result,windows_library_names=mapped_names,
                 concurrent_native_file_queries=parallel_queries,
+                formal_provider_count=len(candidate.get('formal_provider_selection') or []),
+                verified_batch_JCLS_used_without_replacement=bool(candidate.get('formal_provider_selection')),
                 parallel_OS_threads=len(live),dispatcher_JNI_field_registration=registration,game_started=False)
     check(proc(rt,'boom_heap_destroy',U,P)(initial)==1,'Guest heap cleanup failed')
     boundaries={}
@@ -566,6 +598,9 @@ def run(candidate_file,config_file,boundary=None):
     report['source_dispatcher_class_initializing_adapter_called']=True
     report['full_Files_isRegularFile_completed']=any(v['entry']=='Files.isRegularFile' and
         v['context'][0]==0 and v['returned']==1 for v in boundaries.values())
+    report['WindowsNativeDispatcher_initializer_completed']=any(
+        v['entry']=='WindowsNativeDispatcher.GetFileAttributesEx0' and v['context'][0]==0 for v in boundaries.values())
+    report['default_filesystem_startup_completed']=False
     dest=path.parent/('execution-'+uuid4().hex+'.json')
     dest.write_text(json.dumps(report,indent=2)+'\n')
     return dest

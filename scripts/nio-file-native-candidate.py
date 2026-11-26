@@ -1,4 +1,9 @@
-"""Build an isolated source-verified Windows NIO diagnostic provider candidate."""
+"""Build an isolated source-verified Windows NIO diagnostic provider candidate.
+
+Set nio_provider_mode to formal-selection and providers to the accepted provider
+list to use the current batch's UFL2, JCLS and Boot native without old overlays.
+Source selection and closure verification still reconstruct every supplied pack.
+"""
 import argparse
 import hashlib
 import importlib.util
@@ -97,7 +102,51 @@ def contracts(config):
 
 def run(command, directory, log):
     with (directory / log).open('wb') as stream:
-        subprocess.run(command, cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT, timeout=360, check=True)
+        subprocess.run(command, cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT, timeout=1200, check=True)
+
+
+def formal_providers(config):
+    mode=config.get('nio_provider_mode','frozen-diagnostic')
+    S.check(mode in ('frozen-diagnostic','formal-selection'),'Unknown NIO provider selection mode')
+    if mode!='formal-selection':
+        return None
+    S.check(not any(config.get(k) for k in ('source_selection','nio_unsafe_carrier_test',
+        'nio_unsafe_carrier_runtime','nio_boot_unnamed_candidate','nio_boot_unnamed_execution','nio_selection_providers')),
+        'Formal selection must use the verified batch directly, without earlier candidate overlays')
+    batch,plan=(Path(config[k]).resolve(strict=True) for k in ('batch','plan'))
+    summary=S.read(batch/'summary.json')
+    S.check(S.read(batch/'verification.json')['verified'] and summary['unsafe_fields']['abi']==2 and
+            type(summary['class_literals'].get('bootstrap_unnamed_module_slot')) is int,
+            'Formal NIO requires verified UFL2 and the normal bootstrap unnamed JCLS slot')
+    paths=[Path(p).resolve(strict=True) for p in S.read(config['providers'])]
+    S.check(len(paths)==len(set(paths)),'Duplicate formal provider manifests')
+    if config.get('nio_provider_input_state'):
+        state=S.read(S.checked(config['nio_provider_input_state']))
+        S.check(state['status']=='accepted' and state['provider_count']==len(paths) and
+                all(Path(state[k]).resolve()==Path(config[k]).resolve() for k in ('batch','plan','runtime','providers')) and
+                state['batch_summary_sha256']==S.digest(batch/'summary.json')['sha256'] and
+                state['batch_verification_sha256']==S.digest(batch/'verification.json')['sha256'] and
+                state['runtime_sha256']==S.digest(Path(config['runtime'])/'boom-runtime.dll')['sha256'],
+                'Formal provider input state differs from the source batch, runtime or list')
+    result={}
+    for path in paths:
+        manifest=S.read(path)
+        proof_path=path.with_name('verification.json')
+        proof=S.read(proof_path)
+        ref=dict(manifest=S.artifact(path),verification=S.artifact(proof_path))
+        S.check(proof['verified'] and proof['provider_manifest_sha256']==ref['manifest']['digest']['sha256'] and
+                proof['base_batch_summary_sha256']==S.digest(batch/'summary.json')['sha256'] and
+                Path(manifest['base']['batch']).resolve()==batch and Path(manifest['base']['plan']).resolve()==plan and
+                S.checked(manifest['base']['batch_summary'])==batch/'summary.json',
+                'Formal provider lacks an accepted receipt for this exact batch: '+manifest['family'])
+        S.checked(manifest['object'])
+        S.check(manifest['family'] not in result,'Duplicate formal provider family')
+        result[manifest['family']]=ref
+    required={'normal-file-bootstrap-v1','cds-no-archive-v1','object-identity-v1','normal-constructors-v1',
+              'class-flags-v1','normal-throwable-v1','normal-winnt-filesystem-v1',
+              'normal-constructor-invocation-v1','normal-boot-unnamed-module-v1'}
+    S.check(required<=set(result),'Formal provider list is missing a required NIO startup family')
+    return result
 
 
 def msvc():
@@ -109,7 +158,7 @@ def msvc():
     return install / f'VC/Tools/MSVC/{version}/bin/Hostx64/x64'
 
 
-def observed_classes(config,execution):
+def observed_classes(config,execution,provided_methods=()):
     if not execution:
         return set()
     execution=Path(execution).resolve(strict=True)
@@ -123,9 +172,13 @@ def observed_classes(config,execution):
     selection=Path(candidate['selection_directory'])
     proof=S.read(S.checked(candidate['base_proof']))
     closure=S.read(selection/'closure.json')
-    S.check(Path(closure['batch']).resolve()==Path(config['batch']).resolve() and
-            proof['verified'] and proof['diagnostic_manifest_sha256']==S.digest(selection/'diagnostic.json')['sha256'],
-            'Source execution belongs to another diagnostic selection')
+    previous_batch=Path(closure['batch']).resolve(strict=True)
+    S.check(Path(closure['plan']).resolve()==Path(config['plan']).resolve() and proof['verified'] and
+            proof['closure_manifest_sha256']==S.digest(selection/'closure.json')['sha256'] and
+            proof['diagnostic_manifest_sha256']==S.digest(selection/'diagnostic.json')['sha256'] and
+            closure['source_batch_summary_sha256']==S.digest(previous_batch/'summary.json')['sha256'] and
+            S.read(previous_batch/'summary.json')['input_fingerprint']==S.read(Path(config['batch'])/'summary.json')['input_fingerprint'],
+            'Source execution belongs to another original plan or diagnostic selection')
     rows={r['id']:r for r in S.read(selection/'diagnostic.json')['rows']}
     existing=set(S.read(selection/'admit.json').get('additional_source_classes',[]))
     fresh=set()
@@ -139,6 +192,8 @@ def observed_classes(config,execution):
             S.check(all(original.get(k)==fault.get(k) for k in ('symbol','category','method','binding')),
                     'Observed source diagnostic row differs')
             if original['category']==2 and original['method']['id'] not in candidate['new_normal_native_bindings']:
+                if original['method']['id'] in provided_methods:
+                    provided_next=True
                 if any(candidate['source_classes'].get(owner)==original['class_id'] and original['method']['name']==name and
                        original['method']['descriptor']==desc for owner,name,desc,flags in NATIVES[7:]):
                     provided_next=True
@@ -154,6 +209,7 @@ def observed_classes(config,execution):
 
 def prepare_selection(config_file,previous=None):
     config=S.read(config_file)
+    formal=formal_providers(config)
     batch,plan=Path(config['batch']),Path(config['plan'])
     summary=S.read(batch/'summary.json')
     planned=S.read(plan/'summary.json')
@@ -200,7 +256,8 @@ def prepare_selection(config_file,previous=None):
         'java/lang/Throwable':{'<init>','fillInStackTrace','getMessage'},
         'jdk/internal/misc/CDS':set(),'java/lang/Class':set(),'java/lang/Module':{'<init>'}})
     requests.update({owner:set() for owner in IDS.OWNERS})
-    additionally=observed_classes(config,previous)
+    available={m['method'] for p in (formal or {}).values() for m in S.read(S.checked(p['manifest']))['methods']}
+    additionally=observed_classes(config,previous,available)
     wanted={}
     with S.checked(planned['artifacts']['classes']).open(encoding='utf-8') as stream:
         for line in stream:
@@ -234,9 +291,9 @@ def prepare_selection(config_file,previous=None):
                          admitted_classes=sorted(r['id'] for r in wanted.values()),admitted_methods=sorted(admitted),
                          additional_source_classes=sorted(additionally)))
     provider_args=[]
-    for ref in config.get('nio_selection_providers',[]):
+    for ref in config.get('nio_selection_providers',[]) if formal is None else [p['manifest'] for p in formal.values()]:
         path=S.checked(ref)
-        S.check(S.read(path)['family'] in ('normal-constructors-v1','normal-constructor-invocation-v1'),
+        S.check(formal is not None or S.read(path)['family'] in ('normal-constructors-v1','normal-constructor-invocation-v1'),
                 'Unexpected NIO source-selection provider')
         provider_args+=['--provider-pack',path]
     run([sys.executable,ROOT/'scripts/prepare-diagnostic-closure.py',batch,'--plan',plan,'--output',selection,
@@ -406,8 +463,9 @@ def carrier_overlay(config,summary):
 def build(config_file, selection, out):
     out, selection = out.resolve(), selection.resolve(strict=True)
     S.check(out.is_relative_to(ART) and selection.is_relative_to(ART), 'Keep test images in project .boom')
-    out.mkdir(parents=True, exist_ok=False)
     config = S.read(config_file)
+    formal=formal_providers(config)
+    out.mkdir(parents=True, exist_ok=False)
     summary, classes, natives, java = contracts(config)
     runtime,carrier_changes,carrier=carrier_overlay(config,summary)
     fields=IDS.index(summary,S.read(Path(config['plan'])/'summary.json'),classes,S)
@@ -423,6 +481,9 @@ def build(config_file, selection, out):
         selected = closure['selected_methods'].get(str(m['method']))
         S.check(selected and selected['code_sha256'] == m['code_sha256'] and selected['class_id'] == m['class_id'],
                 'Required original Java body missing from selection: ' + m['name'])
+    if formal is not None:
+        S.check(list(formal.values())==closure.get('runtime_provider_packs'),
+                'Verified source selection must carry the exact formal provider list')
     pack = next(S.read(p) for p in S.read(config['providers']) if S.read(p)['family'] == 'normal-winnt-filesystem-v1')
     overlay = S.read(S.checked(pack['frame_overlay']['manifest']))
     overlay_proof = S.read(S.checked(pack['frame_overlay']['verification']))
@@ -436,6 +497,7 @@ def build(config_file, selection, out):
     frames = S.checked(overlay['object'])
     boot_ref=config.get('nio_boot_unnamed_candidate')
     boot=None
+    formal_boot=None
     if boot_ref:
         boot=S.read(S.checked(boot_ref))
         info=boot['contract']
@@ -463,6 +525,17 @@ def build(config_file, selection, out):
             S.check(btest['verified_Java_static_and_JCLS_publication'] and not btest['manually_installed_Module_oop'] and
                     images['control_link_matched_original_image'] and images['source']==boot_ref and
                     S.checked(images['runtime'])==runtime/'boom-runtime.dll','Boot module cold execution proof differs')
+    if formal is not None:
+        formal_boot_pack=S.read(S.checked(formal['normal-boot-unnamed-module-v1']['manifest']))
+        formal_boot=S.read(S.checked(formal_boot_pack['boot_unnamed_metadata']))
+        S.check(formal_boot['slot']==summary['class_literals']['bootstrap_unnamed_module_slot'] and
+                formal_boot['strong_roots']==summary['class_literals']['root_cells'] and
+                str(S.checked(formal_boot_pack['object'])) in closure['objects'],
+                'Formal bootstrap module provider must use the existing verified JCLS pool')
+        for original in formal_boot['original_java']:
+            selected=closure['selected_methods'].get(str(original['method']))
+            S.check(selected and selected['code_sha256']==original['code_sha256'],
+                    'Formal bootstrap module original Java body is missing from the source selection')
     filesystem=classes['sun/nio/fs/WindowsFileSystem']
     with S.checked(summary['layouts']).open(encoding='utf-8') as stream:
         layout=next(row for line in stream if (row:=json.loads(line))['class_id']==filesystem['id'])
@@ -472,14 +545,18 @@ def build(config_file, selection, out):
         [link_array]=[row for line in archive.open('types.jsonl') if
                       (row:=json.loads(line))['name']=='[Ljava/nio/file/LinkOption;' and row['defining_loader']=='bootstrap']
     S.check(link_array['kind']==3,'Expected original LinkOption reference array')
-    # Bind the previously frozen original StringUTF16.isBigEndian provider
-    # through its verified source selection, independent of live tool edits.
-    prior = Path(config['source_selection'])
-    prior_proof = S.read(prior/'selection-verification.json')
-    S.check(prior_proof['verified'] and prior_proof['closure_manifest_sha256'] == S.digest(prior/'closure.json')['sha256'],
-            'Earlier source selection was not verified')
-    prior_closure=S.read(prior/'closure.json')
-    accepted={S.read(S.checked(p['manifest']))['family']:p for p in prior_closure['runtime_provider_packs']}
+    if formal is None:
+        # Older diagnostic receipts remain reproducible with their frozen source
+        # selection. Formal selections link the currently verified packs directly.
+        prior = Path(config['source_selection'])
+        prior_proof = S.read(prior/'selection-verification.json')
+        S.check(prior_proof['verified'] and prior_proof['closure_manifest_sha256'] == S.digest(prior/'closure.json')['sha256'],
+                'Earlier source selection was not verified')
+        prior_closure=S.read(prior/'closure.json')
+        accepted={S.read(S.checked(p['manifest']))['family']:p for p in prior_closure['runtime_provider_packs']}
+    else:
+        prior_closure=closure
+        accepted=formal
     file_ref=accepted['normal-file-bootstrap-v1']
     cds_ref=accepted['cds-no-archive-v1']
     identity_ref=accepted['object-identity-v1']
@@ -511,7 +588,8 @@ def build(config_file, selection, out):
                     S.read(S.checked(supplied['verification']))['verified'],'Refreshed provider COFF differs from frozen source')
         else:
             borrowed_objects.append(obj)
-        borrowed_names.update(f"boom_m{m['method']}" for m in previous['methods'])
+        if formal is None:
+            borrowed_names.update(f"boom_m{m['method']}" for m in previous['methods'])
     tools = msvc()
     def assemble(name, content=None, file=None):
         src = file or out / (name + '.asm')
@@ -556,8 +634,14 @@ def build(config_file, selection, out):
     for u in baseline_parts['units']:
         S.checked(u['object'])
         S.checked(u['assembly'])
-    replacements = {S.checked(summary['frames']['units'][0]['object']):frames,S.checked(memory_unit['object']):memory,
-                    **carrier_changes}
+    replacements = {S.checked(memory_unit['object']):memory,**carrier_changes}
+    original_frame=S.checked(summary['frames']['units'][0]['object'])
+    if str(original_frame) in closure['objects']:
+        replacements[original_frame]=frames
+    else:
+        S.check(formal is not None and str(frames) in closure['objects'] and
+                closure['runtime_frame_overlay']['object']==overlay['object'],
+                'Formal selection does not contain its verified native frame overlay')
     names = [m['method'] for m in java]
     exports = {'boom_nio_buffer_service','boom_nio_buffer_pool','boom_win32_path_attributes','boom_heap_ptr',
                'boom_nio_dispatcher_ids_pool'}
@@ -567,6 +651,9 @@ def build(config_file, selection, out):
         exports.update(boot['exports'])
         exports.update(('boom_java_class_module_roots','boom_java_class_root_count',
                         f"boom_s{info['owner']}_{info['static_index']}"))
+    if formal_boot:
+        exports.update(('boom_java_class_module_roots','boom_java_class_root_count',
+                        f"boom_s{formal_boot['owner']}_{formal_boot['static_field']}"))
     exports |= {f'boom_m{i}' for i in names}
     exports |= {f"boom_m{m['method']}{suffix}" for m in natives for suffix in ('','_native')}
     exports |= {f"boom_layout{classes[n]['id']}" for n in (UNSAFE,ATTRS,'java/lang/String','sun/nio/fs/WindowsPath',
@@ -584,6 +671,10 @@ def build(config_file, selection, out):
     S.check(S.read(runtime/'runtime.json')['sha256']==S.digest(runtime_dll)['sha256'],'Assembly runtime changed')
     objects=[selection/'initialization-closure.obj',stops,*[replacements.get(p,p) for p in original_inputs],
              provider,kernel,*borrowed_objects,runtime/'boom-runtime.lib',kernels[-1].with_name('synchronization.lib'),kernels[-1]]
+    jcls_object=S.checked(summary['class_literals']['units'][0]['object'])
+    if formal is not None:
+        S.check(jcls_object not in replacements and objects.count(jcls_object)==1,
+                'Formal NIO must link the verified JCLS object exactly once without replacement')
     lines=['/NOLOGO','/DLL','/NOENTRY','/MACHINE:X64','/DYNAMICBASE','/NXCOMPAT','/BREPRO','/OUT:"'+str(dll)+'"']
     lines+=['"'+str(p)+'"' for p in objects]+['/EXPORT:'+s for s in sorted(symbols)]
     rsp = out/'link.rsp'
@@ -599,6 +690,14 @@ def build(config_file, selection, out):
                   image=S.artifact(dll),runtime=str(runtime),unsafe_carrier=carrier,boot_unnamed_candidate=boot_ref,
                   boot_unnamed_execution=config.get('nio_boot_unnamed_execution'),
                   runtime_dll=S.artifact(runtime_dll),kernel_source=S.artifact(ROOT/'native/runtime/win32_path_attributes.asm'),
+                  source_batch=S.artifact(Path(config['batch'])/'summary.json'),
+                  source_batch_verification=S.artifact(Path(config['batch'])/'verification.json'),
+                  jcls_object=S.artifact(jcls_object),jcls_object_replaced=jcls_object in replacements,
+                  link_response=S.artifact(rsp),
+                  formal_provider_selection=list(formal.values()) if formal is not None else None,
+                  formal_provider_input_state=config.get('nio_provider_input_state'),
+                  boot_unnamed_provider=formal['normal-boot-unnamed-module-v1'] if formal is not None else None,
+                  boot_unnamed_metadata=formal_boot_pack['boot_unnamed_metadata'] if formal_boot else None,
                   source_inputs=[S.artifact(ROOT/k) for k in ('native/providers/nio_owned_buffers.asm.inc',
                     'native/providers/nio_windows_exception.asm.inc','native/providers/nio_dispatcher_ids.asm.inc',
                     'native/providers/reference_referent_read.asm.inc','native/providers/win32_library_name.asm.inc',
