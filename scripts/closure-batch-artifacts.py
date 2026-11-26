@@ -35,6 +35,8 @@ def source_records(summary, resolve):
         if not path.is_absolute() or path not in records or records[path] != record['digest']:
             raise ValueError('Artifact absent from certified source summary or digest differs')
         return resolve(root,record,subdirectory)
+    if hasattr(resolve,'verified_original_vm_image_home'):
+        checked.verified_original_vm_image_home=resolve.verified_original_vm_image_home
     return checked
 
 
@@ -43,6 +45,15 @@ def configure(coff, batch, summary, plan=None):
     batch = Path(batch).resolve()
     derivation = batch / 'unsafe-field-derivation.json'
     boot = batch / 'boot-unnamed-derivation.json'
+    named = batch / 'named-module-derivation.json'
+    if sum(p.exists() for p in (derivation,boot,named))>1:
+        raise ValueError('Conflicting sparse derivation kinds')
+    if named.is_file():
+        provider = module('refresh-named-module-batch.py')
+        resolve, identity = provider.verified_resolver(batch,summary,plan)
+        identity = dict(identity, closure_resolver_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
+        coff.artifact = source_records(summary,resolve)
+        return identity
     if boot.is_file():
         if derivation.exists():
             raise ValueError('Conflicting sparse derivation kinds')
@@ -54,8 +65,9 @@ def configure(coff, batch, summary, plan=None):
     if not derivation.exists():
         receipt = batch / 'verification.json'
         artifacts = Path(__file__).resolve().parents[1] / '.boom'
-        if batch.parent in (artifacts/'unsafe-field-batches',artifacts/'boot-unnamed-batches') or (
-                receipt.is_file() and any(k.startswith('sparse_') for k in json.loads(receipt.read_bytes()))):
+        if batch.parent in (artifacts/'unsafe-field-batches',artifacts/'boot-unnamed-batches',artifacts/'named-module-batches') or (
+                receipt.is_file() and any(k.startswith('sparse_') or k=='named_module_derivation'
+                                        for k in json.loads(receipt.read_bytes()))):
             raise ValueError('Missing source batch derivation')
         return None
     source = module('refresh-unsafe-field-batch.py')

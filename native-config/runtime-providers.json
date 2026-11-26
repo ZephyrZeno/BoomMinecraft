@@ -1,6 +1,21 @@
 {
   "schema": 1,
   "families": {
+    "normal-module-definitions-v1": {
+      "owner": "java/lang/Module",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/module_definitions_normal.asm.inc",
+      "pool": "boom_provider_module_definitions_pool",
+      "service": "boom_provider_module_definitions_service",
+      "methods": [
+        { "name": "defineModule0", "descriptor": "(Ljava/lang/Module;ZLjava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)V", "access": 266, "operation": 0 },
+        { "name": "addReads0", "descriptor": "(Ljava/lang/Module;Ljava/lang/Module;)V", "access": 266, "operation": 1 },
+        { "name": "addExports0", "descriptor": "(Ljava/lang/Module;Ljava/lang/String;Ljava/lang/Module;)V", "access": 266, "operation": 2 },
+        { "name": "addExportsToAll0", "descriptor": "(Ljava/lang/Module;Ljava/lang/String;)V", "access": 266, "operation": 3 },
+        { "name": "addExportsToAllUnnamed0", "descriptor": "(Ljava/lang/Module;Ljava/lang/String;)V", "access": 266, "operation": 4 }
+      ]
+    },
     "normal-windows-canonical-v1": {
       "owner": "java/io/WinNTFileSystem",
       "loader": "bootstrap",

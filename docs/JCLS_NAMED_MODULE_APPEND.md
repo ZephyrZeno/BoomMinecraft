@@ -1,5 +1,11 @@
 # JCLS named module append candidate
 
+The candidate evidence below records the producer at commit `b87ed8e`. The
+current schema-2 producer also supports a separate real `verify-full` pass and
+strict production closure lineage. Historical receipts retain their original
+source hashes; they are not receipts for the updated producer. Current commands
+and verification are recorded in the production section below.
+
 `scripts/refresh-named-module-batch.py` derives one JCLS data unit from the
 verified v145 bootstrap-unnamed batch. This is a development data candidate;
 it does not produce `verification.json`, claim full source verification, or run
@@ -112,9 +118,11 @@ separate process. The actual source/COFF check passed with slot 64, 1,011
 original Java units retained, and no full-batch or runtime acceptance claim.
 The original 0..63 slots remain unchanged.
 
-## Required production work
+## Historical production blockers
 
-Three production dependencies remain explicit:
+These were the three blockers at the historical `b87ed8e` candidate stage. The
+two validator changes are implemented by the current production integration;
+the Boot native still requires normal regeneration for the enlarged pool.
 
 1. `verify-batch-classes.identities` currently reconstructs modules only from
    represented types plus the explicit bootstrap unnamed slot. The real verifier
@@ -146,9 +154,10 @@ The independent Module5 model has read the candidate in
 named slot 64; synthetic unnamed identities start at 128. This is a source-model
 check over an unverified candidate batch, not component or game acceptance.
 
-## Reproduce
+## Historical reproduction (`b87ed8e`)
 
-Use a new output directory for every build:
+Use the `b87ed8e` source version and a new output directory for every historical
+candidate build. The current producer requires an accepted input state instead:
 
 ```powershell
 python -B scripts/refresh-named-module-batch.py build `
@@ -166,3 +175,93 @@ python -B scripts/refresh-named-module-batch.py verify `
 The current helper-source hashes are part of the candidate seal. Preserve the
 producer source version when later production integration changes those helpers;
 do not rewrite old receipts to make them match a new source namespace.
+
+## Current production verification
+
+The schema-2 producer now accepts a scoped accepted input state. `build` still
+proves only the data append. `verify-full` separately invokes the real complete
+`verify-batch-assembly.verify` with the original source IR and a narrowly bound
+artifact resolver. It recalculates all original source, method, metadata and
+COFF checks. The entire parent receipt must match, field for field, including
+all false execution claims; only the new named-module lineage is added. The
+original checked bootstrap lineage annotation is retained. Inputs and producer
+hashes are reconstructed again after the expensive pass, before atomic receipt
+publication.
+
+`verify-batch-classes.py` independently reconstructs the original module prefix
+from source types. It derives the extra no-type names and loaders from the
+locked resolved graph and actual module-info descriptors. It does not use a
+candidate acceptance flag to choose names, loaders or old slot positions. Its
+existing full canonical ASM and Class/type/COFF verification then runs over
+the enlarged pool.
+
+`closure-batch-artifacts.py` recognizes only the strict named-module lineage
+with a genuine full receipt. Its resolver allows original parent artifact
+records except the replaced JCLS pair, plus exactly the new JCLS ASM/object
+inside the child `class-literals` directory. Wrong roots, unlisted records,
+changed digests, wrong module directories and the removed old JCLS pair are
+rejected. The original VM image home survives the closure wrapper, preserving
+the original normal properties profile.
+
+An additional real COFF attack was found during this integration: swapping
+undefined `boom_t0`/`boom_t1` at indices 21/22 preserved the old symbol set and
+raw relocation indices while redirecting their actual targets. The isolated
+fresh-ml64 reproduction is
+`.boom/named-module-symbol-review/76604fa0f0674040abb535e4226aa140/result.json`
+(SHA256 `abb5d4a40e539d5aa3527cfbb589eee5c5297d850822d190c3db9a581396bf55`).
+The updated proof checks every symbol index's name, section, storage, type,
+auxiliaries and value. Values may move only by the precisely checked immutable
+record/BSS shifts; section auxiliary sizes must match their actual headers.
+The unchanged complete string table is also checked. This binds unchanged
+relocation bytes to unchanged semantic targets.
+
+The first production `-a` complete verifier naturally passed in 310.688 seconds
+before this extra symbol check. Its receipts remain historical and its nine
+producer/helper sources are saved under
+`v148-jdwp-production-a/producer-before-symbol-contract/`. It is not used as a
+receipt for the strengthened producer.
+
+The final batch is `.boom/named-module-batches/v148-jdwp-production-b`. Fresh
+ml64, the actual complete verifier in a new process, and a separate production
+closure resolver process all passed. The full pass naturally exited 0 in
+308.766 seconds. The symbol contract covers 228,061 table entries / 228,056
+records, with only an eight-byte immutable-record shift and eight-byte BSS
+shift. All 1,011 original Java units and prior IDs remain unchanged.
+
+| Final artifact | SHA256 |
+| --- | --- |
+| `summary.json` | `271870db974403d34343f7218a781e118caeef3bf79c3b18188df992a3f17056` |
+| `named-module-derivation.json` | `a200f1b0ad220348043a17ec19768a6f78414af7f3c98e0ecdf0035b7baa4381` |
+| `verification.json` | `9252005a2e8b02422d5beb4dc8aee15c2cf0c9e9eb0dabc8538f29b0f12f1cff` |
+| `source-closure-lineage-verification.json` | `88cb18736469cf0cdefe762bb25e6147a2db06ca7306d73b1bc8e099981aaee7` |
+
+The independent production closure proof confirms 2,487 summary artifact
+records are exactly the retained parent set minus the old JCLS pair plus the
+new pair. Five negative resolver cases passed. Seventeen tests across
+`tests/named_module_batch.py` and `tests/closure_batch_artifacts.py` passed,
+including false module/loader, moved old slot, unrelated COFF replacement,
+actual code/relocation/symbol-target mutation, physical root/loader counts,
+complete parent-receipt coverage and ordinary schema compatibility. The final
+log is `.boom/named-module-production-checks/unit-tests-final.log`.
+
+This verifies the complete unlinked source batch and its closure lineage.
+It does not certify native runtime execution or accept a new provider set.
+`normal-boot-unnamed-module-v1` still must be normally regenerated with its exact
+65-slot guard before use with this batch. Runtime572, all original Java code,
+the input frame and every old artifact directory were preserved.
+
+Current reproduction uses a new directory and the accepted 28-family state:
+
+```powershell
+python -B scripts/refresh-named-module-batch.py build `
+  --state .boom/accepted-native-windows-runtime-v147-28.json `
+  --module jdk.jdwp.agent `
+  --parent-summary-sha256 83a311219b3af267757be5eda15bce2094a2d38e50ccca6de3e5f3bc0f74a2f3 `
+  --parent-verification-sha256 b1abda904b5f3109b9c59e83ff49d23726fc97a553bf96167c91cacfe40485ef `
+  --assembler D:/Dev/BuildTools/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/ml64.exe `
+  --output .boom/named-module-batches/production-independent-review
+
+python -B scripts/refresh-named-module-batch.py verify-full `
+  --output .boom/named-module-batches/production-independent-review `
+  --ir .boom/translation-ir/server-v85-2a52b09a09944122baae25b0ddbd4e99
+```

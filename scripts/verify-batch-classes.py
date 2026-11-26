@@ -109,6 +109,17 @@ def identities(classes,types,bootstrap_unnamed_slot=None):
         rows[t['id']]=dict(type_id=t['id'],component=component,superclass=object_id,loader=r['loader'],module=r['module'],flags=int(r['loader']==0 and r['module']==0),raw_access=0,major=0)
     return loaders,mods,rows
 
+
+def named_module_identities(root,batch,plan,classes,loaders,modules):
+    """Derive extra no-type module keys from locked original descriptors, never flags."""
+    if not (root/'named-module-derivation.json').is_file():return modules
+    spec=importlib.util.spec_from_file_location('class_named_module_source',Path(__file__).with_name('refresh-named-module-batch.py'))
+    model=importlib.util.module_from_spec(spec);spec.loader.exec_module(model)
+    original=dict(batch,class_literals=dict(batch['class_literals'],loader_keys=loaders,modules=modules))
+    additions,_=model.source_graph(original,plan,classes=classes)
+    check(additions and len(modules)+len(additions)<=65536,'Named Class module identity budget exceeded')
+    return modules+additions
+
 def pool_body(shape,capacity,loaders,modules,rows,reverse):
     c=shape['class_id'];roots=capacity+len(loaders)+len(modules)
     parts=[f".data\nALIGN 8\nPUBLIC boom_java_class_pool\nboom_java_class_pool DWORD 04A434C53h,1,0,{capacity}\n QWORD OFFSET boom_java_class_roots,OFFSET boom_java_class_records,OFFSET boom_layout{c},OFFSET boom_runtime_type_map,OFFSET boom_heap_ptr,OFFSET boom_java_class_loader_roots,OFFSET boom_java_class_module_roots,OFFSET boom_java_class_reverse\n DWORD {reverse-1},{len(loaders)},{len(modules)},1\n DWORD {shape['loader_offset']},{shape['module_offset']},{shape['component_offset']},{c}\n QWORD OFFSET boom_t{shape['loader_type']},OFFSET boom_t{shape['module_type']},OFFSET boom_java_class_module_loaders\n DWORD {shape['module_loader_offset']},0\n.const\nPUBLIC boom_java_class_root_count\nboom_java_class_root_count QWORD {roots}\nboom_java_class_module_loaders LABEL DWORD\n"]
@@ -133,6 +144,7 @@ def verify(root,batch,plan,inventory,requests,available,artifact,coff_symbols,fi
     check('bootstrap_unnamed_module_slot' not in s or type(bootstrap_unnamed_slot) is int,
           'Bootstrap unnamed module slot must be an explicit integer')
     shape=shape_model(classes,layouts,with_names);loaders,modules,rows=identities(classes,types,bootstrap_unnamed_slot);capacity=batch['runtime_metadata']['type_capacity'];reverse=1
+    modules=named_module_identities(root,batch,plan,classes,loaders,modules)
     while reverse<capacity*2:reverse*=2
     check(s['source_shape']==shape and s['loader_keys']==loaders and s['modules']==modules,'Normal Class layout/loader/module source differs')
     check((s['type_capacity'],s['provided_types'],s['root_cells'],s['reverse_slots'])==(capacity,len(rows),capacity+len(loaders)+len(modules),reverse),'Class mirror registry counts differ')

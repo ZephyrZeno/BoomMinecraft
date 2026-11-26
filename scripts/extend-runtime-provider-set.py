@@ -29,7 +29,7 @@ S = module('runtime-provider-source')
 R = module('revalidate-runtime-provider-cache')
 
 
-def extend(state_file, families, assembler, output, workers=2):
+def extend(state_file, families, assembler, output, workers=2, *, batch_override=None, regenerate=()):
     state_file, assembler, output = map(lambda p: Path(p).resolve(), (state_file, assembler, output))
     S.check(state_file.is_relative_to(S.ART), 'Use an accepted project state')
     S.check(output.is_relative_to(S.ART / 'formal-native-transitions') and not output.exists(),
@@ -53,11 +53,14 @@ def extend(state_file, families, assembler, output, workers=2):
                 S.artifact(path.with_name('verification.json')) == row['verification'],
                 'An accepted provider input changed')
         source_inputs.extend((row['manifest'], row['verification']))
-    existing = {S.read(p)['family'] for p in paths}
+    original_families = {p: S.read(p)['family'] for p in paths}
+    existing = set(original_families.values())
     registry = S.read(ROOT / 'native-config/runtime-providers.json')
-    S.check(families and len(families) == len(set(families)) and
+    S.check((families or regenerate) and len(families) == len(set(families)) and
             set(families) <= set(registry['families']) and not existing.intersection(families),
             'Additional families must be registered, unique, and absent from the accepted set')
+    S.check(len(regenerate) == len(set(regenerate)) and set(regenerate) <= existing,
+            'Regenerated families must be unique existing inputs')
     S.check(len(existing) == len(paths), 'The accepted input repeats a family')
     batch, plan, runtime = (Path(previous[k]).resolve() for k in ('batch', 'plan', 'runtime'))
     for path, key in ((batch / 'summary.json', 'batch_summary_sha256'),
@@ -72,6 +75,25 @@ def extend(state_file, families, assembler, output, workers=2):
     S.check(runtime_metadata['implementation_language'] == 'x86-64 MASM assembly' and
             runtime_metadata['sha256'] == previous['runtime_sha256'], 'Assembly runtime metadata differs')
     source_inputs.append(S.artifact(runtime / 'runtime.json'))
+    previous_batch = batch
+    batch_lineage = None
+    if batch_override is not None:
+        batch = Path(batch_override).resolve()
+        S.check(batch.is_relative_to(S.ART) and batch != previous_batch,
+                'An explicit batch override must be a different verified project batch')
+        old_identity = S.base(previous_batch, plan)[0]
+        new_identity = S.base(batch, plan)[0]
+        R.compatible_base(old_identity, new_identity)
+        resolver = module('closure-batch-artifacts')
+        assembly_model = module('verify-batch-assembly')
+        batch_lineage = resolver.configure(assembly_model, batch, S.read(batch / 'summary.json'), plan)
+        S.check(batch_lineage and batch_lineage.get('scope') == 'parent_verified_batch_plus_source_reconstructed_named_JCLS_unit' and
+                Path(batch_lineage['parent']['summary']['path']).resolve() == previous_batch / 'summary.json' and
+                batch_lineage['parent']['summary']['digest']['sha256'] == previous['batch_summary_sha256'],
+                'Batch override requires certified named-module lineage from the accepted source batch')
+        source_inputs.extend((S.artifact(batch / 'summary.json'), S.artifact(batch / 'verification.json')))
+        source_inputs.append(S.artifact(batch / 'named-module-derivation.json'))
+    build_families = [*regenerate, *families]
     snapshot, own_tool, assembler_record = S.tools_identity(), S.artifact(Path(__file__)), S.artifact(assembler)
     frame = S.ART / 'native-frame-overlays' / output.name
     packs = S.ART / 'runtime-providers' / output.name
@@ -82,6 +104,7 @@ def extend(state_file, families, assembler, output, workers=2):
     started = time.monotonic()
     progress = dict(schema=1, status='running', pid=os.getpid(), source_state=source_inputs[0],
                     run=str(output), frame=str(frame), packs=str(packs), added_families=list(families),
+                    regenerated_families=list(regenerate), batch=str(batch), previous_batch=str(previous_batch),
                     runtime_acceptance_complete=False, game_started=False)
 
     def unchanged():
@@ -125,17 +148,21 @@ def extend(state_file, families, assembler, output, workers=2):
         publish('refreshing_source_frames')
         overlay = R.refresh_frames(Path(previous['frame_manifest']), batch, plan, frame)
         publish('revalidating_original_provider_caches')
-        current = R.refresh_packs(paths, batch, plan, overlay, packs / 'revalidated')
+        retained = [p for p in paths if original_families[p] not in regenerate]
+        current = R.refresh_packs(retained, batch, plan, overlay, packs / 'revalidated')
+        current_by_family = {S.read(p)['family']: p for p in current}
         generated = {}
         publish('building_additional_families')
-        with ThreadPoolExecutor(max_workers=min(workers, len(families))) as executor:
-            pending = {executor.submit(build_one, family): family for family in families}
+        with ThreadPoolExecutor(max_workers=min(workers, len(build_families))) as executor:
+            pending = {executor.submit(build_one, family): family for family in build_families}
             for future in as_completed(pending):
                 family = pending[future]
                 generated[family] = future.result()
                 progress['generated_verified_families'] = sorted(generated)
                 publish('family_ready_' + family)
-        all_paths = [*current, *(generated[family] for family in families)]
+        all_paths = [generated[original_families[p]] if original_families[p] in regenerate
+                     else current_by_family[original_families[p]] for p in paths]
+        all_paths.extend(generated[family] for family in families)
         records, ids, exports = [], set(), set()
         all_families = existing | set(families)
         for path in all_paths:
@@ -163,6 +190,9 @@ def extend(state_file, families, assembler, output, workers=2):
                      batch=str(batch), plan=str(plan), runtime=str(runtime), frame=str(frame), frame_manifest=str(overlay),
                      providers=str(directory / 'providers.json'), provider_count=len(all_paths),
                      reused_provider_count=len(current), generated_provider_count=len(generated),
+                     regenerated_existing_families=list(regenerate), added_families=list(families),
+                     previous_batch=str(previous_batch),
+                     batch_source_lineage=batch_lineage,
                      run=str(output), source_state=source_inputs[0], tool_sources=snapshot,
                      transition_tool=own_tool, providers_verified=records,
                      batch_summary_sha256=S.digest(batch / 'summary.json')['sha256'],
@@ -191,10 +221,13 @@ def extend(state_file, families, assembler, output, workers=2):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--state', type=Path, required=True)
-    parser.add_argument('--family', action='append', required=True)
+    parser.add_argument('--family', action='append', default=[])
+    parser.add_argument('--regenerate-family', action='append', default=[])
+    parser.add_argument('--batch', type=Path, help='A separately verified compatible derived batch')
     parser.add_argument('--assembler', type=Path, required=True)
     parser.add_argument('--workers', type=int, default=2)
     parser.add_argument('--output', type=Path,
                         default=S.ART / 'formal-native-transitions' / ('native-' + uuid4().hex))
     args = parser.parse_args()
-    print(extend(args.state, args.family, args.assembler, args.output, args.workers))
+    print(extend(args.state, args.family, args.assembler, args.output, args.workers,
+                 batch_override=args.batch, regenerate=args.regenerate_family))

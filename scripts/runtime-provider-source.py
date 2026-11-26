@@ -127,7 +127,10 @@ TOOL_FILES=('scripts/build-runtime-provider-pack.py','scripts/runtime-provider-s
             'native/runtime/windows_canonical_path.asm',
             'scripts/windows-file-queries-source.py',
             'native/providers/windows_file_queries.asm.inc',
-            'native/runtime/win32_path_attributes.asm')
+            'native/runtime/win32_path_attributes.asm',
+            'scripts/module-definitions-source.py',
+            'native/providers/module_definitions_normal.asm.inc',
+            'native/runtime/module_objects.asm')
 
 
 def tools_identity():return {p:digest(ROOT/p)['sha256'] for p in TOOL_FILES}
