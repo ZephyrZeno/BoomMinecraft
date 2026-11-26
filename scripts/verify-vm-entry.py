@@ -9,6 +9,18 @@ spec.loader.exec_module(M)
 S = M.S
 
 
+def verify_link(manifest, runtime_dll, exports, assembly_inputs, sealed=None):
+    names=[Path(record['path']).stem for record in manifest['reassembled_objects']]
+    S.check(len(set(names))==len(names), 'Native entry contains duplicate assembly object names')
+    link=M.module('native_vm_entry_canonical_link','canonical-link-response.py')
+    S.check(S.artifact(link.__file__) in manifest['inputs'],'Native entry omitted its canonical LINK verifier source')
+    if sealed is not None:
+        promoted={symbol for unit in sealed['logical_units'] for symbol in unit['promoted_data']}
+        S.check(not promoted.intersection(exports),'Native entry must not export promoted internal data')
+    return link.verify(S.checked(manifest['link_response']),profile='native',output=Path(manifest['executable']['path']),
+        objects=assembly_inputs,library_choices=[link.native_libraries(manifest['inputs'],runtime_dll)],exports=exports)
+
+
 def verify(directory):
     directory = Path(directory).resolve()
     S.check(directory.is_relative_to(S.ART/'vm-entry-images'), 'Native entry evidence must stay in isolated project output')
@@ -29,18 +41,26 @@ def verify(directory):
     coff = M.module('native_vm_entry_coff_check', 'verify-batch-assembly.py')
     objects = {Path(r['path']).stem: S.checked(r) for r in manifest['reassembled_objects']}
     reused=manifest.get('reused_closure_objects',[])
+    if proof.get('verified_assembly_objects',{}).get('schema')==2:
+        S.check(bool(reused),'Native entry cannot replace accepted parallel parts with monolithic objects')
     if reused:
         provenance=M.module('verified_native_entry_object_provenance','diagnostic-objects.py')
         sealed=provenance.verify(manifest['baseline_directory'])
         S.check(sealed==proof.get('verified_assembly_objects') and sealed['assembler']==manifest['tools']['assembler'] and
                 reused==[unit['object'] for unit in sealed['units']] and all(r in manifest['inputs'] for r in reused) and
                 not manifest['selected_original_Java_reassembled'], 'Native entry reused unverified closure objects')
+        if sealed.get('schema')==2:
+            source_receipt=S.read(Path(manifest['baseline_directory'])/provenance.RECEIPT)
+            S.check(manifest.get('source_assembly_mode')=='parallel_source_groups' and
+                all(unit['assembly'] in manifest['inputs'] for unit in sealed['units']) and
+                all(unit['parallel_receipt'] in manifest['inputs'] for unit in source_receipt['units'] if 'parallel_receipt' in unit),
+                'Native entry omitted its actual parallel source/object provenance')
+        else:S.check(manifest.get('source_assembly_mode','monolithic')=='monolithic','Native entry assembly mode differs')
     S.check(set(objects) == ({'vm-entry'} if reused else {'initialization-closure','diagnostic-stops','vm-entry'}),
             'Native entry contains extra/missing objects')
     assembly_inputs=[r['path'] for r in reused+manifest['reassembled_objects']+manifest['original_source_objects']]
-    rsp=S.checked(manifest['link_response']).read_text(encoding='utf-8').splitlines()
-    S.check([line[1:-1] for line in rsp if line.startswith('"') and line.lower().endswith('.obj"')]==assembly_inputs,
-            'Native entry link used a different COFF set')
+    verify_link(manifest,old['runtime'],set(closure['exports']) | M.EXPORTS,assembly_inputs,
+        sealed if proof.get('verified_assembly_objects',{}).get('schema')==2 else None)
     defined, undefined = coff.coff_symbols(objects['vm-entry'], allowed_foreign=M.FOREIGN | ({'Sleep','GetTickCount64'} if model['child_start'] or model.get('signal_reference') else set()))
     S.check(defined == M.EXPORTS and undefined == imports, 'Native entry actual COFF definitions/imports differ')
     if not manifest.get('original_assembly_read_in_place'):
@@ -64,13 +84,18 @@ def verify(directory):
             'Assembly runtime unexpectedly imports a managed/foreign runtime')
     exports = M.module('native_vm_entry_exports_check', 'diagnostic-closure.py').pe_exports(image)
     S.check(exports == set(closure['exports']) | M.EXPORTS, 'Native executable exports differ from selected source and VM entry')
-    return dict(verified=True, scope='source_bound_native_VM_process_prefix_only',
+    result=dict(verified=True, scope='source_bound_native_VM_process_prefix_only',
         original_Java_methods=proof['Java_methods'], original_Java_source_unchanged=True,
         compiler_generated_VM_binding_pool=True, assembly_process_entry=True,
         managed_execution_host=False, VM_binding_configuration_fixture=False, jvm_fallback=False,
         native_import_modules=sorted(modules),runtime_import_modules=sorted(runtime_modules), executable_sha256=S.digest(image)['sha256'],
         source_manifest_sha256=S.digest(directory/'vm-entry.json')['sha256'],
         linked=True, execution_verified=False, full_VM_bootstrap=False, game_started=False, world_created=False)
+    if proof.get('verified_assembly_objects',{}).get('schema')==2:
+        result.update(source_assembly_mode='parallel_source_groups',verified_assembly_objects=sealed,
+            reused_closure_objects=reused,actual_link_objects=assembly_inputs,
+            monolithic_reference_used=False,monolithic_binary_equivalence=False)
+    return result
 
 
 if __name__ == '__main__':

@@ -1,5 +1,6 @@
 param([Parameter(Mandatory=$true)][string]$Batch,[Parameter(Mandatory=$true)][string]$Plan,[Parameter(Mandatory=$true)][string]$Output,
-[string[]]$ClassRoot,[string[]]$Entry,[string]$AdmitProfile,[string]$ReceiverClass,[string]$Runtime='.boom/assembly-runtime-v109-frames-a',[switch]$PreparedSelection,[string[]]$ProviderPack)
+[string[]]$ClassRoot,[string[]]$Entry,[string]$AdmitProfile,[string]$ReceiverClass,[string]$Runtime='.boom/assembly-runtime-v109-frames-a',[switch]$PreparedSelection,[string[]]$ProviderPack,
+[switch]$ParallelAssembly,[ValidateRange(1,8)][int]$AssemblyWorkers=8,[ValidateRange(1,1024)][int]$AssemblyCodeMiB=8)
 $ErrorActionPreference='Stop'
 $project=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'));$runtimePath=(Resolve-Path -LiteralPath $Runtime).Path
 $root=[IO.Path]::GetFullPath($Output)
@@ -21,9 +22,18 @@ $m=Get-Content -LiteralPath "$root/closure.json" -Raw|ConvertFrom-Json|Select-Ob
 $vswhere=Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe';$installation=(& $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath|Select-Object -First 1)
 $version=(Get-Content -LiteralPath (Join-Path $installation 'VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt') -Raw).Trim();$bin=Join-Path $installation "VC/Tools/MSVC/$version/bin/Hostx64/x64"
 $sdkRoot=(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows Kits\Installed Roots').KitsRoot10;$sdk=Get-ChildItem -LiteralPath (Join-Path $sdkRoot 'Lib') -Directory|Where-Object{Test-Path -LiteralPath (Join-Path $_.FullName 'um/x64/synchronization.lib')}|Sort-Object Name -Descending|Select-Object -First 1
-& D:/Dev/Python312/python.exe (Join-Path $PSScriptRoot 'diagnostic-objects.py') --directory $root --assembler (Join-Path $bin 'ml64.exe')
+$assemblyArgs=@((Join-Path $PSScriptRoot 'diagnostic-objects.py'),'--directory',$root,'--assembler',(Join-Path $bin 'ml64.exe'))
+if($ParallelAssembly){$assemblyArgs+=@('--parallel-assembly','--workers',[string]$AssemblyWorkers,'--code-mib',[string]$AssemblyCodeMiB)}
+& D:/Dev/Python312/python.exe @assemblyArgs
 if($LASTEXITCODE -ne 0){throw 'Diagnostic assembly failed; see the per-unit assembler logs'}
-$dll=Join-Path $root 'diagnostic-image.dll';$lines=@('/NOLOGO','/DLL','/NOENTRY','/MACHINE:X64','/DYNAMICBASE','/NXCOMPAT','/BREPRO',('/OUT:"'+$dll+'"'),('"'+$root+'/initialization-closure.obj"'),('"'+$root+'/diagnostic-stops.obj"'))
+$sealed=Get-Content -LiteralPath (Join-Path $root 'assembly-provenance.json') -Raw|ConvertFrom-Json
+$assemblyObjects=@()
+if($sealed.schema -eq 1){$assemblyObjects=@($sealed.units|ForEach-Object{$_.object.path})}
+elseif($sealed.schema -eq 2){foreach($unit in $sealed.units){foreach($part in $unit.parts){$assemblyObjects+=@($part.object.path)}}}
+else{throw 'Unknown diagnostic object provenance schema'}
+if(-not $assemblyObjects.Count){throw 'Diagnostic assembler produced no sealed COFF inputs'}
+$dll=Join-Path $root 'diagnostic-image.dll';$lines=@('/NOLOGO','/DLL','/NOENTRY','/MACHINE:X64','/DYNAMICBASE','/NXCOMPAT','/BREPRO',('/OUT:"'+$dll+'"'))
+$lines+=@($assemblyObjects|ForEach-Object{'"'+$_+'"'})
 $lines+=@($m.objects|ForEach-Object{'"'+$_+'"'});$lines+=('"'+(Join-Path $runtimePath 'boom-runtime.lib')+'"'),('"'+(Join-Path $sdk.FullName 'um/x64/synchronization.lib')+'"'),('"'+(Join-Path $sdk.FullName 'um/x64/kernel32.lib')+'"');$lines+=@($m.exports|Sort-Object -Unique|ForEach-Object{'/EXPORT:'+$_})
 [IO.File]::WriteAllLines("$root/link.rsp",[string[]]$lines,[Text.UTF8Encoding]::new($false))
 & (Join-Path $bin 'link.exe') "@$root/link.rsp" > "$root/link.log" 2>&1

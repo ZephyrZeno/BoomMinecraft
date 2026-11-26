@@ -120,7 +120,8 @@ def verify_stops(directory,manifest,summary,coff,verified_provider_packs=None):
     asm=(directory/'diagnostic-stops.asm').read_text(encoding='utf-8')
     check(asm==model.body(rows,context_rows) and report['assembly_sha256']==hashlib.sha256((directory/'diagnostic-stops.asm').read_bytes()).hexdigest(),
           'Diagnostic ASM differs from its failure-only model')
-    defined,undefined=coff.coff_symbols(directory/'diagnostic-stops.obj')
+    provenance=load('diagnostic_stop_logical_object_provenance','diagnostic-objects.py')
+    defined,undefined=provenance.logical_symbols(directory,'diagnostic-stops',coff.coff_symbols)
     expected=set(symbols)|{'boom_diagnostic_stop','boom_diagnostic_pool','boom_diagnostic_rows'}
     if context_rows:expected|=model.CONTEXT_EXPORTS
     check(defined==expected and not undefined,'Diagnostic COFF contains missing/extra definitions or imports')
@@ -131,6 +132,20 @@ def verify_stops(directory,manifest,summary,coff,verified_provider_packs=None):
     return result,defined
 
 
+def verify_parallel_link(directory,manifest,sealed):
+    root=Path(directory).resolve()
+    link=load('parallel_source_canonical_link','canonical-link-response.py')
+    report=json.loads((root/'diagnostic.json').read_bytes())
+    promoted={symbol for unit in sealed['logical_units'] for symbol in unit['promoted_data']}
+    check(not promoted.intersection(manifest['exports']),'Parallel source image must not export promoted internal data')
+    link.verify(root/'link.rsp',profile='diagnostic',output=root/'diagnostic-image.dll',
+        objects=[r['object']['path'] for r in sealed['units']]+manifest['objects'],
+        library_choices=link.diagnostic_libraries(report['global_provider_identity']['runtime_dll']),exports=manifest['exports'])
+    pe=load('parallel_source_image_exports','diagnostic-closure.py')
+    check(pe.pe_exports(root/'diagnostic-image.dll')==set(manifest['exports']),
+        'Parallel source image exports differ or expose a promoted internal data symbol')
+
+
 def verify(directory):
     m=load('diagnostic_original_source_verifier','verify-initialization-closure.py')
     objects=load('diagnostic_source_object_provenance','diagnostic-objects.py')
@@ -138,6 +153,8 @@ def verify(directory):
     result=m.verify(directory,allow_diagnostics=True)
     if sealed is not None:
         check(objects.verify(directory)==sealed,'Diagnostic assembly changed during independent source/COFF verification')
+        if sealed.get('schema')==2:
+            verify_parallel_link(directory,json.loads((Path(directory)/'closure.json').read_bytes()),sealed)
         result['verified_assembly_objects']=sealed
     return result
 

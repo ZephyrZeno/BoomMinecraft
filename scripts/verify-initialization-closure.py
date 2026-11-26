@@ -231,7 +231,9 @@ def verify(directory,allow_diagnostics=False):
         for unit in module['units']:
             coff.artifact(batch,unit['assembly'],'properties');defs,_=coff.coff_symbols(coff.artifact(batch,unit['object'],'properties'));actual.update(defs)
         check(actual==expected,'Source property module COFF definitions differ');native_exports.update(actual)
-    defined,undefined=coff.coff_symbols(directory/'initialization-closure.obj')
+    spec=importlib.util.spec_from_file_location('selected_logical_object_provenance',Path(__file__).with_name('diagnostic-objects.py'))
+    provenance=importlib.util.module_from_spec(spec);spec.loader.exec_module(provenance)
+    defined,undefined=provenance.logical_symbols(directory,'initialization-closure',coff.coff_symbols)
     selected_bootstrap=manifest.get('selected_Class_bootstrap_natives',{})
     if selected_bootstrap:
         module=summary['class_bootstrap']

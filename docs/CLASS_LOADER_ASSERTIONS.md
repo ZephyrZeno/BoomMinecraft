@@ -26,8 +26,14 @@
 
 ## 原版进程前沿与范围
 
+正式 23 包现已合流进完整的源初始化选择：4,056 个类、37,546 个原 Java 方法和 8,920 格正常静态根，全部 23 个 provider 实际链接。独立源码／ASM／COFF 与原生入口校验后，原始 System Phase1 返回，Phase2 实际越过 ClassLoader.registerNatives，推进到尚未提供的 Reference.refersTo0（50141）。两个后台原 Thread.exit 及记录回收完成，工作者失败与监视器持有数为零，全部清理标志为 7。
+
+源选择为 `.boom/diagnostic-startup/v145-native-class-loader-parallel-ec0736fc2365423ebb73fa7afb89c5ed/round-000`，证明 SHA256 为 `bbeaeef00ce19d601e6585167383e0424c7cc4e5df87ee83c67acf027bd44f0c`；实际执行在 `.boom/vm-entry-images/ea06ed49ac6a4fc0a9943f74c5d8ef55/execution.json`，SHA256 为 `984f23e9fcf8eaee04c984a33d0fd94c6fbaee24afdd94aa167b3f8d57911d44`。本轮使用可选并行源分组汇编，没有 scratch 补充或手动设置类初始化状态。
+
+以下开发观察保留为早期定位记录：
+
 保留原 Java 目标文件的开发拥有进程已实际返回 System Phase1、进入 Phase2，接入候选后越过 ClassLoader.registerNatives，推进到未选入的 WeakHashMap.isEmpty（67260）。记录为 `.boom/vm-entry-sparse-probes/class-loader-2ae2db85b9fd43528024025b119980c7/observations.json`。
 
 这个旧入口仍保留旧引用服务和 Object.wait 缺口，没有完成整套选择复验，也没有将补充类失败根接入旧入口的标准根跨度；该进程不执行自动 GC。独立候选的 GC 测试与此进程前沿分别记录。
 
-独立冷初始化基线未执行 Java initializeJavaAssertionMaps／desiredAssertionStatus 的完整接收者调用流程，因此不宣称验证了 Java 断言 Map API、完整 System 或 Minecraft 启动。正式 23 包冷测与完整原生初始化进程的后续合流分别验收。
+独立冷初始化基线未执行 Java initializeJavaAssertionMaps／desiredAssertionStatus 的完整接收者调用流程，因此不宣称验证了 Java 断言 Map API。正式进程已越过登记这一启动前缀，完整 System 第二阶段和 Minecraft 启动仍待完成。

@@ -36,10 +36,10 @@ def verified_context_faults(path, event):
             Path(inputs['baseline_directory']).resolve() != root.resolve() or
             inputs['accepted_source_verification_sha256'] != sha(proof) or
             not verified.get('verified') or not verified.get('diagnostic_only') or
-            sha(table) != verified['diagnostic_manifest_sha256'] or len(binary) not in (320,384,400)):
+            sha(table) != verified['diagnostic_manifest_sha256'] or len(binary) not in (320,384,400,448)):
         raise ValueError('Native report or verified source admission table changed')
     words = struct.unpack_from('<80I', binary)
-    if (words[0] != 0x52454d56 or (words[1],len(binary)) not in ((8,320),(9,384),(10,400)) or
+    if (words[0] != 0x52454d56 or (words[1],len(binary)) not in ((8,320),(9,384),(10,400),(11,448)) or
             words[7] != 2 or not words[8]):
         raise ValueError('Native report has no published diagnostic source row')
     primary, first = words[78], words[8]

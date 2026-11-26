@@ -1,7 +1,8 @@
 param([Parameter(Mandatory=$true)][string]$Batch,[Parameter(Mandatory=$true)][string]$Plan,
 [Parameter(Mandatory=$true)][string]$Runtime,[string]$SeedDiagnosticDirectory,[string]$SeedResultFile,
 [Parameter(Mandatory=$true)][string[]]$ProviderPack,[string]$OutputDirectory,[ValidateRange(1,64)][int]$MaxRounds=8,[switch]$ContinueSystemPhase1,[switch]$NativeProcess,[switch]$ConstructChild,[switch]$StartChild,[switch]$ChildTaskMainThread,[switch]$SignalControl,[switch]$SystemPhase2,
-[string]$SourceSelectionDirectory,[ValidateRange(1,65536)][int]$MaxPreselectedMethods=16384,[string[]]$PreselectPackage)
+[string]$SourceSelectionDirectory,[ValidateRange(1,65536)][int]$MaxPreselectedMethods=16384,[string[]]$PreselectPackage,
+[switch]$ParallelAssembly,[ValidateRange(1,8)][int]$AssemblyWorkers=8,[ValidateRange(1,1024)][int]$AssemblyCodeMiB=8)
 $ErrorActionPreference='Stop';$project=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 if(([bool]$SeedDiagnosticDirectory) -eq ([bool]$SeedResultFile)){throw 'Specify one source seed directory or a verified prefix result file'}
 $previousSeed=if($SeedResultFile){(Resolve-Path -LiteralPath $SeedResultFile).Path}else{(Resolve-Path -LiteralPath (Join-Path $SeedDiagnosticDirectory 'result.json')).Path}
@@ -56,7 +57,9 @@ for($i=0;$i -lt $MaxRounds;$i++){
     if($ChildTaskMainThread){$prepare+='--child-task-main-thread'}
     & D:/Dev/Python312/python.exe @prepare > (Join-Path $root ('prepare-'+$i+'.log')) 2> (Join-Path $root ('prepare-'+$i+'.err'))
     if($LASTEXITCODE -ne 0){throw 'Normal VM thread source preparation failed'}
-    & (Join-Path $PSScriptRoot 'Build-DiagnosticClosure.ps1') -Batch $batchPath -Plan $planPath -Runtime $runtimePath -Output $round -PreparedSelection > (Join-Path $root ('build-'+$i+'.log'))
+    $parallelArgs=@{}
+    if($ParallelAssembly){$parallelArgs=@{ParallelAssembly=$true;AssemblyWorkers=$AssemblyWorkers;AssemblyCodeMiB=$AssemblyCodeMiB}}
+    & (Join-Path $PSScriptRoot 'Build-DiagnosticClosure.ps1') -Batch $batchPath -Plan $planPath -Runtime $runtimePath -Output $round -PreparedSelection @parallelArgs > (Join-Path $root ('build-'+$i+'.log'))
     if(-not $?){throw 'Normal VM thread independent source/COFF build failed'}
     $accepted=(Get-FileHash -LiteralPath (Join-Path $round 'selection-verification.json') -Algorithm SHA256).Hash.ToLowerInvariant()
     if($NativeProcess){
@@ -66,6 +69,7 @@ for($i=0;$i -lt $MaxRounds;$i++){
         if($ChildTaskMainThread){$nativeArgs.ChildTaskMainThread=$true}
         if($SignalControl){$nativeArgs.SignalControl=$true}
         if($SystemPhase2){$nativeArgs.SystemPhase2=$true}
+        if($ParallelAssembly){$nativeArgs.ParallelAssembly=$true}
         & (Join-Path $PSScriptRoot 'Build-VmEntry.ps1') @nativeArgs > (Join-Path $root ('native-build-'+$i+'.log'))
         if(-not $?){throw 'Native VM entry construction failed'}
         $nativeAccepted=(Get-FileHash -LiteralPath (Join-Path $nativeRoot 'verification.json') -Algorithm SHA256).Hash.ToLowerInvariant()

@@ -1,5 +1,5 @@
 param([Parameter(Mandatory=$true)][string]$Directory,[Parameter(Mandatory=$true)][string]$AcceptedVerificationSha256,
-[string]$OutputDirectory,[switch]$ConstructorOnly,[switch]$ConstructChild,[switch]$StartChild,[switch]$ChildTaskMainThread,[switch]$SignalControl,[switch]$SystemPhase2)
+[string]$OutputDirectory,[switch]$ConstructorOnly,[switch]$ConstructChild,[switch]$StartChild,[switch]$ChildTaskMainThread,[switch]$SignalControl,[switch]$SystemPhase2,[switch]$ParallelAssembly)
 $ErrorActionPreference='Stop';$project=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 if($ChildTaskMainThread){$StartChild=$true}
 if($StartChild){$ConstructChild=$true}
@@ -22,6 +22,7 @@ if($StartChild){$args_+='--start-child'}
 if($ChildTaskMainThread){$args_+='--child-task-main-thread'}
 if($SignalControl){$args_+='--signal-control'}
 if($SystemPhase2){$args_+='--system-phase2'}
+if($ParallelAssembly){$args_+='--parallel-assembly'}
 & D:/Dev/Python312/python.exe @args_
 if($LASTEXITCODE -ne 0){throw 'Assembly-owned VM entry build failed'}
 & D:/Dev/Python312/python.exe (Join-Path $PSScriptRoot 'verify-vm-entry.py') $OutputDirectory --output (Join-Path $OutputDirectory 'verification.json')

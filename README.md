@@ -4,11 +4,13 @@ An experimental AOT compiler, assembly runtime, and launcher for Minecraft: Java
 
 自研编译器将 JVM 字节码翻译为 x86-64 汇编，目标是通过启动器运行完整原版 Minecraft。游戏逻辑、运行时及游戏执行中的多核、GPU、内存优化均以汇编实现。翻译器使用 Rust，构建工具使用 Python 和 PowerShell，启动器使用 C#。
 
-**项目处于开发阶段，完整 Minecraft 客户端尚未启动。** 2026 年 11 月 26 日，包含 37,546 个选入 Java 方法和全部 22 个正式 provider 的原生镜像通过独立来源／ASM／COFF 校验，实际完成原始 `System.initPhase1` 并进入 `System.initPhase2`。后台线程受控退出和共享等待域清理通过；主线程停在尚未接入该镜像的 ClassLoader.registerNatives。链接数量与实际执行范围分别记录。
+**项目处于开发阶段，完整 Minecraft 客户端尚未启动。** 2026 年 11 月 27 日，包含 37,546 个选入 Java 方法和全部 23 个正式 provider 的原生镜像通过独立来源／ASM／COFF 校验和实际执行。原始 `System.initPhase1` 返回，`System.initPhase2` 越过 ClassLoader 登记，停在尚未提供的 `Reference.refersTo0`。两个后台线程受控退出，等待域与监视器清理通过；第二阶段和游戏启动仍未完成。链接数量与实际执行范围分别记录。
 
 当前已验证原始 `Unsafe` 类初始化调用、Windows 文件系统字段注册、引用等待和对象监视器等待，以及原始 Java 对中断异常的捕获。Windows 文件元数据内核通过 JDK 对照，窗口调用桥通过无窗口契约测试。完整模块引导、图形运行时和创建世界仍在实现。多核线程内核已有并发测试，游戏性能提升需要在完整启动后测量。
 
 v145 新增[正常 BootLoader 模块发布](docs/NORMAL_BOOTLOADER_MODULE.md)，正式原生初始化链已验收相应前缀。[ClassLoader 汇编实现](docs/CLASS_LOADER_ASSERTIONS.md)已作为第 23 包通过独立源选择、原 Java 冷初始化、八线程、真实堆耗尽及正常根图 GC 检查。完整模块引导和游戏启动仍未完成。
+
+[可选并行汇编](docs/PARALLEL_DIAGNOSTIC_ASSEMBLY.md)已接通开发启动验证流程：本轮约 434 MB 初始化汇编拆成 48 个完整源单元，八个工作者的汇编阶段为 4.843 秒。该数字只衡量构建阶段；完整来源与链接校验另行执行，不代表游戏运行性能。独立的[正常库名映射](docs/LIBRARY_NAME_NORMAL.md)已通过原 Java 字符串、类型化错误和八线程测试，尚待正式接入。
 
 首个目标版本为 Java 版 1.21.1，完成原版后再推进模组兼容。类加载器身份、变换链和优化失效边界提前纳入设计。启动器提供“启动游戏”入口，输入准备、翻译和构建由启动流程调用。
 

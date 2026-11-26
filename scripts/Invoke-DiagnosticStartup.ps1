@@ -1,7 +1,8 @@
 param([Parameter(Mandatory=$true)][string]$Batch,[Parameter(Mandatory=$true)][string]$Plan,[string[]]$ClassRoot,[string[]]$Entry,[string]$ReceiverClass,
 [string]$Runtime='.boom/assembly-runtime-v109-frames-a',[string]$ResumeDirectory,[string]$OutputDirectory,[string]$SeedDiagnosticDirectory,[string]$SeedResultFile,[ValidateRange(1,128)][int]$MaxRounds=32,[ValidateRange(32,512)][int]$HeapMB=128,
 [string[]]$ProviderPack,[string[]]$ProviderFamily=@('cds-no-archive-v1','object-identity-v1','normal-constructors-v1','class-flags-v1','normal-constructor-invocation-v1','normal-file-bootstrap-v1','normal-scoped-memory-registration-v1','normal-throwable-v1','normal-signal-lookup-v1','normal-thread-primitives-v1','normal-access-context-v1'),[switch]$AllowAdditionalClassRoots,[switch]$AllowDifferentEntries,
-[string]$SourceSelectionDirectory,[ValidateRange(1,65536)][int]$MaxPreselectedMethods=16384)
+[string]$SourceSelectionDirectory,[ValidateRange(1,65536)][int]$MaxPreselectedMethods=16384,
+[switch]$ParallelAssembly,[ValidateRange(1,8)][int]$AssemblyWorkers=8,[ValidateRange(1,1024)][int]$AssemblyCodeMiB=8)
 $ErrorActionPreference='Stop'
 $project=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'));$runtimePath=(Resolve-Path -LiteralPath $Runtime).Path;$batchPath=(Resolve-Path -LiteralPath $Batch).Path;$planPath=(Resolve-Path -LiteralPath $Plan).Path
 if($ResumeDirectory -and $OutputDirectory){throw 'Resume and fresh output directories are mutually exclusive'}
@@ -117,7 +118,9 @@ for($i=$firstRound;$i -lt $MaxRounds;$i++){
         if($LASTEXITCODE -ne 0){throw 'Source-only generated Java preselection failed'}
         $preselections.Add([ordered]@{path=$buildProfile;sha256=(Get-FileHash -LiteralPath $buildProfile -Algorithm SHA256).Hash.ToLowerInvariant();extra_methods_previously_executed=$false;native_implementations_added=0})
     }
-    & (Join-Path $PSScriptRoot 'Build-DiagnosticClosure.ps1') -Batch $batchPath -Plan $planPath -Output $round -ClassRoot $ClassRoot -Entry $Entry -ReceiverClass $ReceiverClass -AdmitProfile $buildProfile -Runtime $runtimePath -ProviderPack $ProviderPack > (Join-Path $root ('build-'+$i+'.log'))
+    $parallelArgs=@{}
+    if($ParallelAssembly){$parallelArgs=@{ParallelAssembly=$true;AssemblyWorkers=$AssemblyWorkers;AssemblyCodeMiB=$AssemblyCodeMiB}}
+    & (Join-Path $PSScriptRoot 'Build-DiagnosticClosure.ps1') -Batch $batchPath -Plan $planPath -Output $round -ClassRoot $ClassRoot -Entry $Entry -ReceiverClass $ReceiverClass -AdmitProfile $buildProfile -Runtime $runtimePath -ProviderPack $ProviderPack @parallelArgs > (Join-Path $root ('build-'+$i+'.log'))
     if(-not $?){throw 'Diagnostic image preparation failed'}
     $start=[Diagnostics.ProcessStartInfo]::new();$start.FileName=(Get-Process -Id $PID).Path;$start.WorkingDirectory=$round;$start.UseShellExecute=$false;$start.CreateNoWindow=$true;$start.RedirectStandardOutput=$true;$start.RedirectStandardError=$true
     foreach($a in @('-NoProfile','-File',(Join-Path $PSScriptRoot 'Run-DiagnosticImage.ps1'),'-Directory',$round,'-Runtime',$runtimePath,'-HeapMB',"$HeapMB")){$start.ArgumentList.Add($a)}

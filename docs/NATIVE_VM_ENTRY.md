@@ -2,7 +2,19 @@
 
 `Build-VmEntry.ps1` 把已独立校验的原始 Java 汇编、运行时提供者对象和新生成的 VM 绑定表链接为原生 `boom-vm-entry.exe`。游戏执行路径不加载 C#／CLR、JVM 或 CRT。Python 只在构建时读取锁定输入，PowerShell 只构建、启动隔离进程和读取验证记录。
 
-## v145 正式 22 包初始化进程
+## v145 正式 23 包并行汇编进程
+
+原生镜像已从完整独立校验的 4,056 类／37,546 Java 方法源选择，实际链接全部 23 个正式 provider 并执行。初始化源码按完整函数分为 48 个单元，另保留完整 diagnostic-stops；入口按封存顺序复用 49 个闭包 COFF。源码、类状态、正常根跨度与原 Java 方法保持来源绑定，详见[并行构建证据](PARALLEL_DIAGNOSTIC_ASSEMBLY.md)。
+
+本轮原始 System.initPhase1 返回，System.initPhase2 已越过 ClassLoader.registerNatives，主线程真实停在未提供的 Reference.refersTo0（50141）；观察到调用方法 111859、PC 80。Phase2 未返回，VM 级别仍为 1，原生诊断退出码为 86。
+
+引用处理与 Object.wait 两个等待域均完成停止和关闭；两个停止令牌全部消费，两个后台原 Thread.exit 与 OS 记录回收完成。工作者／信号失败状态、最终监视器持有数和注册表锁均为零，堆／注册表／Java 帧清理标志为 7。停止前活对象数为 8,021；这不是自动回收或完整引用处理的证明。
+
+源选择 `.boom/diagnostic-startup/v145-native-class-loader-parallel-ec0736fc2365423ebb73fa7afb89c5ed/round-000` 的证明 SHA256 为 `bbeaeef00ce19d601e6585167383e0424c7cc4e5df87ee83c67acf027bd44f0c`。原生入口证明在 `.boom/vm-entry-images/ea06ed49ac6a4fc0a9943f74c5d8ef55/verification.json`，SHA256 为 `c2eb44e1acb7e3a8a719b2498767b8e483de9c7a3e1aec28ee2fe98ded3f5b7c`；执行回执 SHA256 为 `984f23e9fcf8eaee04c984a33d0fd94c6fbaee24afdd94aa167b3f8d57911d44`，448 字节 ABI11 原生报告 SHA256 为 `7bf48f2461d2c0d78a1da6acb869d41eb74d4658a6d375234c2a3bbf9c36a4ad`。
+
+没有托管执行宿主、JVM 回退或 VM 绑定配置夹具。完整 System、Minecraft 入口、世界创建及游戏侧多核／GPU／内存优化仍待完成。
+
+## v145 正式 22 包初始化进程（历史记录）
 
 原生镜像选入 4,055 个类和 37,546 个原始 Java 方法，链接全部 22 个正式 provider；来源、精确 ASM、实际 COFF 及原生入口均独立验证后执行。原始 System.initPhase1 正常返回，System.initPhase2 随后调用，VM 级别保持 1，主线程真实停在未提供的 ClassLoader.registerNatives（41548）。Phase2 和 Minecraft 仍未完成。
 

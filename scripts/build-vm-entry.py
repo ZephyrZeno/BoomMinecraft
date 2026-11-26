@@ -11,7 +11,7 @@ spec.loader.exec_module(M)
 S = M.S
 
 
-def build(directory, accepted_sha, output, assembler, linker, synchronization, kernel32, include_system, construct_child=False, start_child=False, child_task_main_thread=False, signal_control=False, system_phase2=False):
+def build(directory, accepted_sha, output, assembler, linker, synchronization, kernel32, include_system, construct_child=False, start_child=False, child_task_main_thread=False, signal_control=False, system_phase2=False, parallel_assembly=False):
     directory, output = Path(directory).resolve(), Path(output).resolve()
     S.check(output.is_relative_to(S.ART/'vm-entry-images') and not output.exists(), 'Use a fresh native entry output directory')
     closure, proof, old = M.accepted(directory, accepted_sha)
@@ -32,7 +32,7 @@ def build(directory, accepted_sha, output, assembler, linker, synchronization, k
         inputs.append(S.artifact(directory/'execution.json'))
     inputs += [S.artifact(p) for p in (runtime, runtime_lib, runtime.with_name('runtime.json'),
         assembler, linker, synchronization, kernel32, Path(__file__), M.ROOT/'scripts/vm-entry-source.py',
-        M.ROOT/'scripts/verify-vm-entry.py', M.ROOT/'native/entry/vm_process.asm.inc')]
+        M.ROOT/'scripts/verify-vm-entry.py', M.ROOT/'scripts/canonical-link-response.py', M.ROOT/'native/entry/vm_process.asm.inc')]
     if model['lifecycle_reference']:
         inputs += [model['lifecycle_reference']['manifest'],model['lifecycle_reference']['metadata']]
     if model.get('signal_reference'):
@@ -53,12 +53,20 @@ def build(directory, accepted_sha, output, assembler, linker, synchronization, k
     inputs.append(S.artifact(Path(provenance.__file__)))
     reused=[]
     sealed=proof.get('verified_assembly_objects')
+    if parallel_assembly:
+        S.check(sealed and sealed.get('schema')==2,'Build the accepted source selection with -ParallelAssembly first')
     if sealed and sealed['assembler']==tools['assembler']:
         try:eligible=provenance.verify(directory)==sealed
         except (OSError,ValueError,KeyError,TypeError):eligible=False
         if eligible:
             reused=[unit['object'] for unit in sealed['units']]
             inputs.extend([S.artifact(directory/provenance.RECEIPT),*reused])
+            if sealed.get('schema')==2:
+                inputs.extend(unit['assembly'] for unit in sealed['units'])
+                receipt=S.read(directory/provenance.RECEIPT)
+                inputs.extend(unit['parallel_receipt'] for unit in receipt['units'] if 'parallel_receipt' in unit)
+    if sealed and sealed.get('schema')==2:
+        S.check(bool(reused),'Parallel source provenance changed; implicit monolithic recompilation is forbidden')
     objects = []
     for name in (('vm-entry',) if reused else (*provenance.UNITS,'vm-entry')):
         obj = output/(name+'.obj')
@@ -94,6 +102,7 @@ def build(directory, accepted_sha, output, assembler, linker, synchronization, k
         source_Java_codegen_rerun=False, original_Java_assembly_changed=False, selected_original_Java_reassembled=not bool(reused),
         VM_binding_configuration_fixture=False, managed_execution_host=False, jvm_fallback=False,
         linked=True, executed=False, full_VM_bootstrap=False, game_started=False, world_created=False)
+    if sealed and sealed.get('schema')==2:data['source_assembly_mode']='parallel_source_groups'
     S.write(output/'vm-entry.json', data)
     print(target)
 
@@ -109,5 +118,6 @@ if __name__ == '__main__':
     p.add_argument('--child-task-main-thread', action='store_true')
     p.add_argument('--signal-control', action='store_true')
     p.add_argument('--system-phase2', action='store_true')
+    p.add_argument('--parallel-assembly',action='store_true')
     a = p.parse_args()
-    build(a.directory, a.accepted_verification_sha256, a.output, a.assembler, a.linker, a.synchronization, a.kernel32, not a.constructor_only, a.construct_child, a.start_child, a.child_task_main_thread, a.signal_control or a.system_phase2, a.system_phase2)
+    build(a.directory, a.accepted_verification_sha256, a.output, a.assembler, a.linker, a.synchronization, a.kernel32, not a.constructor_only, a.construct_child, a.start_child, a.child_task_main_thread, a.signal_control or a.system_phase2, a.system_phase2,a.parallel_assembly)
