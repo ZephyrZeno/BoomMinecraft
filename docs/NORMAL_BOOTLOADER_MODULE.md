@@ -24,4 +24,6 @@
 
 该冷初始化测试的 System 准备阶段仍停在独立缺口 `m42389`，因此不能记为 System Phase1 或整版启动完成。另一个保留原 Java 目标文件的开发进程已实际返回 Phase1、进入 Phase2，并在加入此汇编服务后推进到 `ClassLoader.registerNatives`；它没有重新完成整个链接选择证明。
 
-22 个正式 provider 的共同输入已通过摘要与依赖一致性检查，完整原生启动链、Thread.join／Timer 和 NIO 使用同一输入继续独立验收。共同输入文件不代表它们已经共同执行成功。完整 Minecraft、世界创建以及游戏侧性能验证仍未完成。
+随后选入并链接全部 22 个正式 provider 的原生镜像已完成独立来源／ASM／COFF 校验与实际执行：原始 Phase1 返回、Phase2 调用，越过此模块登记后停在 ClassLoader.registerNatives。两名后台工作者完成原始退出及回收，等待域正常关闭、工作者失败为零、监视器持有为零，清理标志为 7。详见[正式原生进程记录](NATIVE_VM_ENTRY.md#v145-正式-22-包初始化进程)。
+
+原始 Thread.join／Timer 和 NIO 的独立测试也使用同一输入分别记录。完整 Minecraft、世界创建以及游戏侧性能验证仍未完成。

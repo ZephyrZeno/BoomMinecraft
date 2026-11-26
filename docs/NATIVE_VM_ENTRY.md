@@ -2,6 +2,14 @@
 
 `Build-VmEntry.ps1` 把已独立校验的原始 Java 汇编、运行时提供者对象和新生成的 VM 绑定表链接为原生 `boom-vm-entry.exe`。游戏执行路径不加载 C#／CLR、JVM 或 CRT。Python 只在构建时读取锁定输入，PowerShell 只构建、启动隔离进程和读取验证记录。
 
+## v145 正式 22 包初始化进程
+
+原生镜像选入 4,055 个类和 37,546 个原始 Java 方法，链接全部 22 个正式 provider；来源、精确 ASM、实际 COFF 及原生入口均独立验证后执行。原始 System.initPhase1 正常返回，System.initPhase2 随后调用，VM 级别保持 1，主线程真实停在未提供的 ClassLoader.registerNatives（41548）。Phase2 和 Minecraft 仍未完成。
+
+此次合流包含 UFL2 窄字段原子规则、正式 BootLoader 模块发布和共享监视器等待。引用处理与 Object.wait 等待域均完成打开、停止及关闭，两个后台工作者各完成一次原始 Thread.exit 并回收；正常 run 返回数仍为零。两个停止令牌全部消费，工作者与信号失败状态为零，最终监视器持有数为零。堆、注册表和 Java 帧清理标志为 7。
+
+源选择在 `.boom/diagnostic-startup/v145-native-boot-unnamed-40a5c3ea326e43c993fe3d8bef4841df/round-000`，独立证明 SHA256 为 `a2fbf9ecdf9a06d7e91a1886fe484d8fa90eef8918a67e03d24a456587e244de`。实际执行在 `.boom/vm-entry-images/a7c5084275e0419db074936e926fd155/execution.json`，SHA256 为 `5b8a96a3919a0706d0213b87de946b86e1a6717d5c29b50e1882fece19671457`。选入的方法数不代表全部方法均已执行。
+
 ## 已完成的实际执行
 
 - v123 原生进程实际完成原版 `Thread.start`、`run`、`exit` 和 OS 记录回收，退出码 0，三项清理全部通过。验证对象是无 Runnable 任务的正常 Thread；详见[线程生命周期证据](NORMAL_THREAD_BOOTSTRAP.md)。

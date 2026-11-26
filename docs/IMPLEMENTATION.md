@@ -6,6 +6,8 @@
 
 开发拥有进程已实际从 ClassLoader.registerNatives 推进到 WeakHashMap.isEmpty 的源方法选择缺口，Phase1 返回、Phase2 进入及清理标志均有原生报告。它保留旧入口及未完成的选择／GC 根合流范围，完整游戏仍未启动；正式 22 包启动链继续单独验收。
 
+正式 22 包启动链随后完成独立来源／ASM／COFF 校验和实际执行：4,055 类、37,546 个选入 Java 方法；Phase1 返回、Phase2 调用后停在尚未接入该镜像的 41548。两名后台工作者原始 exit 和回收成功，共享等待域关闭，失败状态与监视器持有均为零，清理标志为 7。ClassLoader 第 23 包的正式接线继续推进，当前 Python 322 项、Rust 200 项单元检查通过。
+
 ## 正常 BootLoader 模块发布 v145（2026-11-26）
 
 正式汇编 provider 已接入原始 BootLoader.setBootLoaderUnnamedModule0，原 Java 冷初始化完成，五个静态字段与正常 JCLS 模块根保持一致。八个 OS 线程并发冷初始化只发布一个 Module，重复调用及错误参数检查通过。编译器在末尾追加 bootstrap unnamed 槽，保留已有模块编号与所有普通 Java COFF；完整派生批次及正式源码／ASM／COFF 验证通过。详见[正常 BootLoader 模块发布](NORMAL_BOOTLOADER_MODULE.md)。
