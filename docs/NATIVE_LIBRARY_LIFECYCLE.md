@@ -44,3 +44,11 @@ Winsock 必须在真实拥有者的有效生命周期内保持初始化。现有
 `scripts/test-builtin-net-platform.py` 同时构建生产导入测试 DLL 和独立故障测试 DLL。后者仅在测试链接时重绑三个调用，注入连续两次 closesocket 失败和一次 WSACleanup 失败。测试核对中间真实句柄仍有效、未提前清理、另一个拥有者仍可用，最终三份实际探测 socket 全部关闭，进程恢复 WSANOTINITIALISED。生产 COFF 保持七个直接 Win32／Winsock 导入。
 
 主 agent 独立重复测试记录在 `.boom/builtin-net-platform-tests/root-v145-failure-recovery/result.json`，SHA256 为 `b1fd2a8074c19d9ea067886f3de66e0bd953bd209f583d78f790907fed8e4e51`。这层尚未连接原始 Boolean 属性读取、线程附着检查、JNI_OnLoad 或 NativeLibraries 字段发布；它不能记作原生库装载或游戏启动完成。
+
+## 已验证的 nio 内部模块检查
+
+`native/providers/builtin_module_context.asm.inc` 使用正式 Thread provider 的同一个注册表单元，经实际 FLS 查询当前线程，并核对堆归属、源 Thread 类型及虚拟线程边界。未附着、已脱离、错误类型或已有异常均不能通过。内部 nio 函数体只检查锁定源码需要的 1.2 版本条件；静态包装器在该函数体成功后才返回 1.8。
+
+`scripts/test-builtin-module-context.py` 已通过八个 OS 线程的真实附着／脱离、与主线程同时九条记录、原始 Thread.currentThread native 的身份一致性和异常保留检查。主 agent 独立复跑记录在 `.boom/builtin-module-context-tests/root-v145-independent/result.json`，SHA256 为 `896d374463878e155cfba0633caed3b08d6da41e1427211f96a3a6aab0fe3fb5`。
+
+本测试的 Thread 接收者使用明确的源布局存储夹具，未执行 Java 构造器。这个内部 ABI 不提供 JavaVM／JNIEnv 函数表或标准 JNI 函数地址；版本返回值不代表完整 JNI 兼容。原始 NativeLibraries 装载、Java 属性回调和字段发布仍待单独接入。
