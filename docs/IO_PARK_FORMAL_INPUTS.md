@@ -57,6 +57,11 @@ skip、零 failure/error，回执位于
 首次通配 discover 导入了 CLI fixture 重写器 `strip_fixture_nest.py`，把 `discover` 当作
 classfile 路径；首败说明已保留，后续明确只排除此非测试 CLI，没有修改旧 fixture 工具。
 
+后续修复为该 CLI 增加正常的 main 入口保护，通配导入不再读取或改写文件。新旧 CLI
+对同一实际 javac21 fixture 产生完全相同的 classfile，原 JDK 仍拒绝被破坏的私有 nest
+关系，回执 `.boom/fixture-nest-import-v154-a/verification.json`。随后无需排除文件的
+通配回归通过541项、11项 skip、零 failure/error（本次包含并行开发中的新测试）。
+
 `scripts/test-io-park-formal-inputs.py` 在新的目录重新独立验证 31 输入，逐族保留真实
 源/帧/依赖/COFF proof，并检查遗漏根、错误 count、错误符号、缺 export、遗漏 Java
 callback、错误 native frame/upcall 声明和实际非零 COFF 初值均被拒绝；再对两新包做
