@@ -1,5 +1,11 @@
 # BoomMinecraft 自研汇编后端实现与验证记录
 
+## ClassLoader 断言快照候选（2026-11-26）
+
+原始 ClassLoader 的两个 native 已由汇编实现登记与无覆盖规则的断言快照。九组执行覆盖原始冷初始化、四种启动默认值、八个 OS 线程、错误／重复调用、真实堆耗尽及正常根图 GC；两个配置单元测试通过。源模型预检的指令、数据、unwind 与命名重定位和已执行候选一致，正式 family 尚未登记。详见[正常 ClassLoader 候选](CLASS_LOADER_ASSERTIONS.md)。
+
+开发拥有进程已实际从 ClassLoader.registerNatives 推进到 WeakHashMap.isEmpty 的源方法选择缺口，Phase1 返回、Phase2 进入及清理标志均有原生报告。它保留旧入口及未完成的选择／GC 根合流范围，完整游戏仍未启动；正式 22 包启动链继续单独验收。
+
 ## 正常 BootLoader 模块发布 v145（2026-11-26）
 
 正式汇编 provider 已接入原始 BootLoader.setBootLoaderUnnamedModule0，原 Java 冷初始化完成，五个静态字段与正常 JCLS 模块根保持一致。八个 OS 线程并发冷初始化只发布一个 Module，重复调用及错误参数检查通过。编译器在末尾追加 bootstrap unnamed 槽，保留已有模块编号与所有普通 Java COFF；完整派生批次及正式源码／ASM／COFF 验证通过。详见[正常 BootLoader 模块发布](NORMAL_BOOTLOADER_MODULE.md)。
