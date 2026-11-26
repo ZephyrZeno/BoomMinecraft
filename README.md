@@ -8,6 +8,8 @@ An experimental AOT compiler, assembly runtime, and launcher for Minecraft: Java
 
 当前[31 包原生入口](docs/NATIVE_RUNTIME_31.md)已实际完成 System 三阶段、正常 argv、Parker 生命周期及完整源／native 根快照，随后在原 Main 日志初始化中停于未实现的 `Class.getDeclaredMethods0`。Main 方法体与帮助输出尚未执行完成。Windows 文件元数据内核通过 JDK 对照，窗口调用桥通过无窗口契约测试。图形运行时和创建世界仍在实现。多核线程内核已有并发测试，游戏性能提升需要在完整启动后测量；自动／并发收集未实现。[Lambda 通用展开](docs/NORMAL_LAMBDA_EXPANSION.md)已在独立候选中执行原严格 Builder，正式稀疏类型接线仍待完成。
 
+[正常方法反射候选](docs/NORMAL_METHODS.md)已通过原 Java 查找／复制、JDK 对照、八线程和显式 GC 测试；独立派生 Main 进程越过方法枚举，下一实际缺口为 `Class.getConstantPool`。该候选尚未正式登记，不代表完整 Main 或游戏已启动。
+
 v145 新增[正常 BootLoader 模块发布](docs/NORMAL_BOOTLOADER_MODULE.md)，正式原生初始化链已验收相应前缀。[ClassLoader 汇编实现](docs/CLASS_LOADER_ASSERTIONS.md)已作为第 23 包通过独立源选择、原 Java 冷初始化、八线程、真实堆耗尽及正常根图 GC 检查。动态模块／类加载、后续 VM 初始化和游戏启动仍未完成。
 
 [可选并行汇编](docs/PARALLEL_DIAGNOSTIC_ASSEMBLY.md)已接通开发启动验证流程：23 组样本约 434 MB 初始化汇编拆成 48 个完整源单元，八个工作者的汇编阶段为 4.843 秒。该数字只衡量构建阶段；完整来源与链接校验另行执行，不代表游戏运行性能。[新增三组正式验证](docs/NATIVE_RUNTIME_26.md)覆盖四个引用操作、库名映射和受限库加载，包括原 Java 构造器、八线程及真实资源清理。
