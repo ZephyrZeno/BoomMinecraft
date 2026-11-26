@@ -66,3 +66,11 @@ net 正向测试使用原始 Properties 初始化器、构造器和 setProperty�
 主 agent 独立复跑记录在 `.boom/native-library-lifecycle/root-independent-positive/execution.json` 与 `.boom/native-library-lifecycle/root-independent-bad-version/execution.json`。生成器与 API 提取器为 `scripts/native-library-lifecycle-candidate.py`、`scripts/native-library-api-source.py`，执行检查为 `scripts/test-native-library-lifecycle.py`。
 
 Thread 和 NativeLibraryImpl 接收者仍是明确的源布局存储夹具，未执行其 Java 构造器；属性准备属于 Java API 夹具。以上结果不表示完整 Phase1、NativeLibraries 的 Java 冷初始化、正式 family 注册或 Minecraft 启动已经完成。
+
+## 独立正常 source 模型
+
+`native-library-source.py`、`native-library-helpers-source.py` 和 `native-library-source-candidate.py` 已将生产所需的数据与模板从 NIO 测试选择中分离。四个 native、字段位置、源 native 帧以及 String／Boolean／两个错误构造器的 Java Code 身份均按传入批次动态取得；模型不要求 NIO candidate，不包含 Properties／System.setProperties 测试准备。
+
+helpers 的函数 AST 与已执行候选一致，生成 ASM 的摘要固定核对。所需 Thread family、正常元数据与 Properties 模块、四个原 Java 回调和显式 Java upcall 标志均由模型声明。Source／ASM／COFF 独立证明在 `.boom/native-library-source/source-bound-v145-a/verification.json`，SHA256 为 `95356010e0b23153088fb437117a66c80e9422a1749ad7c5164a18c200bef732`。
+
+该独立模型尚未正式登记、链接或执行。System.mapLibraryName 也需自己的正常 family，普通 Java 装载链仍会在尚未接入的接口处明确停止。
