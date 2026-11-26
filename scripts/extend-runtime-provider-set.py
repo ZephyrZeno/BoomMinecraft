@@ -93,7 +93,7 @@ def extend(state_file, families, assembler, output, workers=2, *, batch_override
     original_families = {p: S.read(p)['family'] for p in paths}
     existing = set(original_families.values())
     registry = S.read(ROOT / 'native-config/runtime-providers.json')
-    S.check((families or regenerate) and len(families) == len(set(families)) and
+    S.check((families or regenerate or equivalent_batch_verification_sha256 is not None) and len(families) == len(set(families)) and
             set(families) <= set(registry['families']) and not existing.intersection(families),
             'Additional families must be registered, unique, and absent from the accepted set')
     S.check(len(regenerate) == len(set(regenerate)) and set(regenerate) <= existing,
@@ -199,7 +199,9 @@ def extend(state_file, families, assembler, output, workers=2, *, batch_override
         current_by_family = {S.read(p)['family']: p for p in current}
         generated = {}
         publish('building_additional_families')
-        with ThreadPoolExecutor(max_workers=min(workers, len(build_families))) as executor:
+        # A pure equivalent-batch migration still verifies every retained pack.
+        # No worker is started when there are no additional/regenerated families.
+        with ThreadPoolExecutor(max_workers=max(1,min(workers, len(build_families)))) as executor:
             pending = {executor.submit(build_one, family): family for family in build_families}
             for future in as_completed(pending):
                 family = pending[future]

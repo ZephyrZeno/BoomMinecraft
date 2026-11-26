@@ -81,62 +81,11 @@ def base_scope(batch,plan):
             record=identity[name];check(artifact(record['path'])==record,'Shared provider base changed during verification: '+name)
 
 
-TOOL_FILES=('scripts/build-runtime-provider-pack.py','scripts/runtime-provider-source.py','scripts/verify-runtime-provider-pack.py',
-            'scripts/verify-batch-frames.py','scripts/verify-batch-assembly.py',
-            'scripts/Build-RuntimeProviderPack.ps1','native-config/runtime-providers.json','native/providers/native-wrapper.asm.tpl','native/providers/cds.asm.inc','native/providers/identity.asm.inc',
-            'scripts/constructor-provider-source.py','scripts/verify-constructor-provider.py','scripts/verify-batch-metadata.py','native/providers/constructors.asm.inc',
-            'scripts/system-class-inputs.py',
-            'scripts/class-flags-source.py','scripts/verify-class-flags-provider.py','native/providers/class_flags.asm.inc',
-            'scripts/constructor-invocation-source.py','scripts/verify-constructor-invocation.py',
-            'native/providers/constructor_invoke.asm.inc','native/providers/constructor_callsite.asm.inc',
-            'native/providers/constructor_unbox.asm.inc','native/providers/constructor_widen.asm.inc',
-            'scripts/file-bootstrap-source.py','scripts/verify-file-bootstrap.py','native/providers/file_bootstrap.asm.inc',
-            'scripts/scoped-memory-source.py','scripts/verify-scoped-memory.py','native/providers/scoped_memory.asm.inc',
-            'scripts/normal-throwable-source.py','scripts/verify-normal-throwable.py','native/providers/normal_throwable.asm.inc',
-            'scripts/signal-lookup-source.py','scripts/verify-signal-lookup.py','native/providers/signal_lookup.asm.inc',
-            'scripts/normal-thread-source.py','scripts/verify-normal-thread.py','native/providers/normal_thread.asm.inc',
-            'scripts/normal-access-source.py','scripts/verify-normal-access.py','native/providers/normal_access.asm.inc',
-            'scripts/normal-thread-start-source.py','scripts/verify-normal-thread-start.py','native/providers/normal_thread_start.asm.inc',
-            'scripts/normal-thread-priority-source.py','scripts/verify-normal-thread-priority.py','native/providers/normal_thread_priority.asm.inc',
-            'scripts/normal-signal-control-source.py','scripts/verify-normal-signal-control.py','native/providers/normal_signal_control.asm.inc',
-            'scripts/windows-startup-source.py','scripts/verify-windows-startup-provider.py','native/providers/windows_startup.asm.inc',
-            'scripts/finalization-policy-source.py','scripts/verify-finalization-policy.py','native/providers/finalization_policy.asm.inc',
-            'scripts/object-notification-source.py','scripts/verify-object-notification.py','native/providers/object_notification.asm.inc',
-            'scripts/unsafe-class-init-source.py','scripts/verify-unsafe-class-init.py','native/providers/unsafe_class_initialization.asm.inc',
-            'scripts/framed-runtime-service.py','scripts/reference-processing-source.py','native/providers/reference_processing.asm.inc',
-            'scripts/object-wait-source.py','native/providers/object_wait.asm.inc',
-            'scripts/boot-unnamed-source.py','native/providers/boot_unnamed_normal.asm.inc','scripts/verify-translation-ir.py',
-            'scripts/class-loader-assertions-source.py','scripts/class-loader-assertions-candidate.py','native/providers/class_loader_assertions.asm.inc',
-            'scripts/winnt-filesystem-source.py','native/providers/winnt_filesystem.asm.inc',
-            'scripts/revalidate-runtime-provider-cache.py',
-            'scripts/reference-referent-source.py',
-            'native/providers/reference_referent_get.asm.inc',
-            'native/providers/reference_referent_read.asm.inc',
-            'scripts/native-library-source.py',
-            'scripts/native-library-helpers-source.py',
-            'native/providers/native_library_lifecycle.asm.inc',
-            'native/providers/builtin_net_platform.asm.inc',
-            'native/providers/builtin_module_context.asm.inc',
-            'scripts/library-name-source.py',
-            'native/providers/library_name_normal.asm.inc',
-            'native/providers/win32_library_name.asm.inc',
-            'native/kernels/java_string_literals.inc',
-            'scripts/native-frame-overlay.py',
-            'scripts/windows-canonical-source.py',
-            'native/providers/windows_canonical.asm.inc',
-            'native/runtime/windows_canonical_path.asm',
-            'scripts/windows-file-queries-source.py',
-            'native/providers/windows_file_queries.asm.inc',
-            'native/runtime/win32_path_attributes.asm',
-            'scripts/module-definitions-source.py',
-            'native/providers/module_definitions_normal.asm.inc',
-            'native/runtime/module_objects.asm',
-            'scripts/file-input-source.py','native/providers/file_input_readonly.asm.inc',
-            'scripts/unsafe-park-source.py','native/providers/unsafe_park.asm.inc',
-            'scripts/provider-native-roots.py','native/kernels/provider_native_root_snapshot.asm.inc')
+_PROVIDER_TOOLS=module('provider_data_tool_manifest','provider-tool-manifest.py')
+TOOL_FILES=_PROVIDER_TOOLS.tool_files(ROOT)
 
 
-def tools_identity():return {p:digest(ROOT/p)['sha256'] for p in TOOL_FILES}
+def tools_identity():return _PROVIDER_TOOLS.tools_identity(ROOT)
 
 
 def original_class(summary,source):

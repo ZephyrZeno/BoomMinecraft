@@ -16,6 +16,10 @@ JCLS ASM 字节必须完全相同；实际机器 COFF 按现有完整核验器�
 为零。旧回执保持原样。后续所有旧 provider cache 仍由当前源模型重新构造和校验，
 新 family 仍实际汇编，最终输出仍是 `pending_runtime_acceptance`，不会继承游戏执行成功。
 
+该显式路径也允许不添加或重编 family，只迁移全部原包到新完整 batch 和当前工具
+来源，便于独立组件继续使用同一原 Java 输入。无 family 时不启动汇编工人；仍完整
+重验所有原包和 frame。未提供等价完整证明时，空的普通扩展请求继续被拒绝。
+
 7项边界测试覆盖新完整摘要、当前 resolver 拒绝、原 Java／profile／类型容量、覆盖
 标志、旧来源绑定、原模块图、ASM 字节和 COFF 符号／根布局变化。根独立对真实
 `v148-jdwp-production-b` → `v149-jdwp-tool105-a` 执行新检查通过，回执为

@@ -34,7 +34,8 @@ PROOF = 'named-module-derivation.json'
 TOOLS = ('refresh-named-module-batch.py', 'refresh-boot-unnamed-batch.py',
          'boot-unnamed-normal-candidate.py', 'closure-batch-artifacts.py',
          'refresh-unsafe-field-batch.py', 'verify-batch-assembly.py',
-         'verify-batch-classes.py', 'verify-translation-ir.py', 'runtime-provider-source.py')
+         'verify-batch-classes.py', 'verify-translation-ir.py', 'runtime-provider-source.py',
+         'provider-tool-manifest.py')
 
 
 def artifact(path):

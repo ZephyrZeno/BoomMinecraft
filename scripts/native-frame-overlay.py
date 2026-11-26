@@ -22,7 +22,7 @@ R=module('native_overlay_original_frames','verify-batch-frames.py')
 C=module('native_overlay_original_classes','constructor-provider-source.py')
 TOOLS=('scripts/native-frame-overlay.py','scripts/runtime-provider-source.py',
        'scripts/constructor-provider-source.py','scripts/system-class-inputs.py','scripts/verify-batch-frames.py',
-       'scripts/verify-batch-assembly.py','scripts/verify-batch-metadata.py')
+       'scripts/verify-batch-assembly.py','scripts/verify-batch-metadata.py','scripts/provider-tool-manifest.py')
 
 
 def tools():return {p:S.digest(S.ROOT/p)['sha256'] for p in TOOLS}

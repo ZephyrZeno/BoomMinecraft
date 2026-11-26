@@ -1,6 +1,10 @@
-# Provider 工具清单候选
+# Provider 工具清单与当前来源
 
-本批新增独立 helper、数据清单、测试及身份实验，不改当前生产 `runtime-provider-source.py`、registry、105项 TOOL_FILES、named65 proof 或任何旧产物。它只验证构建工具路径图和完整文件身份，不验证 Java native 语义、COFF、实际运行或游戏启动，也不接受任何旧 provider/named receipt。
+生产 `runtime-provider-source.py` 已将工具列表和身份委托给独立 helper，当前107项。原 I/O、源码读取和基础校验函数的执行 AST 保持相同；旧文件和证明没有改写。Named producer 现在封存原9项加 helper 整文件，共10项；native frame 的原7项也追加 helper，共8项。新的 VM 入口构建／校验同样把 S 和 helper 的全部字节列入输入，数据清单自身仍属于完整 provider 身份。
+
+首次切换后重新生成并实际完整验证 `.boom/named-module-batches/v156-jdwp-manifest107-a`，完整回执 SHA256 为 `dbe4b8f4ef535c10550c04452172b8adb4a4547d176fa804d44ebd3053ec99c7`。再用严格的完整等价路径迁移原31包：原 Java、类型、模块、ASM／COFF 字节不变，全部旧包与 frame 用当前源模型重验，生成0个新族。313.594秒后发布 `.boom/formal-native-transitions/manifest107-31-v157-a/pending-state.json`，SHA256 为 `edb4dc1c1a117415f6291189dc50c64721aa802695d7f221ffa43262ccd2fce4`。状态仍为 `pending_runtime_acceptance`，不继承旧工具来源下的运行验收。
+
+接线后的33项清单边界测试、独立数据追加身份实验及572项完整 Python 回归通过，11项 skip。以下保留独立候选及其历史验证记录；工具图证明本身仍不验证 native 语义、实际游戏执行或完整启动。snapshot 中的 `production_sources_modified_by_this_tool=false` 只表示只读工具不修改生产文件，不是对调用者当前接线状态的猜测。
 
 ## 数据与接口
 
@@ -26,13 +30,13 @@ tools_identity 只缓存进程内已审计的来源图，最多保留4个根。�
 
 ## Named resolver 的首次接线边界
 
-当前 named producer 的9项 TOOLS 包含完整 S 文件；该文件中追加一项 TOOL_FILES 就会使旧来源失效。当前 named/boot/候选路径实际使用 S 的 ART/ROOT、check、read、digest、checked、artifact、original_class、write 等正常 I/O 和校验函数，没有调用 S.TOOL_FILES/tools_identity。上述实现字节改变仍必须使 named proof 失效。
+切换前 named producer 的9项 TOOLS 包含完整 S 文件；该文件中追加一项 TOOL_FILES 就会使旧来源失效。Named/boot/候选路径实际使用 S 的 ART/ROOT、check、read、digest、checked、artifact、original_class、write 等正常 I/O 和校验函数，没有调用 S.TOOL_FILES/tools_identity。上述实现字节改变仍必须使 named proof 失效。
 
-未来应由主 agent 一次修改 S，仅让工具列表/身份委托此 helper。helper 不能导入 S，也不执行任何新增 family 模型；只解析源码/JSON并返回数据。因此随后新增族的数据列表不会改变 S 的 I/O 实现。**这第一次接线必须将 helper 整文件加入 named 实现来源集合，使用新来源做真实独立验收；不能自动豁免或改写旧9项 proof。** 本批没有做这一步。只有新证明明确隔离了 named 不消费的 TOOL 枚举数据后，后续 manifest/registry/framed族数据变化才可保持 named 的实现来源集合不变；完整 provider 身份照常包含并重核它们，旧 pack 必须失效并重新验证。任何 S/helper/named 实现文件变化仍按完整字节失效，不能为了复用缓存忽略哈希。
+首次生产接线只让 S 的工具列表/身份委托此 helper。helper 不导入 S，也不执行任何新增 family 模型；只解析源码/JSON并返回数据。因此随后新增族的数据列表不会改变 S 的 I/O 实现。**第一次接线已将 helper 整文件加入 named 实现来源集合，并实际完成上述新独立验收；未自动豁免或改写旧9项 proof。** 新证明明确隔离了 named 不消费的 TOOL 枚举数据，后续 manifest/registry/framed族数据变化可保持 named 的实现来源集合不变；完整 provider 身份照常包含并重核它们，旧 pack 必须失效并重新验证。任何 S/helper/named 实现文件变化仍按完整字节失效，不能为了复用缓存忽略哈希。
 
 旧 `rebase-runtime-provider-inputs.py` 当前只接受 TOOL_FILES 字面 tuple 的追加；本 helper 接线不属于那个旧规则，不能强走旧 rebase。这是首次生产切换时需要主 agent 明确处理的兼容边界。
 
-主 agent 后续提供的正式迁移入口是 `extend-runtime-provider-set.py --batch NEW --equivalent-batch-verification-sha256 HASH`（ca2964b）：它要求当前严格 named full resolver/完整证明、old/new summary只差JCLS产物位置、覆盖项及原parent/graph/append一致、真实JCLS ASM/COFF/符号/root delta0，再重验全部旧包并真实汇编新族，结果仍为pending。本候选没有调用该入口；首轮 helper/S/named来源接线仍须先获得新full65证明，不能用此工具清单实验代替。
+正式迁移入口是 `extend-runtime-provider-set.py --batch NEW --equivalent-batch-verification-sha256 HASH`：它要求当前严格 named full resolver/完整证明、old/new summary只差JCLS产物位置、覆盖项及原parent/graph/append一致、真实JCLS ASM/COFF/符号/root delta0，再重验全部旧包并真实汇编请求的新族，结果仍为pending。首次生产迁移已实际执行该入口且未请求新族；独立工具清单实验不能代替这项完整证明。
 
 ## 独立验证
 
@@ -48,7 +52,7 @@ D:/Dev/Python312/python.exe scripts/provider-tool-manifest.py --output .boom/pro
 D:/Dev/Python312/python.exe scripts/test-provider-tool-manifest.py --output .boom/provider-tool-manifest/NEW-experiment
 ```
 
-输出目录须全新；第三条用于当前Std2尚未注册的独立候选环境。共享生产切换、首轮 named来源大验证和provider重新验收均由主 agent 后续负责。
+输出目录须全新；第三条用于Std2尚未注册的独立候选环境。正式生产接线及首轮完整来源迁移见文首，后续新 family 的语义与运行验收继续单独验证。
 
 根独立重新运行33项测试和两个 CLI 均通过。独立来源图回执
 `.boom/provider-tool-manifest/root-review-v154-a/identity.json` 的 SHA256 为

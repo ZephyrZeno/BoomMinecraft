@@ -359,7 +359,7 @@ def load(root=ROOT):
         runtime_contract_sources=sorted({p for row in audits.values() for p in row['runtime_sources']}),
         helper_sha256=sha256(source_path(root,HELPER).read_bytes()),manifest_sha256=sha256(manifest_path.read_bytes()),
         registry_sha256=sha256(registry_path.read_bytes()),
-        producer_switched=False,named_module_receipts_accepted=False)
+        producer_modified_by_this_tool=False,named_module_receipts_accepted=False)
 
 
 def tool_files(root=ROOT):return load(root)['tool_files']
@@ -403,7 +403,7 @@ def snapshot(root=ROOT):
     return dict(schema=1,verified=True,scope='standalone_declared_provider_tool_graph_and_full_file_identity_only',
         root=str(root),contract=json.loads(json.dumps(before)),tool_sources=identity,
         separately_required_runtime_sources={name:sha256(source_path(root,name).read_bytes()) for name in before['runtime_contract_sources']},
-        production_sources_switched=False,
+        production_sources_modified_by_this_tool=False,
         provider_packs_revalidated=False,named_batch_revalidated=False,game_started=False)
 
 

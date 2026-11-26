@@ -39,7 +39,8 @@ def run(output):
     named=H.literal_assignment(ast.parse(named_path.read_text(encoding='utf-8-sig')),'TOOLS')
     # This is a proposed future executable-input projection, not a new named
     # resolver receipt. The new helper must join that set at first integration.
-    proposed_named=tuple('scripts/'+name for name in named)+(H.HELPER,)
+    proposed_named=tuple('scripts/'+name for name in named)
+    if H.HELPER not in proposed_named:proposed_named+=(H.HELPER,)
     paths=set(current['contract']['tool_files'])|set(current['contract']['runtime_contract_sources'])|set(proposed_named)
     for name in paths:
         target=mirror/name;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/name,target)

@@ -39,6 +39,9 @@ class ProviderToolManifestTests(unittest.TestCase):
 
     def test_complete_current_prefix_and_control_identity(self):
         current=H.load(self.root)
+        source_spec=importlib.util.spec_from_file_location('provider_tool_delegated_identity',ROOT/'scripts/runtime-provider-source.py')
+        source=importlib.util.module_from_spec(source_spec);source_spec.loader.exec_module(source)
+        self.assertEqual(current['tool_files'],source.TOOL_FILES)
         self.assertEqual(H.path_digest(current['tool_files'][:105]),H.LEGACY_PATH_SHA256)
         self.assertEqual(current['tool_files'][105:107],(H.HELPER,H.MANIFEST))
         identity=H.tools_identity(self.root)
