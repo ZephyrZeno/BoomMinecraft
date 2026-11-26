@@ -28,7 +28,8 @@ SPECS=[(OWNER,'findBuiltinLib','(Ljava/lang/String;)Ljava/lang/String;',0x10a),
        ('jdk/internal/loader/NativeLibrary','findEntry0','(JLjava/lang/String;)J',0x108)]
 JAVA=[('java/lang/String','toCharArray','()[C'),('java/lang/Boolean','getBoolean','(Ljava/lang/String;)Z'),
       ('java/lang/InternalError','<init>','(Ljava/lang/String;)V'),
-      ('java/lang/UnsatisfiedLinkError','<init>','(Ljava/lang/String;)V')]
+      ('java/lang/UnsatisfiedLinkError','<init>','(Ljava/lang/String;)V'),
+      ('java/lang/Throwable','fillInStackTrace','()Ljava/lang/Throwable;')]
 PINS={'NativeLibraries.c':'75549e652ada82c64b4199d92f5423287fb59aa20cff382dbd95e432830fe6bf',
       'jni_util.h':'05f7396789edad4d6987a5a223dd0e78ebc5f29d2e3ef03d4694b3d4849fbc5c',
       'nio_util.c':'ea2ef0421238f79036007d3cdb77229c0a77f855590ac5e0ac26ffab0198f7b8',
@@ -91,7 +92,8 @@ def index(summary,classes,S):
         source_classes={name:c['id'] for name,c in owners.items()},system_props_index=props,
         thread_class=owners['java/lang/Thread']['id'],virtual_base_class=owners['java/lang/BaseVirtualThread']['id'],
         required_classes=sorted(c['id'] for c in owners.values()),required_java_methods=[m['method'] for m in java],
-        required_base_modules=['runtime_metadata','properties'],required_provider_families=['normal-thread-primitives-v1'],
+        required_base_modules=['runtime_metadata','properties'],
+        required_provider_families=['normal-thread-primitives-v1','normal-throwable-v1'],
         pool_bytes=32,pool_abi=1,native_sources=sources,
         embedded_kernels={name:S.artifact(S.ROOT/'native/providers'/name) for name in embedded},
         helper_generator=S.artifact(helper),helper_ASM_sha256=helper_hash,
