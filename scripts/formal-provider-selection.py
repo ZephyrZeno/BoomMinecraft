@@ -1,4 +1,4 @@
-"""Prepare and independently verify focused source images from the pending 26 packs."""
+"""Prepare independently verified focused source from an exact sealed provider set."""
 import argparse
 import importlib.util
 import json
@@ -35,7 +35,7 @@ def checked(record):
     return path
 
 
-def provider_paths(value):
+def provider_paths(value,expected_count=26):
     rows=value if isinstance(value,list) else value['providers']
     paths=[]
     for row in rows:
@@ -43,7 +43,8 @@ def provider_paths(value):
         path=Path(item) if isinstance(item,str) else S.checked(item)
         path=path.resolve();S.check(path.is_relative_to(ART),'Focused provider escaped project artifacts')
         paths.append(path)
-    S.check(len(paths)==26 and len(set(paths))==26,'Focused formal selection requires the exact 26-provider input set')
+    S.check(type(expected_count) is int and expected_count>0 and len(paths)==expected_count and
+            len(set(paths))==expected_count,'Focused selection requires the exact sealed provider count without duplicates')
     return paths
 
 
@@ -51,10 +52,30 @@ def state_inputs(state_file):
     state_file=Path(state_file).resolve()
     S.check(state_file.is_relative_to(ART),'Focused input state must stay in project artifacts')
     state=S.read(state_file)
+    S.check(state['status'] in ('accepted','pending_runtime_acceptance') and
+            state.get('current_source_provider_verification_complete') is True and
+            state.get('runtime_acceptance_complete') is (state['status']=='accepted'),
+            'Focused inputs require verified source and an explicit accepted/pending scope')
+    if state['status']=='pending_runtime_acceptance':
+        S.check(state.get('accepted_provider_set_published') is False,'Pending source inputs cannot publish runtime acceptance')
     values={key:Path(state[key]).resolve() for key in ('batch','plan','runtime','providers')}
     S.check(all(p.is_relative_to(ART) for p in values.values()),'Focused state escaped project artifacts')
     values['runtime']=values['runtime']/'boom-runtime.dll' if values['runtime'].is_dir() else values['runtime']
-    paths=provider_paths(S.read(values['providers']))
+    count=state['provider_count'];paths=provider_paths(S.read(values['providers']),count)
+    receipts=state['providers_verified']
+    S.check(len(receipts)==count,'Focused provider receipt count differs from the sealed state')
+    families=[];snapshot=S.tools_identity()
+    S.check(state['tool_sources']==snapshot,'Focused state belongs to a historical tool namespace')
+    for path,record in zip(paths,receipts):
+        S.check(S.checked(record['manifest'])==path and
+                S.checked(record['verification'])==path.with_name('verification.json'),
+                'Focused provider order or sealed manifest/receipt differs')
+        manifest=S.read(path);proof=S.read(path.with_name('verification.json'))
+        S.check(manifest['family']==record['family'] and manifest['tool_sources']==snapshot and
+                proof.get('verified') is True and proof.get('provider_manifest_sha256')==S.digest(path)['sha256'],
+                'Focused provider family/current identity or receipt binding differs')
+        families.append(manifest['family'])
+    S.check(len(set(families))==count,'Focused provider families are duplicated')
     return state,values,paths
 
 
@@ -75,8 +96,13 @@ def prepare(state_file,output,*,method_roots,class_roots=(),admitted_methods=(),
         seal(path)
     V=module('formal_focused_provider_verifier','verify-runtime-provider-pack.py')
     packs=V.load_packs(batch,plan,paths)
-    S.check(len({p['manifest']['family'] for p in packs})==26,'Focused provider families are duplicated')
+    count=state['provider_count']
+    S.check(len(packs)==len({p['manifest']['family'] for p in packs})==count,'Focused provider families/count differ')
     identity,summary,_=S.base(batch,plan)
+    S.check(identity['batch_summary']['digest']['sha256']==state['batch_summary_sha256'] and
+            identity['base_verification']['digest']['sha256']==state['batch_verification_sha256'] and
+            S.digest(runtime)['sha256']==state['runtime_sha256'] and all(p['manifest']['base']==identity for p in packs),
+            'Focused state/provider source base or original runtime identity differs')
     for key in ('batch_summary','base_verification','source_plan','source_classes','source_methods'):
         seal(identity[key]['path'])
     for pack in packs:
@@ -134,7 +160,7 @@ def prepare(state_file,output,*,method_roots,class_roots=(),admitted_methods=(),
     for unit in receipt['units']:
         if 'parallel_receipt' in unit:seal(unit['parallel_receipt']['path'])
     for record in records.values():checked(record)
-    images=dict(schema=1,scope='focused_original_source_with_26_individually_verified_provider_inputs',
+    images=dict(schema=1,scope=f'focused_original_source_with_{count}_individually_verified_provider_inputs',
         input_state=state_record,provider_list=provider_list,base=identity,
         source_selection_directory=str(output),source_manifest=S.artifact(output/'closure.json'),
         source_selection=S.artifact(proof_file),image=S.artifact(image),runtime=S.artifact(runtime),
@@ -147,7 +173,7 @@ def prepare(state_file,output,*,method_roots,class_roots=(),admitted_methods=(),
             selected=i in manifest.get('selected_runtime_provider_packs',[])) for i,p in enumerate(packs)],
         selected_provider_families=families,link_inputs=[S.artifact(p) for p in [*objects,*libraries]],
         inputs=list(records.values()),helper=S.artifact(__file__),harness_sources=[S.artifact(p) for p in harness_sources],
-        source_selection_independently_reverified=True,provider_inputs=26,runtime_acceptance_proven=False,
+        source_selection_independently_reverified=True,provider_inputs=count,runtime_acceptance_proven=False,
         metadata_fixture=False,Java_codegen_rerun=False,original_Java_or_metadata_modified=False,
         diagnostic_stops_replaced=False,executed=False,full_VM_startup=False,game_started=False)
     path=output/'images.json';S.write(path,images);return path
@@ -156,14 +182,19 @@ def prepare(state_file,output,*,method_roots,class_roots=(),admitted_methods=(),
 def verify(images_file):
     images_file=Path(images_file).resolve();S.check(images_file.is_relative_to(ART),'Focused evidence escaped artifacts')
     images=S.read(images_file)
-    S.check(images['scope']=='focused_original_source_with_26_individually_verified_provider_inputs' and
-            images['provider_inputs']==26 and images['source_selection_independently_reverified'] and
+    count=images['provider_inputs']
+    S.check(type(count) is int and count>0 and images['scope']==f'focused_original_source_with_{count}_individually_verified_provider_inputs' and
+            images['source_selection_independently_reverified'] and
             not any(images[k] for k in ('runtime_acceptance_proven','metadata_fixture','Java_codegen_rerun',
                 'original_Java_or_metadata_modified','diagnostic_stops_replaced','full_VM_startup','game_started')),
             'Focused source proof scope differs')
     S.check(images['helper']==S.artifact(__file__) and images['helper'] in images['inputs'] and
             all(record in images['inputs'] for record in images['harness_sources']), 'Focused helper/harness identity is not sealed')
     for record in images['inputs']:checked(record)
+    state,values,paths=state_inputs(checked(images['input_state']))
+    S.check(state['provider_count']==count and checked(images['provider_list'])==values['providers'] and
+            [Path(row['manifest']['path']).resolve() for row in images['providers']]==paths,
+            'Focused image provider count/order differs from the sealed input state')
     directory=Path(images['source_selection_directory'])
     S.check(directory.is_relative_to(ART) and images_file==directory/'images.json','Focused evidence directory differs')
     S.check(checked(images['source_manifest'])==directory/'closure.json' and
@@ -174,7 +205,8 @@ def verify(images_file):
     S.check(proof==S.read(images['source_selection']['path']),'Focused independent source verification differs')
     closure=S.read(directory/'closure.json');diagnostic=S.read(directory/'diagnostic.json')
     refs=[dict(manifest=p['manifest'],verification=p['verification']) for p in images['providers']]
-    S.check(len(refs)==26 and refs==closure['runtime_provider_packs'],'Focused provider references differ from the verified source')
+    S.check(len(refs)==count and len({row['family'] for row in images['providers']})==count and
+            refs==closure['runtime_provider_packs'],'Focused provider references differ from the verified source')
     selected=closure.get('selected_runtime_provider_packs',[])
     for i,row in enumerate(images['providers']):
         pack=S.read(checked(row['manifest']));checked(row['verification'])
@@ -211,7 +243,7 @@ if __name__=='__main__':
     args=parser.parse_args()
     if args.verify:print(json.dumps(verify(args.verify)))
     else:
-        S.check(args.state is not None,'Provide the pending 26-provider input state')
+        S.check(args.state is not None,'Provide the sealed accepted or pending source-provider input state')
         print(prepare(args.state,args.output,method_roots=[tuple(s.split(':',3)) for s in args.entry],
             class_roots=[tuple(s.split(':',1)) for s in args.class_root],source_profile=args.source_profile,
             exports=args.export,optional_exports=args.optional_export,harness_sources=args.harness_source))
