@@ -314,7 +314,10 @@ def run(state_file,baseline,candidate_specs,component_proofs,output):
                 new_pe['subsystem']==3 and not new_pe['is_dll'] and new_pe['dll_characteristics']==old_pe['dll_characteristics'],
                 'Development EXE changed exports, ABI, subsystem or native security flags')
         old_imports=M.pe(baseline/'boom-vm-entry.exe')['imports'];new_imports=M.pe(target)['imports']
-        S.check(set(new_imports)==set(old_imports) and all(set(names)<=set(old_imports[dll])|foreign for dll,names in new_imports.items()) and
+        candidate_runtime_imports=runtime_exports&{name for row in candidates for name in row['imports']}
+        allowed_imports={dll:set(names)|foreign|(candidate_runtime_imports if dll.lower()==runtime.name.lower() else set())
+                         for dll,names in old_imports.items()}
+        S.check(set(new_imports)==set(old_imports) and all(set(names)<=allowed_imports[dll] for dll,names in new_imports.items()) and
                 all(set(names)<=set(new_imports[dll]) for dll,names in old_imports.items()),'Prototype introduced an unverified native import')
         S.check(foreign<=set().union(*(set(names) for names in new_imports.values())),
                 'Expected prototype imports are absent from the actual PE')
@@ -322,6 +325,7 @@ def run(state_file,baseline,candidate_specs,component_proofs,output):
         S.write(output/'pe-verification.json',dict(verified=True,scope='actual_native_PE_entry_exports_dependencies_flags_and_unwind_ranges',
             image=S.artifact(target),AddressOfEntryPoint=process_entry,original_exports_unchanged=True,
             baseline_imports=old_imports,actual_imports=new_imports,prototype_allowed_foreign=sorted(foreign),
+            prototype_verified_runtime_imports=sorted(candidate_runtime_imports),
             original_runtime_imports=M.pe(runtime)['imports'],actual_runtime_imports=M.pe(output/'boom-runtime.dll')['imports'],
             exact_runtime_sha256=RUNTIME_SHA,actual_unwind_rows=new_pe['runtime_function_rows'],
             response=S.artifact(rsp),complete_canonical_response_verified=True))

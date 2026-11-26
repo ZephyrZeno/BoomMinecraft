@@ -35,4 +35,14 @@ Phase1 返回，Phase2 调用而未返回。cleanup=7，worker failure=0，held 
 
 主 agent 另外用自己的两份独立重建候选与组件执行证明，在 `.boom/native-provider-prefix/root-review-v147-a/` 复跑。`execution.json` SHA256 为 `7caab0b98520100eec3f4ac7ee262057dec841fe8eab16cf9cb940d2474190dd`，约 41.391 秒，仍得到 Module.defineModule0／row 104319 和相同正常清理结果。输入不是直接复用上面两份候选的路径，组件与所用候选的精确绑定同样通过。
 
-回执明确 `prototype_native_added=9`、`full_selection_reverified=false`、`formal27_accepted=false`、`shared_provider_registered=false`、`full_VM_bootstrap=false`。这里的旧源码证明只作已封存 26 快照的来源证据，当前 namespace 的正式 28 验证仍需完整生产流程。原 448 ABI 不携带两个候选的最终 owned-buffer 计数，本探针没有注入计数观察代码，不声称该计数已读取为 0。两个候选的错误消息、缓存历史和 malloc/OOM 限制逐项保存在回执 policy 中。
+回执明确 `prototype_native_added=9`、`full_selection_reverified=false`、`formal27_accepted=false`、`shared_provider_registered=false`、`full_VM_bootstrap=false`。这里的旧源码证明只作已封存 26 快照的来源证据，正式 28 的后续完整验证另见 [28 组输入记录](NATIVE_RUNTIME_28.md)。原 448 ABI 不携带两个候选的最终 owned-buffer 计数，本探针没有注入计数观察代码，不声称该计数已读取为 0。两个候选的错误消息、缓存历史和 malloc/OOM 限制逐项保存在回执 policy 中。
+
+## 加入 Module 候选后的运行时导入边界
+
+组合第三个 Module 五项候选时，第一次 `v148-canonical2-queries7-module5-a` 在执行前的 PE 检查拒绝了两个新增导入：`boom_java_class_bind_loader`、`boom_java_class_seal`。它们由候选实际 COFF 声明，且确实存在于同一份 SHA256 锁定的汇编 runtime DLL；原探针只准入原 EXE 已用的 runtime 函数，误拒了这两个正常调用。首次失败、工具快照和实际导入差异保留，未执行该镜像。
+
+当前检查只在原 runtime DLL 的导入组中额外允许“已验候选的实际 COFF imports”与“锁定 runtime 的真实 exports”的交集；不增加 DLL、不接受未声明函数，完整 RSP／SDK／源码检查保持。新的 `pe-verification.json` 封存具体准入集合。
+
+新目录 `.boom/native-provider-prefix/v148-canonical2-queries7-module5-b` 已通过这些检查并真正执行十四项候选的组合，`execution.json` SHA256 为 `59f43e47dc922e879b0fe1bf936841714fcb9b80b54b509c486fd11ed57c7b30`。Phase1 返回，Phase2 进入后，主 Context 为 kind 20、原 Module 构造器 42233／PC 81，owned EXE 返回 70；没有 source diagnostic row。两个后台线程正常退出并回收，cleanup=7、worker failure=0、held=0。
+
+这只是旧 64 槽闭域下的实际停止边界，不能根据 Context 20 单独断言是缺失的模块槽，也不记作 ModuleBootstrap 成功。65 槽目录、Boot 包重建和正式 Module 集成仍需分别验证。
