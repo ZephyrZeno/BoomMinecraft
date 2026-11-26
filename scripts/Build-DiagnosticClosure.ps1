@@ -18,7 +18,7 @@ if($PreparedSelection){
     & D:/Dev/Python312/python.exe @prepare > "$root/prepare.log" 2> "$root/prepare.err"
     if($LASTEXITCODE -ne 0){Get-Content -LiteralPath "$root/prepare.err" -Tail 12;throw 'Diagnostic source selection failed'}
 }
-$m=Get-Content -LiteralPath "$root/closure.json" -Raw|ConvertFrom-Json|Select-Object objects,exports
+$m=Get-Content -LiteralPath "$root/closure.json" -Raw|ConvertFrom-Json|Select-Object objects,exports,selected_runtime_provider_packs,runtime_provider_packs
 $vswhere=Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe';$installation=(& $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath|Select-Object -First 1)
 $version=(Get-Content -LiteralPath (Join-Path $installation 'VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt') -Raw).Trim();$bin=Join-Path $installation "VC/Tools/MSVC/$version/bin/Hostx64/x64"
 $sdkRoot=(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows Kits\Installed Roots').KitsRoot10;$sdk=Get-ChildItem -LiteralPath (Join-Path $sdkRoot 'Lib') -Directory|Where-Object{Test-Path -LiteralPath (Join-Path $_.FullName 'um/x64/synchronization.lib')}|Sort-Object Name -Descending|Select-Object -First 1
@@ -32,9 +32,16 @@ if($sealed.schema -eq 1){$assemblyObjects=@($sealed.units|ForEach-Object{$_.obje
 elseif($sealed.schema -eq 2){foreach($unit in $sealed.units){foreach($part in $unit.parts){$assemblyObjects+=@($part.object.path)}}}
 else{throw 'Unknown diagnostic object provenance schema'}
 if(-not $assemblyObjects.Count){throw 'Diagnostic assembler produced no sealed COFF inputs'}
+$winsock=$false
+foreach($index in $m.selected_runtime_provider_packs){
+    $record=$m.runtime_provider_packs[[int]$index].manifest
+    if((Get-Item -LiteralPath $record.path).Length -ne $record.digest.size -or (Get-FileHash -LiteralPath $record.path -Algorithm SHA256).Hash.ToLowerInvariant() -ne $record.digest.sha256){throw 'Selected provider manifest changed before source image link'}
+    $provider=Get-Content -LiteralPath $record.path -Raw|ConvertFrom-Json
+    if($provider.family -eq 'normal-native-libraries-v1'){$winsock=$true}
+}
 $dll=Join-Path $root 'diagnostic-image.dll';$lines=@('/NOLOGO','/DLL','/NOENTRY','/MACHINE:X64','/DYNAMICBASE','/NXCOMPAT','/BREPRO',('/OUT:"'+$dll+'"'))
 $lines+=@($assemblyObjects|ForEach-Object{'"'+$_+'"'})
-$lines+=@($m.objects|ForEach-Object{'"'+$_+'"'});$lines+=('"'+(Join-Path $runtimePath 'boom-runtime.lib')+'"'),('"'+(Join-Path $sdk.FullName 'um/x64/synchronization.lib')+'"'),('"'+(Join-Path $sdk.FullName 'um/x64/kernel32.lib')+'"');$lines+=@($m.exports|Sort-Object -Unique|ForEach-Object{'/EXPORT:'+$_})
+$lines+=@($m.objects|ForEach-Object{'"'+$_+'"'});$lines+=('"'+(Join-Path $runtimePath 'boom-runtime.lib')+'"'),('"'+(Join-Path $sdk.FullName 'um/x64/synchronization.lib')+'"'),('"'+(Join-Path $sdk.FullName 'um/x64/kernel32.lib')+'"');if($winsock){$ws2=Join-Path $sdk.FullName 'um/x64/ws2_32.lib';if(-not (Test-Path -LiteralPath $ws2)){throw 'Selected NativeLibraries requires the same Windows SDK ws2_32.lib'};$lines+=('"'+$ws2+'"')};$lines+=@($m.exports|Sort-Object -Unique|ForEach-Object{'/EXPORT:'+$_})
 [IO.File]::WriteAllLines("$root/link.rsp",[string[]]$lines,[Text.UTF8Encoding]::new($false))
 & (Join-Path $bin 'link.exe') "@$root/link.rsp" > "$root/link.log" 2>&1
 if($LASTEXITCODE -ne 0){Get-Content -LiteralPath "$root/link.log" -Tail 16;throw 'Diagnostic image link failed'}

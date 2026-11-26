@@ -443,6 +443,92 @@
           "operation": 0
         }
       ]
+    },
+    "normal-reference-referent-v1": {
+      "owner": "java/lang/ref/Reference",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/reference_referent_get.asm.inc",
+      "pool": "boom_provider_reference_referent_pool",
+      "service": "boom_provider_reference_referent_get",
+      "methods": [
+        {
+          "name": "get0",
+          "descriptor": "()Ljava/lang/Object;",
+          "access": 258,
+          "operation": 0
+        },
+        {
+          "name": "refersTo0",
+          "descriptor": "(Ljava/lang/Object;)Z",
+          "access": 258,
+          "operation": 1
+        },
+        {
+          "name": "clear0",
+          "descriptor": "()V",
+          "access": 258,
+          "operation": 2
+        },
+        {
+          "name": "refersTo0",
+          "descriptor": "(Ljava/lang/Object;)Z",
+          "access": 258,
+          "operation": 3,
+          "owner": "java/lang/ref/PhantomReference"
+        }
+      ]
+    },
+    "normal-native-libraries-v1": {
+      "owner": "jdk/internal/loader/NativeLibraries",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/native_library_lifecycle.asm.inc",
+      "pool": "boom_native_library_pool",
+      "service": "boom_native_library_service",
+      "methods": [
+        {
+          "name": "findBuiltinLib",
+          "descriptor": "(Ljava/lang/String;)Ljava/lang/String;",
+          "access": 266,
+          "operation": 0
+        },
+        {
+          "name": "load",
+          "descriptor": "(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z",
+          "access": 266,
+          "operation": 1
+        },
+        {
+          "name": "unload",
+          "descriptor": "(Ljava/lang/String;ZJ)V",
+          "access": 266,
+          "operation": 2
+        },
+        {
+          "owner": "jdk/internal/loader/NativeLibrary",
+          "name": "findEntry0",
+          "descriptor": "(JLjava/lang/String;)J",
+          "access": 264,
+          "operation": 3
+        }
+      ]
+    },
+    "normal-library-name-v1": {
+      "owner": "java/lang/System",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/library_name_normal.asm.inc",
+      "pool": "boom_provider_library_name_pool",
+      "service": "boom_provider_library_name_service",
+      "methods": [
+        {
+          "name": "mapLibraryName",
+          "descriptor": "(Ljava/lang/String;)Ljava/lang/String;",
+          "access": 265,
+          "operation": 0
+        }
+      ]
     }
   }
 }

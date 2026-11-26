@@ -225,10 +225,10 @@ def prepare(batch,plan,output,family,frame_overlay=None):
         assembled=False,linked=False,executed=False,game_started=False,world_created=False,elapsed_ms=round((time.monotonic()-started)*1000))
     if family in framed_services.FAMILIES:
         record=output/(metadata_kind+'.json');S.write(record,metadata);result[metadata_kind+'_metadata']=S.artifact(record)
-        result.update(native_entries_traced=True,native_java_upcalls=metadata_kind in ('winnt_filesystem','object_wait'),leaf_guest_services=False,
+        result.update(native_entries_traced=True,native_java_upcalls=metadata_kind in ('winnt_filesystem','object_wait','native_library','library_name'),leaf_guest_services=False,
                       all_native_frames=False,frame_overlay=frame_reference,allowed_foreign_imports=sorted(C.FOREIGN))
-        if metadata_kind in ('object_wait','boot_unnamed'):
-            result.update(required_java_methods=metadata['required_java_methods'],required_provider_families=metadata['required_provider_families'])
+        if metadata_kind in ('object_wait','boot_unnamed','reference_referent','native_library','library_name'):
+            result.update(required_java_methods=metadata.get('required_java_methods',[]),required_provider_families=metadata.get('required_provider_families',[]))
     elif metadata_kind=='unsafe_class_init':
         S.write(output/'unsafe-class-init.json',metadata);result['unsafe_class_init_metadata']=S.artifact(output/'unsafe-class-init.json')
         result.update(native_entries_traced=True,native_java_upcalls=True,all_native_frames=False,frame_overlay=frame_reference)
@@ -288,6 +288,8 @@ def seal(output,assembler):
     S.check(m['tool_sources']==S.tools_identity(),'Provider tool changed during build')
     identity,_,_=S.base(m['base']['batch'],m['base']['plan']);S.check(identity==m['base'],'Provider base changed during build')
     S.checked(m['assembly'])
+    services=S.module('seal_framed_service_metadata','framed-runtime-service.py')
+    if m['family'] in services.FAMILIES:S.checked(m[services.FAMILIES[m['family']][1]+'_metadata'])
     if 'constructor_metadata' in m:S.checked(m['constructor_metadata'])
     if 'class_flags_metadata' in m:S.checked(m['class_flags_metadata'])
     if 'constructor_invocation_metadata' in m:S.checked(m['constructor_invocation_metadata'])

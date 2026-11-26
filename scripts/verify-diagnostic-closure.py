@@ -136,14 +136,27 @@ def verify_parallel_link(directory,manifest,sealed):
     root=Path(directory).resolve()
     link=load('parallel_source_canonical_link','canonical-link-response.py')
     report=json.loads((root/'diagnostic.json').read_bytes())
+    S=load('parallel_source_library_selection','runtime-provider-source.py')
+    selected_families={S.read(S.checked(manifest['runtime_provider_packs'][i]['manifest']))['family']
+        for i in manifest.get('selected_runtime_provider_packs',[])}
+    winsock='normal-native-libraries-v1' in selected_families
     promoted={symbol for unit in sealed['logical_units'] for symbol in unit['promoted_data']}
     check(not promoted.intersection(manifest['exports']),'Parallel source image must not export promoted internal data')
-    link.verify(root/'link.rsp',profile='diagnostic',output=root/'diagnostic-image.dll',
+    linked=link.verify(root/'link.rsp',profile='diagnostic',output=root/'diagnostic-image.dll',
         objects=[r['object']['path'] for r in sealed['units']]+manifest['objects'],
-        library_choices=link.diagnostic_libraries(report['global_provider_identity']['runtime_dll']),exports=manifest['exports'])
+        library_choices=link.diagnostic_libraries(report['global_provider_identity']['runtime_dll'],winsock=winsock),exports=manifest['exports'])
     pe=load('parallel_source_image_exports','diagnostic-closure.py')
     check(pe.pe_exports(root/'diagnostic-image.dll')==set(manifest['exports']),
         'Parallel source image exports differ or expose a promoted internal data symbol')
+    libraries=[]
+    if winsock:
+        libraries=[S.artifact(path) for path in linked['libraries'] if Path(path).name.lower()=='ws2_32.lib']
+        check(len(libraries)==1,'Selected NativeLibraries omitted its actual SDK ws2_32 import library')
+        image=load('parallel_native_library_import_check','vm-entry-source.py').pe(root/'diagnostic-image.dll')
+        winsock_tokens=link.winsock_import_tokens(libraries[0]['path'])
+        check(sorted(image['imports'].get('ws2_32.dll',[]))==sorted(winsock_tokens.values()),
+              'Selected NativeLibraries image changed its five required Winsock API imports')
+    return libraries
 
 
 def verify(directory):
@@ -154,7 +167,8 @@ def verify(directory):
     if sealed is not None:
         check(objects.verify(directory)==sealed,'Diagnostic assembly changed during independent source/COFF verification')
         if sealed.get('schema')==2:
-            verify_parallel_link(directory,json.loads((Path(directory)/'closure.json').read_bytes()),sealed)
+            libraries=verify_parallel_link(directory,json.loads((Path(directory)/'closure.json').read_bytes()),sealed)
+            if libraries:result['verified_system_import_libraries']=libraries
         result['verified_assembly_objects']=sealed
     return result
 

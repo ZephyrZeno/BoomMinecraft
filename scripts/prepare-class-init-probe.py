@@ -26,7 +26,7 @@ def source_identity(batch,plan):
 def prepare(batch,plan,output,class_roots=None,method_roots=None,scan=False,contract_roots=None,expand_dispatch=True,diagnostic=None,provider_packs=None,verified_provider_packs=None):
     batch,plan,output=Path(batch),Path(plan),Path(output);output.mkdir(parents=True,exist_ok=True)
     summary=json.loads((batch/'summary.json').read_text(encoding='utf-8'));assert summary['schema']>=5
-    provider_module=None;packs=[];pack_natives={};pack_for={};selected_pack_natives={};selected_packs=set();pack_needs_class_pool=False
+    provider_module=None;packs=[];pack_natives={};pack_for={};selected_pack_natives={};selected_packs=set();pack_needs_class_pool=False;pack_needs_properties=False
     if provider_packs:
         spec=importlib.util.spec_from_file_location('selected_separate_native_providers',Path(__file__).with_name('verify-runtime-provider-pack.py'))
         provider_module=importlib.util.module_from_spec(spec);spec.loader.exec_module(provider_module)
@@ -300,6 +300,10 @@ def prepare(batch,plan,output,class_roots=None,method_roots=None,scan=False,cont
                 if id_ in selected_pack_natives:continue
                 selected_pack_natives[id_]=pack_natives[id_];pack_index=pack_for[id_];selected_packs.add(pack_index)
                 pack_needs_class_pool|='class_literals' in packs[pack_index]['manifest']['required_base_modules']
+                if 'properties' in packs[pack_index]['manifest']['required_base_modules']:
+                    if not summary.get('properties',{}).get('units'):raise ValueError('Provider requires the original properties base module')
+                    pack_needs_properties=True
+                    queue.append(('class',summary['properties']['class_id']))
                 for cls in packs[pack_index]['manifest']['required_class_ids']:queue.append(('class',cls))
                 for callback in packs[pack_index]['manifest'].get('required_java_methods',[]):queue.append(('method',f'boom_m{callback}'))
                 for contract in packs[pack_index]['manifest'].get('required_source_contracts',[]):queue.append(('contract',contract))
@@ -460,7 +464,7 @@ def prepare(batch,plan,output,class_roots=None,method_roots=None,scan=False,cont
     if selected_natives:objects.extend(u['object']['path'] for u in summary['system_natives']['units'])
     if selected_class_sites or selected_class_natives or selected_intern_natives or selected_unsafe_field_natives or selected_lookup_natives or selected_frame_natives or pack_needs_class_pool:objects.extend(u['object']['path'] for u in summary['class_literals']['units'])
     if selected_intern_natives:objects.extend(u['object']['path'] for u in summary['string_intern']['units'])
-    if selected_property_natives:objects.extend(u['object']['path'] for u in summary['properties']['units'])
+    if selected_property_natives or pack_needs_properties:objects.extend(u['object']['path'] for u in summary['properties']['units'])
     if selected_bootstrap_natives:objects.extend(u['object']['path'] for u in summary['class_bootstrap']['units'])
     if selected_unsafe_natives or selected_unsafe_field_natives:objects.extend(u['object']['path'] for u in summary['unsafe_bootstrap']['units'])
     if selected_vm_natives:objects.extend(u['object']['path'] for u in summary['vm_registration']['units'])
@@ -517,7 +521,7 @@ def prepare(batch,plan,output,class_roots=None,method_roots=None,scan=False,cont
     if selected_intern_natives:
         exports.extend(('boom_java_string_intern_pool','boom_java_string_intern_root_count','boom_java_string_intern_root'))
         exports.extend(f"boom_m{m['method']}{suffix}" for m in intern_natives.values() for suffix in ('','_native'))
-    if selected_property_natives:
+    if selected_property_natives or pack_needs_properties:
         exports.extend(('boom_java_properties_roots','boom_java_properties_root_count','boom_java_platform_properties_pool',
                         'boom_java_vm_properties_pool','boom_java_properties_string_pool'))
         exports.extend(f"boom_m{m['method']}{suffix}" for m in property_natives.values() for suffix in ('','_native'))

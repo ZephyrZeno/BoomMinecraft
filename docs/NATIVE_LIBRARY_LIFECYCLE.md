@@ -73,4 +73,4 @@ Thread 和 NativeLibraryImpl 接收者仍是明确的源布局存储夹具，未
 
 helpers 的函数 AST 与已执行候选一致，生成 ASM 的摘要固定核对。模型声明所需 Thread／Throwable family、正常元数据与 Properties 模块、四个原 Java 回调和原始 Throwable.fillInStackTrace() 包装；正式接线还必须显式启用 Java upcall 标志。错误构造器的虚调用也需要选入原 Java 包装及正常回溯 native，不能只选构造器。Source／ASM／COFF 独立证明在 `.boom/native-library-source/source-bound-v145-b-throwable-dependency/verification.json`，SHA256 为 `4d0ea3fcfa75988e5147b3f0eb727a2bd18bb6411c0ca6813007259d8f109fa1`；新增依赖后生产 ASM 与上一版逐字节相同，仍为四个 native、五个 Java 依赖、50 个导入和 23 个导出。
 
-该独立模型尚未正式登记、链接或执行。System.mapLibraryName 也需自己的正常 family，普通 Java 装载链仍会在尚未接入的接口处明确停止。
+该模型现已登记为正常 family，并在[第 26 组正式组件](NATIVE_LIBRARY_FORMAL.md)执行原 Thread／NativeLibraryImpl 构造、源属性回调和真实资源清理。独立候选范围与正式证据分别保留；完整 Java 装载链及游戏启动仍未完成。

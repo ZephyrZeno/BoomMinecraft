@@ -5,6 +5,9 @@ import zipfile
 
 
 FAMILIES = {
+    'normal-reference-referent-v1': ('reference-referent-source.py','reference_referent','reference_referent_get.asm.inc'),
+    'normal-native-libraries-v1': ('native-library-source.py','native_library','native_library_lifecycle.asm.inc'),
+    'normal-library-name-v1': ('library-name-source.py','library_name','library_name_normal.asm.inc'),
     'normal-class-loader-assertions-v1': ('class-loader-assertions-source.py','class_loader_assertions','class_loader_assertions.asm.inc'),
     'normal-boot-unnamed-module-v1': ('boot-unnamed-source.py','boot_unnamed','boot_unnamed_normal.asm.inc'),
     'normal-object-wait-v1': ('object-wait-source.py','object_wait','object_wait.asm.inc'),
@@ -45,13 +48,13 @@ def verify(path, batch, plan, m, S):
     S.check(m['assembled'] and m['native_entries_traced'] and not any(m[k] for k in ('all_native_frames','java_codegen_rerun',
             'base_Java_ASM_and_COFF_modified','all_family_natives_implemented','linked','executed','game_started','world_created')),
             'Native service evidence scope differs')
-    S.check(m['leaf_guest_services'] is False and m['native_java_upcalls'] == (key in ('winnt_filesystem','object_wait')) and
+    S.check(m['leaf_guest_services'] is False and m['native_java_upcalls'] == (key in ('winnt_filesystem','object_wait','native_library','library_name')) and
             source_frame(batch,plan,S.checked(m['frame_overlay']['manifest']),meta,S) == m['frame_overlay'],
             'Original source frame configuration differs')
     proc, data = C.native_imports(meta)
-    if key in ('object_wait','boot_unnamed'):
-        S.check(m['required_java_methods']==meta['required_java_methods'] and
-                m['required_provider_families']==meta['required_provider_families'],
+    if key in ('object_wait','boot_unnamed','reference_referent','native_library','library_name'):
+        S.check(m['required_java_methods']==meta.get('required_java_methods',[]) and
+                m['required_provider_families']==meta.get('required_provider_families',[]),
                 'Original required Java methods or service dependencies differ')
     declared = {f"boom_class{c['id']}" for c in owners} | {'boom_class_ensure32'}
     expected = 'option casemap:none\nEXTERN boom_class_ensure32:PROC\n' + ''.join(f"EXTERN boom_class{c['id']}:BYTE\n" for c in owners)

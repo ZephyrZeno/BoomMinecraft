@@ -72,4 +72,4 @@
   --output .boom/library-name/review-execution
 ```
 
-当前结果仍是独立正常 source 组件验证。该 family 尚未正式注册；完整 System 冷启动、Phase1／Phase2、原 Java NativeLibraries 装载链和 Minecraft 启动均未由这组测试完成。
+以上保留独立候选范围。该 family 现已登记，并通过[第 26 组正常冷源验证](FORMAL_MAP_LIBRARY_NAME.md)；原 properties 模块由实际依赖选择，未调用属性 native。完整 System、原 Java NativeLibraries 装载链和 Minecraft 启动仍未由这些组件测试完成。

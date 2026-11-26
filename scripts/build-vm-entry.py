@@ -15,6 +15,9 @@ def build(directory, accepted_sha, output, assembler, linker, synchronization, k
     directory, output = Path(directory).resolve(), Path(output).resolve()
     S.check(output.is_relative_to(S.ART/'vm-entry-images') and not output.exists(), 'Use a fresh native entry output directory')
     closure, proof, old = M.accepted(directory, accepted_sha)
+    selected_families={S.read(S.checked(closure['runtime_provider_packs'][i]['manifest']))['family']
+        for i in closure.get('selected_runtime_provider_packs',[])}
+    winsock='normal-native-libraries-v1' in selected_families
     model = M.binding_model(closure, include_system, construct_child, start_child, child_task_main_thread, signal_control, system_phase2)
     original_objects = M.source_objects(closure)
     runtime = Path(old['runtime']).resolve()
@@ -33,6 +36,10 @@ def build(directory, accepted_sha, output, assembler, linker, synchronization, k
     inputs += [S.artifact(p) for p in (runtime, runtime_lib, runtime.with_name('runtime.json'),
         assembler, linker, synchronization, kernel32, Path(__file__), M.ROOT/'scripts/vm-entry-source.py',
         M.ROOT/'scripts/verify-vm-entry.py', M.ROOT/'scripts/canonical-link-response.py', M.ROOT/'native/entry/vm_process.asm.inc')]
+    winsock_libraries=[]
+    if winsock:
+        winsock_libraries=[S.artifact(Path(kernel32).with_name('ws2_32.lib'))]
+        inputs.extend(winsock_libraries)
     if model['lifecycle_reference']:
         inputs += [model['lifecycle_reference']['manifest'],model['lifecycle_reference']['metadata']]
     if model.get('signal_reference'):
@@ -79,7 +86,7 @@ def build(directory, accepted_sha, output, assembler, linker, synchronization, k
     rsp = ['/NOLOGO', '/MACHINE:X64', '/SUBSYSTEM:CONSOLE', '/ENTRY:boom_process_entry', '/NODEFAULTLIB',
            '/DYNAMICBASE', '/NXCOMPAT', '/HIGHENTROPYVA', '/BREPRO', '/STACK:8388608', '/OUT:"'+str(target)+'"']
     link_objects = [r['path'] for r in reused+objects+original_objects]
-    rsp += ['"'+p+'"' for p in link_objects+[str(runtime_lib), str(synchronization), str(kernel32)]]
+    rsp += ['"'+p+'"' for p in link_objects+[str(runtime_lib), str(synchronization), str(kernel32)]+[r['path'] for r in winsock_libraries]]
     rsp += ['/EXPORT:'+s for s in sorted(set(closure['exports']) | M.EXPORTS)]
     (output/'link.rsp').write_text('\n'.join(rsp)+'\n', encoding='utf-8')
     with (output/'link.log').open('wb') as log:
@@ -103,6 +110,7 @@ def build(directory, accepted_sha, output, assembler, linker, synchronization, k
         VM_binding_configuration_fixture=False, managed_execution_host=False, jvm_fallback=False,
         linked=True, executed=False, full_VM_bootstrap=False, game_started=False, world_created=False)
     if sealed and sealed.get('schema')==2:data['source_assembly_mode']='parallel_source_groups'
+    if winsock:data['supplemental_system_import_libraries']=winsock_libraries
     S.write(output/'vm-entry.json', data)
     print(target)
 

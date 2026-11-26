@@ -113,4 +113,4 @@ HotSpot 的弱读取、无保活比较及清除还包含各 GC 专属访问规�
   --output .boom/reference-referent/review-execution
 ```
 
-该四入口 family 尚未正式登记；独立执行未重放整个 System 冷初始化、VM 启动或 Minecraft。源输入仍受非移动、静止 GC 和原版未变换边界约束，不提供完整弱引用 GC。
+该四入口 family 现已登记，并在[第 26 组正式冷源验证](REFERENCE_REFERENT_FORMAL.md)通过同一组原 Java／并发／GC 检查，没有替换 native stop。独立候选证据保留；完整 System、VM 和 Minecraft 仍未完成。源输入仍受非移动、静止 GC 和原版未变换边界约束，不提供完整弱引用 GC。

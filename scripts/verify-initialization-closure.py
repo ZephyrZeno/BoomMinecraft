@@ -5,10 +5,59 @@ import importlib.util
 import json
 from pathlib import Path
 import re
+import struct
 import zipfile
 
 def check(value,message):
     if not value:raise ValueError(message)
+
+def verify_property_root_span(path,cells,strings):
+    """Check the original properties root prefix in its actual sealed AMD64 COFF."""
+    raw=Path(path).read_bytes()
+    check(len(raw)>=20 and cells==2*strings+1 and strings>0,'Invalid property root source inventory')
+    machine,count,_,offset,symbols,optional,_=struct.unpack_from('<HHIIIHH',raw)
+    check(machine==0x8664 and optional==0 and count>0 and offset>=20+40*count and
+          offset+18*symbols+4<=len(raw),'Invalid property root COFF')
+    table=offset+18*symbols;length=struct.unpack_from('<I',raw,table)[0]
+    check(length>=4 and table+length<=len(raw),'Invalid property root COFF string table')
+    sections={}
+    for i in range(1,count+1):
+        at=20+(i-1)*40
+        name=raw[at:at+8].rstrip(b'\0').decode('ascii');size,position=struct.unpack_from('<II',raw,at+16)
+        sections[i]=dict(name=name,size=size,position=position)
+    wanted={'boom_java_properties_roots','property_java_string_roots','property_java_string_states','boom_java_properties_root_count'}
+    found={};i=0
+    while i<symbols:
+        name,value,section,_,storage,auxiliary=struct.unpack_from('<8sIhHBB',raw,offset+i*18)
+        if name[:4]==b'\0'*4:
+            begin=table+struct.unpack_from('<I',name,4)[0]
+            check(table+4<=begin<table+length,'Invalid property root symbol name')
+            end=raw.find(b'\0',begin,table+length);check(end>=begin,'Unterminated property root symbol')
+            name=raw[begin:end]
+        else:name=name.rstrip(b'\0')
+        name=name.decode('ascii')
+        check(i+auxiliary<symbols,'Invalid property root symbol metadata')
+        if name in wanted:
+            check(name not in found and section in sections and storage in (2,3),'Duplicate/unbound property root symbol')
+            found[name]=dict(value=value,section=section,storage=storage)
+        i+=1+auxiliary
+    check(set(found)==wanted,'Missing actual property root/count/storage symbols')
+    root=found['boom_java_properties_roots'];bank=sections[root['section']]
+    names=found['property_java_string_roots'];states=found['property_java_string_states']
+    check(root['storage']==2 and root['value']==0 and bank['name']=='.bss' and
+          names['section']==states['section']==root['section'] and names['value']==8 and
+          states['value']==cells*8 and states['value']+strings*4<=bank['size'],
+          'Property GC roots lost their original contiguous cell offsets')
+    counter=found['boom_java_properties_root_count'];data=sections[counter['section']]
+    pos=data['position']+counter['value']
+    check(counter['storage']==2 and data['name']=='.rdata' and counter['value']+8<=data['size'] and
+          data['position']>0 and pos+8<=len(raw) and struct.unpack_from('<Q',raw,pos)[0]==cells,
+          'Actual property GC root count differs from the original source')
+    return dict(symbol='boom_java_properties_roots',count_symbol='boom_java_properties_root_count',
+        object=str(Path(path).resolve()),object_sha256=hashlib.sha256(raw).hexdigest(),section='.bss',
+        offset=0,cells=cells,bytes=cells*8,source_string_roots=2*strings,contiguous_original_span_verified=True,
+        runtime_GC_registration_executed=False)
+
 
 def verify(directory,allow_diagnostics=False):
     directory=Path(directory);manifest_bytes=(directory/'closure.json').read_bytes();manifest=json.loads(manifest_bytes)
@@ -218,7 +267,12 @@ def verify(directory,allow_diagnostics=False):
             coff.artifact(batch,unit['assembly'],'string-intern');defs,_=coff.coff_symbols(coff.artifact(batch,unit['object'],'string-intern'));actual.update(defs)
         check(actual==expected,'Source intern module COFF definitions differ');native_exports.update(actual)
     selected_properties=manifest.get('selected_property_natives',{})
-    if selected_properties:
+    property_objects=[u['object']['path'] for u in summary.get('properties',{}).get('units',[])]
+    properties_linked=any(p in manifest['objects'] for p in property_objects)
+    property_root_span=None
+    if selected_properties or properties_linked:
+        check(bool(property_objects) and all(manifest['objects'].count(p)==1 for p in property_objects),'Selected image omitted/duplicated its original property COFF')
+        check(summary['properties']['class_id'] in selected,'Properties module omitted its original Raw class state/failure root')
         module=summary['properties']
         with zipfile.ZipFile(coff.artifact(batch,module['index'],'properties')) as bundle:
             methods_={str(r['method']):r for r in map(json.loads,bundle.read('methods.jsonl').splitlines())}
@@ -231,6 +285,8 @@ def verify(directory,allow_diagnostics=False):
         for unit in module['units']:
             coff.artifact(batch,unit['assembly'],'properties');defs,_=coff.coff_symbols(coff.artifact(batch,unit['object'],'properties'));actual.update(defs)
         check(actual==expected,'Source property module COFF definitions differ');native_exports.update(actual)
+        check(len(module['units'])==1 and module['root_cells']==2*module['canonical_strings']+1,'Source property root module shape differs')
+        property_root_span=verify_property_root_span(coff.artifact(batch,module['units'][0]['object'],'properties'),module['root_cells'],module['canonical_strings'])
     spec=importlib.util.spec_from_file_location('selected_logical_object_provenance',Path(__file__).with_name('diagnostic-objects.py'))
     provenance=importlib.util.module_from_spec(spec);spec.loader.exec_module(provenance)
     defined,undefined=provenance.logical_symbols(directory,'initialization-closure',coff.coff_symbols)
@@ -383,6 +439,12 @@ def verify(directory,allow_diagnostics=False):
         for i in sorted(indices):
             p=packs[i]['manifest'];check(set(p['required_class_ids'])<=set(selected),'Provider omitted original class initialization dependencies')
             needs_source_initializer_map|='class_initialization_map' in p['required_base_modules']
+            if 'properties' in p['required_base_modules']:
+                check(properties_linked and property_root_span is not None and all(manifest['objects'].count(obj)==1 for obj in property_objects),
+                      'Provider omitted its required original properties module/root span')
+            if 'runtime_metadata' in p['required_base_modules']:
+                check(all(manifest['objects'].count(u['object']['path'])==1 for u in summary['runtime_metadata']['units']),
+                      'Provider omitted its required original runtime metadata COFF')
             check(all(str(m) in manifest['selected_methods'] for m in p.get('required_java_methods',[])),
                   'Provider omitted required original Java callbacks')
             check(set(p.get('required_source_contracts',[]))<=set(manifest.get('selected_dispatch_sites',{})),
@@ -409,7 +471,7 @@ def verify(directory,allow_diagnostics=False):
                 source_native_methods=len(selected_native),
                 source_Class_literals=len(selected_class_sites),source_Class_core_natives=len(selected_class_natives),
                 source_String_intern_natives=len(selected_intern_natives),
-                source_property_natives=len(selected_properties),
+                source_property_natives=len(selected_properties),source_property_root_span=property_root_span,
                 source_Class_bootstrap_natives=len(selected_bootstrap),
                 source_Unsafe_natives=len(selected_unsafe),
                 source_VM_natives=len(selected_vm),

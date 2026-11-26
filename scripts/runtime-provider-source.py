@@ -109,6 +109,18 @@ TOOL_FILES=('scripts/build-runtime-provider-pack.py','scripts/runtime-provider-s
             'scripts/class-loader-assertions-source.py','scripts/class-loader-assertions-candidate.py','native/providers/class_loader_assertions.asm.inc',
             'scripts/winnt-filesystem-source.py','native/providers/winnt_filesystem.asm.inc',
             'scripts/revalidate-runtime-provider-cache.py',
+            'scripts/reference-referent-source.py',
+            'native/providers/reference_referent_get.asm.inc',
+            'native/providers/reference_referent_read.asm.inc',
+            'scripts/native-library-source.py',
+            'scripts/native-library-helpers-source.py',
+            'native/providers/native_library_lifecycle.asm.inc',
+            'native/providers/builtin_net_platform.asm.inc',
+            'native/providers/builtin_module_context.asm.inc',
+            'scripts/library-name-source.py',
+            'native/providers/library_name_normal.asm.inc',
+            'native/providers/win32_library_name.asm.inc',
+            'native/kernels/java_string_literals.inc',
             'scripts/native-frame-overlay.py')
 
 

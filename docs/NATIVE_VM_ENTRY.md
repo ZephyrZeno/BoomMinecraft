@@ -2,7 +2,13 @@
 
 `Build-VmEntry.ps1` 把已独立校验的原始 Java 汇编、运行时提供者对象和新生成的 VM 绑定表链接为原生 `boom-vm-entry.exe`。游戏执行路径不加载 C#／CLR、JVM 或 CRT。Python 只在构建时读取锁定输入，PowerShell 只构建、启动隔离进程和读取验证记录。
 
-## v145 正式 23 包并行汇编进程
+## v146 第 26 组原生进程
+
+新增三个正式源绑定后，完整原生镜像已实际越过 Reference.refersTo0，新的停止点为 WinNTFileSystem.canonicalize0（40674）。源选择含 4,701 类、45,776 个原 Java 方法和 10,591 格正常根，独立校验自然退出 0；原始 Phase1 返回、Phase2 进入但未完成。两个后台原 Thread.exit／记录回收、零工作者失败、零监视器持有和清理标志 7 均通过。
+
+源／入口／执行散列、三个新组件的实际范围及 scoped accepted26 状态见[第 26 组验收记录](NATIVE_RUNTIME_26.md)。它不表示完整 VM 或游戏启动。
+
+## v145 正式 23 包并行汇编进程（历史记录）
 
 原生镜像已从完整独立校验的 4,056 类／37,546 Java 方法源选择，实际链接全部 23 个正式 provider 并执行。初始化源码按完整函数分为 48 个单元，另保留完整 diagnostic-stops；入口按封存顺序复用 49 个闭包 COFF。源码、类状态、正常根跨度与原 Java 方法保持来源绑定，详见[并行构建证据](PARALLEL_DIAGNOSTIC_ASSEMBLY.md)。
 

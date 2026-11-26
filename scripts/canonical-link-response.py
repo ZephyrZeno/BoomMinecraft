@@ -104,3 +104,38 @@ def verify(response, *, profile, output, objects, library_choices, exports):
             return dict(profile=profile, objects=object_paths, libraries=libraries, exports=symbols,
                         complete_argument_sequence_verified=True)
     raise ValueError('Canonical LINK response differs: options, output, sealed COFF parts or their order, libraries, or exports')
+
+
+def winsock_import_tokens(library):
+    """Resolve only the five source APIs from the sealed SDK's short import objects."""
+    import struct
+    raw=Path(library).read_bytes();check(raw.startswith(b'!<arch>\n'),'Expected the selected SDK import library archive')
+    required={'WSAStartup','WSACleanup','WSAGetLastError','socket','closesocket'}
+    found={};at=8
+    while at<len(raw):
+        check(at+60<=len(raw) and raw[at+58:at+60]==b'`\n','Malformed SDK archive member header')
+        size_text=raw[at+48:at+58].strip()
+        check(size_text and size_text.isdigit(),'Invalid SDK import member size')
+        size=int(size_text);begin=at+60;end=begin+size
+        check(end<=len(raw),'Truncated SDK import member')
+        member=raw[begin:end]
+        if len(member)>=20 and member[:4]==b'\0\0\xff\xff':
+            _,_,version,machine,_,amount,ordinal,flags=struct.unpack_from('<HHHHIIHH',member)
+            if version==0:
+                check(20+amount<=len(member),'Truncated SDK short import payload')
+                names=member[20:20+amount].split(b'\0')
+                check(len(names)>=3 and names[-1]==b'','Invalid SDK short import names')
+                api=names[0].decode('ascii')
+                if api in required:
+                    kind,name_kind=flags&3,(flags>>2)&7
+                    check(api not in found and machine==0x8664 and kind==0 and name_kind in (0,1) and flags>>5==0 and
+                          names[1].decode('ascii').lower()=='ws2_32.dll','The selected SDK has an ambiguous/foreign Winsock import')
+                    check(name_kind!=0 or ordinal>0,'The selected SDK has an invalid Winsock ordinal')
+                    found[api]='#'+str(ordinal) if name_kind==0 else api
+        at=end
+        if size&1:
+            check(at<len(raw) and raw[at:at+1]==b'\n','Invalid SDK archive member alignment')
+            at+=1
+    check(set(found)==required and len(set(found.values()))==len(required),
+          'The selected SDK does not supply the five exact distinct source Winsock APIs')
+    return dict(sorted(found.items()))

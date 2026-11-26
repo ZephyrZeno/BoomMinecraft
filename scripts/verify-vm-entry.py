@@ -9,7 +9,7 @@ spec.loader.exec_module(M)
 S = M.S
 
 
-def verify_link(manifest, runtime_dll, exports, assembly_inputs, sealed=None):
+def verify_link(manifest, runtime_dll, exports, assembly_inputs, sealed=None, *, winsock=False):
     names=[Path(record['path']).stem for record in manifest['reassembled_objects']]
     S.check(len(set(names))==len(names), 'Native entry contains duplicate assembly object names')
     link=M.module('native_vm_entry_canonical_link','canonical-link-response.py')
@@ -18,7 +18,7 @@ def verify_link(manifest, runtime_dll, exports, assembly_inputs, sealed=None):
         promoted={symbol for unit in sealed['logical_units'] for symbol in unit['promoted_data']}
         S.check(not promoted.intersection(exports),'Native entry must not export promoted internal data')
     return link.verify(S.checked(manifest['link_response']),profile='native',output=Path(manifest['executable']['path']),
-        objects=assembly_inputs,library_choices=[link.native_libraries(manifest['inputs'],runtime_dll)],exports=exports)
+        objects=assembly_inputs,library_choices=[link.native_libraries(manifest['inputs'],runtime_dll,winsock=winsock)],exports=exports)
 
 
 def verify(directory):
@@ -32,6 +32,16 @@ def verify(directory):
     for record in manifest['inputs']:
         S.check(S.artifact(record['path']) == record, 'Native entry input changed: '+record['path'])
     closure, proof, old = M.accepted(manifest['baseline_directory'], manifest['accepted_source_verification_sha256'])
+    selected_families={S.read(S.checked(closure['runtime_provider_packs'][i]['manifest']))['family']
+        for i in closure.get('selected_runtime_provider_packs',[])}
+    winsock='normal-native-libraries-v1' in selected_families
+    extra_libraries=[]
+    if winsock:
+        kernel32=[r for r in manifest['inputs'] if Path(r['path']).name.lower()=='kernel32.lib']
+        S.check(len(kernel32)==1,'NativeLibraries must use one sealed Windows SDK kernel32 library')
+        extra_libraries=[S.artifact(Path(kernel32[0]['path']).with_name('ws2_32.lib'))]
+    S.check(manifest.get('supplemental_system_import_libraries',[])==extra_libraries and all(r in manifest['inputs'] for r in extra_libraries),
+            'Native entry omitted or added a system import library outside the selected source family')
     model = M.binding_model(closure, manifest['include_System_phase1'], manifest['construct_child'],
                             manifest.get('start_child', False), manifest.get('child_task_main_thread', False), manifest.get('signal_control', False), manifest.get('system_phase2',False))
     S.check(model == manifest['binding_model'] and M.source_objects(closure) == manifest['original_source_objects'],
@@ -60,7 +70,7 @@ def verify(directory):
             'Native entry contains extra/missing objects')
     assembly_inputs=[r['path'] for r in reused+manifest['reassembled_objects']+manifest['original_source_objects']]
     verify_link(manifest,old['runtime'],set(closure['exports']) | M.EXPORTS,assembly_inputs,
-        sealed if proof.get('verified_assembly_objects',{}).get('schema')==2 else None)
+        sealed if proof.get('verified_assembly_objects',{}).get('schema')==2 else None,winsock=winsock)
     defined, undefined = coff.coff_symbols(objects['vm-entry'], allowed_foreign=M.FOREIGN | ({'Sleep','GetTickCount64'} if model['child_start'] or model.get('signal_reference') else set()))
     S.check(defined == M.EXPORTS and undefined == imports, 'Native entry actual COFF definitions/imports differ')
     if not manifest.get('original_assembly_read_in_place'):
@@ -72,8 +82,14 @@ def verify(directory):
     parsed = M.pe(image)
     S.check(not parsed['dll'] and parsed['entry_rva'] != 0 and parsed['subsystem'] == 3, 'Native process entry is not a console EXE')
     modules = set(parsed['imports'])
-    S.check('boom-runtime.dll' in modules and all(n in {'boom-runtime.dll', 'kernel32.dll'} or
+    allowed_modules={'boom-runtime.dll','kernel32.dll'} | ({'ws2_32.dll'} if winsock else set())
+    S.check('boom-runtime.dll' in modules and all(n in allowed_modules or
             n.startswith('api-ms-win-') for n in modules), 'Native entry unexpectedly imports a managed/foreign runtime')
+    if winsock:
+        policy=M.module('selected_sdk_Winsock_import_policy','canonical-link-response.py')
+        winsock_tokens=policy.winsock_import_tokens(extra_libraries[0]['path'])
+        S.check(sorted(parsed['imports'].get('ws2_32.dll',[]))==sorted(winsock_tokens.values()),
+                'Selected NativeLibraries executable changed its five required Winsock API imports')
     S.check(M.FOREIGN <= set(parsed['imports'].get('kernel32.dll', [])), 'Native process owner Windows imports missing')
     S.check((manifest.get('execution_report_bytes',112),manifest.get('execution_report_abi',2)) ==
             M.report_layout(model), 'Native thread execution report ABI differs')
@@ -95,6 +111,7 @@ def verify(directory):
         result.update(source_assembly_mode='parallel_source_groups',verified_assembly_objects=sealed,
             reused_closure_objects=reused,actual_link_objects=assembly_inputs,
             monolithic_reference_used=False,monolithic_binary_equivalence=False)
+    if winsock:result['verified_system_import_libraries']=extra_libraries
     return result
 
 
