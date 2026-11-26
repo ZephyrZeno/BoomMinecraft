@@ -225,9 +225,9 @@ def prepare(batch,plan,output,family,frame_overlay=None):
         assembled=False,linked=False,executed=False,game_started=False,world_created=False,elapsed_ms=round((time.monotonic()-started)*1000))
     if family in framed_services.FAMILIES:
         record=output/(metadata_kind+'.json');S.write(record,metadata);result[metadata_kind+'_metadata']=S.artifact(record)
-        result.update(native_entries_traced=True,native_java_upcalls=metadata_kind in ('winnt_filesystem','object_wait','native_library','library_name'),leaf_guest_services=False,
+        result.update(native_entries_traced=True,native_java_upcalls=metadata_kind in ('winnt_filesystem','object_wait','native_library','library_name','windows_canonical','windows_file_queries'),leaf_guest_services=False,
                       all_native_frames=False,frame_overlay=frame_reference,allowed_foreign_imports=sorted(C.FOREIGN))
-        if metadata_kind in ('object_wait','boot_unnamed','reference_referent','native_library','library_name'):
+        if metadata_kind in ('object_wait','boot_unnamed','reference_referent','native_library','library_name','windows_canonical','windows_file_queries'):
             result.update(required_java_methods=metadata.get('required_java_methods',[]),required_provider_families=metadata.get('required_provider_families',[]))
     elif metadata_kind=='unsafe_class_init':
         S.write(output/'unsafe-class-init.json',metadata);result['unsafe_class_init_metadata']=S.artifact(output/'unsafe-class-init.json')

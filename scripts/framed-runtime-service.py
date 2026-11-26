@@ -5,6 +5,8 @@ import zipfile
 
 
 FAMILIES = {
+    'normal-windows-canonical-v1': ('windows-canonical-source.py','windows_canonical','windows_canonical.asm.inc'),
+    'normal-windows-file-queries-v1': ('windows-file-queries-source.py','windows_file_queries','windows_file_queries.asm.inc'),
     'normal-reference-referent-v1': ('reference-referent-source.py','reference_referent','reference_referent_get.asm.inc'),
     'normal-native-libraries-v1': ('native-library-source.py','native_library','native_library_lifecycle.asm.inc'),
     'normal-library-name-v1': ('library-name-source.py','library_name','library_name_normal.asm.inc'),
@@ -48,11 +50,11 @@ def verify(path, batch, plan, m, S):
     S.check(m['assembled'] and m['native_entries_traced'] and not any(m[k] for k in ('all_native_frames','java_codegen_rerun',
             'base_Java_ASM_and_COFF_modified','all_family_natives_implemented','linked','executed','game_started','world_created')),
             'Native service evidence scope differs')
-    S.check(m['leaf_guest_services'] is False and m['native_java_upcalls'] == (key in ('winnt_filesystem','object_wait','native_library','library_name')) and
+    S.check(m['leaf_guest_services'] is False and m['native_java_upcalls'] == (key in ('winnt_filesystem','object_wait','native_library','library_name','windows_canonical','windows_file_queries')) and
             source_frame(batch,plan,S.checked(m['frame_overlay']['manifest']),meta,S) == m['frame_overlay'],
             'Original source frame configuration differs')
     proc, data = C.native_imports(meta)
-    if key in ('object_wait','boot_unnamed','reference_referent','native_library','library_name'):
+    if key in ('object_wait','boot_unnamed','reference_referent','native_library','library_name','windows_canonical','windows_file_queries'):
         S.check(m['required_java_methods']==meta.get('required_java_methods',[]) and
                 m['required_provider_families']==meta.get('required_provider_families',[]),
                 'Original required Java methods or service dependencies differ')

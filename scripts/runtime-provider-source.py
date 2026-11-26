@@ -121,7 +121,13 @@ TOOL_FILES=('scripts/build-runtime-provider-pack.py','scripts/runtime-provider-s
             'native/providers/library_name_normal.asm.inc',
             'native/providers/win32_library_name.asm.inc',
             'native/kernels/java_string_literals.inc',
-            'scripts/native-frame-overlay.py')
+            'scripts/native-frame-overlay.py',
+            'scripts/windows-canonical-source.py',
+            'native/providers/windows_canonical.asm.inc',
+            'native/runtime/windows_canonical_path.asm',
+            'scripts/windows-file-queries-source.py',
+            'native/providers/windows_file_queries.asm.inc',
+            'native/runtime/win32_path_attributes.asm')
 
 
 def tools_identity():return {p:digest(ROOT/p)['sha256'] for p in TOOL_FILES}

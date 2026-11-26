@@ -1,6 +1,35 @@
 {
   "schema": 1,
   "families": {
+    "normal-windows-canonical-v1": {
+      "owner": "java/io/WinNTFileSystem",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/windows_canonical.asm.inc",
+      "pool": "boom_provider_windows_canonical_pool",
+      "service": "boom_provider_windows_canonical_service",
+      "methods": [
+        { "name": "canonicalize0", "descriptor": "(Ljava/lang/String;)Ljava/lang/String;", "access": 258, "operation": 0 },
+        { "name": "getDriveDirectory", "descriptor": "(I)Ljava/lang/String;", "access": 258, "operation": 1 }
+      ]
+    },
+    "normal-windows-file-queries-v1": {
+      "owner": "java/io/WinNTFileSystem",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/windows_file_queries.asm.inc",
+      "pool": "boom_provider_windows_file_queries_pool",
+      "service": "boom_provider_windows_file_queries_service",
+      "methods": [
+        { "name": "getBooleanAttributes0", "descriptor": "(Ljava/io/File;)I", "access": 258, "operation": 0 },
+        { "name": "getLastModifiedTime0", "descriptor": "(Ljava/io/File;)J", "access": 258, "operation": 1 },
+        { "name": "getLength0", "descriptor": "(Ljava/io/File;)J", "access": 258, "operation": 2 },
+        { "name": "listRoots0", "descriptor": "()I", "access": 266, "operation": 3 },
+        { "name": "getSpace0", "descriptor": "(Ljava/io/File;I)J", "access": 258, "operation": 4 },
+        { "name": "getNameMax0", "descriptor": "(Ljava/lang/String;)I", "access": 258, "operation": 5 },
+        { "name": "checkAccess0", "descriptor": "(Ljava/io/File;I)Z", "access": 258, "operation": 6 }
+      ]
+    },
     "normal-class-loader-assertions-v1": {
       "owner": "java/lang/ClassLoader",
       "loader": "bootstrap",
