@@ -4,7 +4,7 @@
 
 ## v146 第 26 组原生进程
 
-新增三个正式源绑定后，完整原生镜像已实际越过 Reference.refersTo0，新的停止点为 WinNTFileSystem.canonicalize0（40674）。源选择含 4,701 类、45,776 个原 Java 方法和 10,591 格正常根，独立校验自然退出 0；原始 Phase1 返回、Phase2 进入但未完成。两个后台原 Thread.exit／记录回收、零工作者失败、零监视器持有和清理标志 7 均通过。
+注册两组 Windows 路径／文件查询后，[正式 28 组输入](NATIVE_RUNTIME_28.md)的完整原生镜像已实际越过 WinNTFileSystem.canonicalize0 和 getBooleanAttributes0，新的停止点为 Module.defineModule0（42293，当前选择 row 105103）。源选择含 5374 类、50860 个原 Java 方法和 12704 格正常根，独立完整校验自然退出 0；原始 Phase1 返回、Phase2 进入但未完成。两个后台原 Thread.exit／记录回收、零工作者失败、零监视器持有和清理标志 7 均通过。
 
 源／入口／执行散列、三个新组件的实际范围及 scoped accepted26 状态见[第 26 组验收记录](NATIVE_RUNTIME_26.md)。它不表示完整 VM 或游戏启动。
 

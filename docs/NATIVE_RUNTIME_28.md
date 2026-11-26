@@ -36,4 +36,17 @@
 
 [九项 native 的 owned 增量探针](NATIVE_PROVIDER_PREFIX.md)已实际越过原 canonicalize0 和 getBooleanAttributes0 停点，下一原 native 为 Module.defineModule0（本批 42293、row 104319、main 64498／PC 26）。该探针显式 `full_selection_reverified=false`，不能替代正式 28 组的完整源选择和原生镜像验证。
 
-当前正式 28 组主流程仍在独立完整校验。完整 System Phase2、Minecraft 入口、世界创建、自动／并发 GC 和游戏性能验收尚未完成。[八项文件输入候选](FILE_INPUT_READONLY.md)已独立通过原 Java 读／关闭链和并发关闭测试，但尚未注册；其新增 4096 格 owner 根必须由正式 GC 消费者接入后才能验收。
+正式 28 组的完整流程现已实际通过。新选择位于 `.boom/diagnostic-startup/v147-native-windows-runtime-4ebc28839a37447e9323d556b76759d7/round-000`，包含 5374 类、50860 个选入 Java 方法、131775 个源函数和 12704 格正常静态／失败根。558473573 字节初始化 ASM 完成并行汇编，独立完整 verifier 自然退出 0，用时 515.328 秒。
+
+原生镜像 `.boom/vm-entry-images/82204015cd174cf695f9d937ae2534d4` 已实际执行：原 Phase1 返回，Phase2 越过两组 Windows 接口，停在原 Module.defineModule0／方法 42293、main 64498／PC 26。**这份新选择的 row 为 105103**，与旧快照增量探针的 row 104319 不同。Phase2 未返回，VM level 为 1。两个原后台线程退出并回收，worker failure、停止时 monitor 持有数均为 0，cleanup=7；停止前活对象 8978。未将源选择数量记作已执行方法数量。
+
+```text
+source proof 4b7c2eefd078550dcdd7699dd0587278e8aa71d6880ce8c9d6c06f76e0445820
+native proof ca94078417abcd1519a2dc44f6db14c14765a1744f039573614d2b8fe2df9b29
+execution    7f270e7fa5f3b4068b59eab48ae4ddd0d2e1320921e8195ce01886d969247652
+report448    f0f80b4df52adf7b6d73afaf4a2393fbb54086ee2a300a51958e461897057a17
+```
+
+主 agent 对本轮 497 项实际输入和生成物分别在验收前后重新计算摘要，发布 `.boom/accepted-native-windows-runtime-v147-28.json`，SHA256 `31b53bd3c0627e1b0a3c9c315a722fec9e3e9aed37f3e08397761a0aa2c5b90d`。新 accepted 视图把 producer 引用指向内容相同的归档源码，并保留原位置和原 pending 的摘要，没有改写原收据。组件与正式对象的代码／数据／重定位等价证明 SHA256 为 `bf975f4c62a3bf39105756d907265fb377edc19485374e28a40c99b0898c2595`。接受范围为当前输入、两个组件的等价执行和实际原生前缀；未穷尽执行全部 native，原报告也没有观察两个候选的最终缓冲计数。
+
+376 项现有 Python 测试通过。完整 System Phase2、Minecraft 入口、世界创建、自动／并发 GC 和游戏性能验收尚未完成。[八项文件输入候选](FILE_INPUT_READONLY.md)已独立通过原 Java 读／关闭链和并发关闭测试，但尚未注册；其新增 4096 格 owner 根必须由正式 GC 消费者接入后才能验收。

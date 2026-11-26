@@ -4,7 +4,7 @@ An experimental AOT compiler, assembly runtime, and launcher for Minecraft: Java
 
 自研编译器将 JVM 字节码翻译为 x86-64 汇编，目标是通过启动器运行完整原版 Minecraft。游戏逻辑、运行时及游戏执行中的多核、GPU、内存优化均以汇编实现。翻译器使用 Rust，构建工具使用 Python 和 PowerShell，启动器使用 C#。
 
-**项目处于开发阶段，完整 Minecraft 客户端尚未启动。** 2026 年 11 月 27 日，包含 45,776 个选入 Java 方法和 26 组运行时输入的原生镜像通过独立来源／ASM／COFF 校验和实际执行。原始 `System.initPhase1` 返回，`System.initPhase2` 已越过 ClassLoader 和引用接口，停在尚未提供的 `WinNTFileSystem.canonicalize0`。两个后台线程受控退出，等待域与监视器清理通过；第二阶段和游戏启动仍未完成。链接数量与实际执行范围分别记录。
+**项目处于开发阶段，完整 Minecraft 客户端尚未启动。** 2026 年 11 月 27 日，包含 50,860 个选入 Java 方法和 [28 组运行时输入](docs/NATIVE_RUNTIME_28.md)的原生镜像通过独立来源／ASM／COFF 完整校验和实际执行。原始 `System.initPhase1` 返回，`System.initPhase2` 已越过 Windows 路径规范化和文件查询，停在尚未提供的 `Module.defineModule0`。两个后台线程正常退出并回收，等待域与监视器清理通过；第二阶段和游戏启动仍未完成。链接数量与实际执行范围分别记录。
 
 当前已验证原始 `Unsafe` 类初始化调用、Windows 文件系统字段注册、引用等待和对象监视器等待，以及原始 Java 对中断异常的捕获。Windows 文件元数据内核通过 JDK 对照，窗口调用桥通过无窗口契约测试。完整模块引导、图形运行时和创建世界仍在实现。多核线程内核已有并发测试，游戏性能提升需要在完整启动后测量。
 
