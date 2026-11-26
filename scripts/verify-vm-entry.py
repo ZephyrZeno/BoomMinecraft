@@ -45,7 +45,7 @@ def verify(directory):
     S.check(manifest.get('supplemental_system_import_libraries',[])==extra_libraries and all(r in manifest['inputs'] for r in extra_libraries),
             'Native entry omitted or added a system import library outside the selected source family')
     model = M.binding_model(closure, manifest['include_System_phase1'], manifest['construct_child'],
-                            manifest.get('start_child', False), manifest.get('child_task_main_thread', False), manifest.get('signal_control', False), manifest.get('system_phase2',False), manifest.get('system_phase3',False))
+                            manifest.get('start_child', False), manifest.get('child_task_main_thread', False), manifest.get('signal_control', False), manifest.get('system_phase2',False), manifest.get('system_phase3',False), manifest.get('server_help',False))
     S.check(model == manifest['binding_model'] and M.source_objects(closure) == manifest['original_source_objects'],
             'Native entry binding or original source object identity differs')
     if model.get('provider_native_root_spans'):
@@ -58,6 +58,10 @@ def verify(directory):
     if model.get('system_phase3'):
         for name in ('scripts/vm-system-phase3.py','native/entry/system_phase3.asm.inc'):
             S.check(S.artifact(M.ROOT/name) in manifest['inputs'],'Missing original System phase 3 source contract')
+    if model.get('game_entry'):
+        for name in ('scripts/vm-game-entry.py','native/entry/game_main.asm.inc'):
+            S.check(S.artifact(M.ROOT/name) in manifest['inputs'],'Missing original server Main source owner contract')
+        S.check(model['game_entry']['source_archive'] in manifest['inputs'],'Missing locked original server input archive')
     expected, imports = M.assembly(model)
     S.check(S.checked(manifest['assembly']).read_text(encoding='utf-8') == expected, 'Native binding/process MASM differs')
     coff = M.module('native_vm_entry_coff_check', 'verify-batch-assembly.py')

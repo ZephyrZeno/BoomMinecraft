@@ -27,7 +27,8 @@ CLASS_NAMES = ('java/lang/Thread', 'java/lang/ThreadGroup', 'java/security/Acces
                'java/lang/Thread$FieldHolder', 'jdk/internal/misc/VM', 'java/lang/String')
 
 
-def prepare(batch, plan, runtime, output, profile, provider_paths, continue_system=False, construct_child=False, start_child=False, child_task_main_thread=False, system_phase2=False, system_phase3=False):
+def prepare(batch, plan, runtime, output, profile, provider_paths, continue_system=False, construct_child=False, start_child=False, child_task_main_thread=False, system_phase2=False, system_phase3=False, server_help=False):
+    S.check(not server_help or system_phase3,'Original server Main needs the complete original System initialization')
     S.check(not system_phase3 or system_phase2, 'Original phase 3 requires original module bootstrap')
     S.check(not system_phase2 or continue_system, 'Module bootstrap needs System phase 1')
     S.check(not start_child or construct_child, 'Starting a child requires original child construction')
@@ -92,6 +93,9 @@ def prepare(batch, plan, runtime, output, profile, provider_paths, continue_syst
         entries.append(('bootstrap', 'java/lang/System', 'initPhase2', '(ZZ)I'))
     if system_phase3:
         entries.append(('bootstrap', 'java/lang/System', 'initPhase3', '()V'))
+    if server_help:
+        class_roots.append(('vanilla-application','net/minecraft/server/Main'))
+        entries.append(('vanilla-application','net/minecraft/server/Main','main','([Ljava/lang/String;)V'))
     manifest = source.prepare(batch, plan, output, class_roots, entries,
         diagnostic=dict(admit_methods=p['admitted_methods'], admit_classes=p.get('admitted_classes', []),
             known_symbols=known, data_providers=providers, global_identity=identity,context_rows=system_phase2),
@@ -135,8 +139,9 @@ if __name__ == '__main__':
     p.add_argument('--continue-system-phase1', action='store_true')
     p.add_argument('--system-phase2', action='store_true')
     p.add_argument('--system-phase3', action='store_true')
+    p.add_argument('--server-help', action='store_true')
     p.add_argument('--construct-child', action='store_true')
     p.add_argument('--start-child', action='store_true')
     p.add_argument('--child-task-main-thread', action='store_true')
     a = p.parse_args()
-    prepare(a.batch, a.plan, a.runtime, a.output, a.profile, a.provider_pack, a.continue_system_phase1 or a.system_phase2 or a.system_phase3, a.construct_child, a.start_child, a.child_task_main_thread, a.system_phase2 or a.system_phase3, a.system_phase3)
+    prepare(a.batch, a.plan, a.runtime, a.output, a.profile, a.provider_pack, a.continue_system_phase1 or a.system_phase2 or a.system_phase3 or a.server_help, a.construct_child, a.start_child, a.child_task_main_thread, a.system_phase2 or a.system_phase3 or a.server_help, a.system_phase3 or a.server_help, a.server_help)

@@ -1,6 +1,6 @@
 param([Parameter(Mandatory=$true)][string]$Batch,[Parameter(Mandatory=$true)][string]$Plan,
 [Parameter(Mandatory=$true)][string]$Runtime,[string]$SeedDiagnosticDirectory,[string]$SeedResultFile,
-[Parameter(Mandatory=$true)][string[]]$ProviderPack,[string]$OutputDirectory,[ValidateRange(1,64)][int]$MaxRounds=8,[switch]$ContinueSystemPhase1,[switch]$NativeProcess,[switch]$ConstructChild,[switch]$StartChild,[switch]$ChildTaskMainThread,[switch]$SignalControl,[switch]$SystemPhase2,[switch]$SystemPhase3,
+[Parameter(Mandatory=$true)][string[]]$ProviderPack,[string]$OutputDirectory,[ValidateRange(1,64)][int]$MaxRounds=8,[switch]$ContinueSystemPhase1,[switch]$NativeProcess,[switch]$ConstructChild,[switch]$StartChild,[switch]$ChildTaskMainThread,[switch]$SignalControl,[switch]$SystemPhase2,[switch]$SystemPhase3,[switch]$ServerHelp,
 [string]$SourceSelectionDirectory,[ValidateRange(1,65536)][int]$MaxPreselectedMethods=16384,[string[]]$PreselectPackage,
 [switch]$ParallelAssembly,[ValidateRange(1,8)][int]$AssemblyWorkers=8,[ValidateRange(1,1024)][int]$AssemblyCodeMiB=8)
 $ErrorActionPreference='Stop';$project=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
@@ -8,6 +8,7 @@ if(([bool]$SeedDiagnosticDirectory) -eq ([bool]$SeedResultFile)){throw 'Specify 
 $previousSeed=if($SeedResultFile){(Resolve-Path -LiteralPath $SeedResultFile).Path}else{(Resolve-Path -LiteralPath (Join-Path $SeedDiagnosticDirectory 'result.json')).Path}
 $batchPath=(Resolve-Path -LiteralPath $Batch).Path;$planPath=(Resolve-Path -LiteralPath $Plan).Path;$runtimePath=(Resolve-Path -LiteralPath $Runtime).Path
 if($ChildTaskMainThread){$StartChild=$true}
+if($ServerHelp){$SystemPhase3=$true}
 if($SystemPhase3){$SystemPhase2=$true}
 if($SystemPhase2){$SignalControl=$true;$NativeProcess=$true}
 if($SignalControl){$ContinueSystemPhase1=$true;if(-not $NativeProcess){throw 'Signal control requires the assembly-owned native process'}}
@@ -24,6 +25,7 @@ if($StartChild){$entries+='bootstrap:java/lang/Thread:start:()V'}
 if($ContinueSystemPhase1){$entries+='bootstrap:java/lang/System:initPhase1:()V'}
 if($SystemPhase2){$entries+='bootstrap:java/lang/System:initPhase2:(ZZ)I'}
 if($SystemPhase3){$entries+='bootstrap:java/lang/System:initPhase3:()V'}
+if($ServerHelp){$classes+='vanilla-application:net/minecraft/server/Main';$entries+='vanilla-application:net/minecraft/server/Main:main:([Ljava/lang/String;)V'}
 $seedFile=Join-Path $root 'seed.json';$profile=Join-Path $root 'profile.json'
 $seedArgs=@((Join-Path $PSScriptRoot 'seed-diagnostic-profile.py'),$batchPath,'--previous',$previousSeed,'--output',$seedFile,'--allow-additional-class-roots','--allow-different-entries')
 foreach($c in $classes){$seedArgs+=@('--class-root',$c)};foreach($e in $entries){$seedArgs+=@('--entry',$e)}
@@ -55,6 +57,7 @@ for($i=0;$i -lt $MaxRounds;$i++){
     if($ContinueSystemPhase1){$prepare+='--continue-system-phase1'}
     if($SystemPhase2){$prepare+='--system-phase2'}
     if($SystemPhase3){$prepare+='--system-phase3'}
+    if($ServerHelp){$prepare+='--server-help'}
     if($ConstructChild){$prepare+='--construct-child'}
     if($StartChild){$prepare+='--start-child'}
     if($ChildTaskMainThread){$prepare+='--child-task-main-thread'}
@@ -73,6 +76,7 @@ for($i=0;$i -lt $MaxRounds;$i++){
         if($SignalControl){$nativeArgs.SignalControl=$true}
         if($SystemPhase2){$nativeArgs.SystemPhase2=$true}
         if($SystemPhase3){$nativeArgs.SystemPhase3=$true}
+        if($ServerHelp){$nativeArgs.ServerHelp=$true}
         if($ParallelAssembly){$nativeArgs.ParallelAssembly=$true}
         & (Join-Path $PSScriptRoot 'Build-VmEntry.ps1') @nativeArgs > (Join-Path $root ('native-build-'+$i+'.log'))
         if(-not $?){throw 'Native VM entry construction failed'}
@@ -96,7 +100,7 @@ for($i=0;$i -lt $MaxRounds;$i++){
     }
     $execution=Get-Content -LiteralPath (Join-Path $round 'execution.json') -Raw|ConvertFrom-Json
     $rounds.Add([ordered]@{directory=$round;execution=$execution})
-    if($execution.completed_requested_entries){$stopReason=if($SystemPhase3){'original_System_phase3_completed'}elseif($SystemPhase2){'original_System_phase2_completed'}elseif($ContinueSystemPhase1){'original_primordial_constructors_and_System_phase1_completed'}elseif($StartChild){'original_Java_thread_start_run_exit_completed'}elseif($ConstructChild){'original_primordial_and_child_constructors_completed'}else{'original_primordial_constructors_completed'};break}
+    if($execution.completed_requested_entries){$stopReason=if($ServerHelp){'original_server_Main_help_completed'}elseif($SystemPhase3){'original_System_phase3_completed'}elseif($SystemPhase2){'original_System_phase2_completed'}elseif($ContinueSystemPhase1){'original_primordial_constructors_and_System_phase1_completed'}elseif($StartChild){'original_Java_thread_start_run_exit_completed'}elseif($ConstructChild){'original_primordial_and_child_constructors_completed'}else{'original_primordial_constructors_completed'};break}
     if(-not $execution.fault){$stopReason='runtime_failure_without_source_stop';break}
     if($execution.fault.category -notin @(1,5) -and -not $execution.source_admission_rows.Count){$stopReason='requires_semantic_implementation';break}
     & D:/Dev/Python312/python.exe (Join-Path $PSScriptRoot 'update-diagnostic-profile.py') $batchPath --execution (Join-Path $round 'execution.json') --admitted $profile --output (Join-Path $round 'admission.json') > (Join-Path $round 'admission.log')
@@ -109,5 +113,7 @@ $result=[ordered]@{schema=1;diagnostic_only=$true;scope='normal_VM_primordial_th
 class_roots=@($classes);entries=$entries;admitted_methods=$methods;admitted_classes=$admittedClasses;seed_evidence=[ordered]@{path=$seedFile;sha256=(Get-FileHash -LiteralPath $seedFile -Algorithm SHA256).Hash.ToLowerInvariant()};
 runtime_provider_packs=$ProviderPack;rounds=$rounds.ToArray();stop_reason=$stopReason;runtime_failure=$failure;constructor_specialization=$false;constructor_branches_removed=$false;managed_execution_host=(-not $NativeProcess);VM_binding_configuration_fixture=(-not $NativeProcess);construct_child_requested=[bool]$ConstructChild;start_child_requested=[bool]$StartChild;nonnull_Runnable_task_requested=[bool]$ChildTaskMainThread;normal_signal_control_requested=[bool]$SignalControl;source_closure_complete=$false;full_VM_bootstrap=$false;game_started=$false;world_created=$false;run_directory=$root}
 if($SystemPhase2){$result['scope']='normal_VM_primordial_thread_and_module_system_bootstrap';$result['original_System_phase2_requested']=$true}
+if($SystemPhase3){$result['original_System_phase3_requested']=$true}
+if($ServerHelp){$result['scope']='original_VM_and_server_Main_help_prefix';$result['original_server_Main_help_requested']=$true;$result['help_is_full_game_startup']=$false}
 if($SourceSelectionDirectory){$result['source_only_preselections']=$sourceProfiles.ToArray();$result['preselected_methods_counted_as_executed']=$false}
 $json=$result|ConvertTo-Json -Depth 18;[IO.File]::WriteAllText((Join-Path $root 'result.json'),$json,[Text.UTF8Encoding]::new($false));Write-Output $json

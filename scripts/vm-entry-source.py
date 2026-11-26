@@ -69,7 +69,8 @@ def accepted(directory, proof_sha):
     return closure, proof, old
 
 
-def binding_model(closure, include_system, construct_child=False, start_child=False, child_task_main_thread=False, signal_control=False, system_phase2=False, system_phase3=False):
+def binding_model(closure, include_system, construct_child=False, start_child=False, child_task_main_thread=False, signal_control=False, system_phase2=False, system_phase3=False, server_help=False):
+    S.check(not server_help or system_phase3, 'Original server entry requires complete original System phase 3')
     S.check(not system_phase3 or system_phase2, 'System phase 3 requires the complete original phase 2')
     S.check(not system_phase2 or (include_system and signal_control), 'System phase 2 requires phase 1 and the native signal lifecycle')
     S.check(not start_child or construct_child, 'Native Thread start requires original child construction')
@@ -164,6 +165,12 @@ def binding_model(closure, include_system, construct_child=False, start_child=Fa
     if system_phase3:
         phases=module('native_phase3_original_source','vm-system-phase3.py')
         model['system_phase3']=phases.bind(closure,summary,owners['java/lang/System'],S,R)
+    if server_help:
+        game=module('native_original_server_entry','vm-game-entry.py')
+        candidates=[row for row in classes if (row['name'],row['origin']['loader'])==(game.OWNER,game.LOADER)]
+        S.check(len(candidates)==1,'Original dedicated-server Main is missing or ambiguous')
+        model['game_entry']=game.bind(closure,summary,candidates[0],S,R,('--help',))
+        model['game_entry']['argv_root_offset']=(6 if construct_child else 5)*8
     if signal_control:
         found = [(i, ref, S.read(S.checked(ref['manifest']))) for i, ref in enumerate(closure['runtime_provider_packs'])
                  if S.read(S.checked(ref['manifest']))['family'] == 'normal-signal-control-v1']
@@ -221,10 +228,11 @@ def binding_model(closure, include_system, construct_child=False, start_child=Fa
 def entry_exports(model):
     return EXPORTS | ({'boom_provider_native_roots_snapshot','boom_provider_native_roots_full_snapshot',
         'boom_selected_provider_root_spans','boom_selected_provider_root_span_count','boom_selected_provider_root_cell_count'}
-        if model.get('provider_native_root_spans') else set())
+        if model.get('provider_native_root_spans') else set()) | ({model['game_entry']['argument_rows_symbol']} if model.get('game_entry') else set())
 
 
 def report_layout(model):
+    if model.get('game_entry'):return 576,14
     if model.get('system_phase3'):return 544,13
     if model.get('provider_native_root_spans'):return 512,12
     if model.get('object_wait'):return 448,11
@@ -248,6 +256,9 @@ def assembly(model):
         proc.add(model['system_phase2']['symbol'])
     if model.get('system_phase3'):
         proc.add(model['system_phase3']['symbol'])
+    if model.get('game_entry'):
+        proc.update(model['game_entry']['required_runtime_exports'])
+        proc.add(model['game_entry']['symbol'])
     if model['child_constructor']:
         proc.update({model['child_constructor']['symbol'], 'boom_object_new', 'boom_threads_current'})
     if model['child_start']:
@@ -276,6 +287,8 @@ def assembly(model):
         proc.update(('boom_provider_unsafe_park_open','boom_provider_unsafe_park_close'))
     if model.get('file_input'):
         data.update(('boom_file_input_owner_roots','boom_file_input_live_handles','boom_file_input_owned_buffers'))
+    if model.get('game_entry'):
+        data.update(('boom_java_platform_properties_pool',f"boom_class{model['game_entry']['class_id']}"))
     if model.get('provider_native_root_spans'):
         N=module('vm_complete_native_root_consumer','provider-native-roots.py')
         root_text,root_imports=N.complete_consumer_assembly(model['provider_native_root_spans'],source_exports=model['root_source_exports'])
@@ -305,13 +318,19 @@ def assembly(model):
     if model.get('provider_native_root_spans'):phase2_definitions+='VM_ENTRY_NATIVE_ROOTS EQU 1\n'
     if model.get('system_phase3'):
         phase2_definitions+=f"VM_ENTRY_SYSTEM_PHASE3 EQU 1\nORIGINAL_SYSTEM_PHASE3 TEXTEQU <{model['system_phase3']['symbol']}>\n"
+    if model.get('game_entry'):
+        game=model['game_entry']
+        phase2_definitions+=(f"VM_ENTRY_GAME_MAIN EQU 1\nORIGINAL_GAME_MAIN TEXTEQU <{game['symbol']}>\n"
+            f"GAME_MAIN_CLASS TEXTEQU <boom_class{game['class_id']}>\nGAME_ARGC EQU {game['argv']['argc']}\n"
+            f"GAME_ARGV_TEXT_ROWS TEXTEQU <{game['argument_rows_symbol']}>\n"
+            f"GAME_ARGV_ROOT TEXTEQU <boom_vm_thread_root_cells+{game['argv_root_offset']}>\n")
     if model.get('winnt_filesystem'):phase2_definitions+='VM_ENTRY_WINNT_FILESYSTEM EQU 1\n'
     out = (f"option casemap:none\nVM_ENTRY_CHILD_REQUESTED EQU {int(model['child_constructor'] is not None)}\n"
         f"VM_ENTRY_START_REQUESTED EQU {int(model['child_start'] is not None)}\n"
         f"VM_ENTRY_SIGNAL_REQUESTED EQU {int(bool(model.get('signal_reference')))}\n"
         f"VM_ENTRY_REPORT_BYTES EQU {report_bytes}\nVM_ENTRY_REPORT_ABI EQU {report_abi}\n"
         +phase2_definitions)+''.join(f'EXTERN {s}:{t}\n' for s, t in sorted(externals.items()))
-    root_count = 6 if model['child_constructor'] else 5
+    root_count = (6 if model['child_constructor'] else 5)+int(bool(model.get('game_entry')))
     out += f'.data?\nALIGN 8\nPUBLIC boom_vm_thread_root_cells\nboom_vm_thread_root_cells QWORD {root_count} DUP(?)\n'
     out += f'.const\nPUBLIC boom_vm_thread_root_count\nboom_vm_thread_root_count QWORD {root_count}\n.data\nALIGN 8\nPUBLIC boom_vm_thread_bootstrap_pool\nboom_vm_thread_bootstrap_pool DWORD 056544250h,1,0,64\n'
     out += ''.join(f' QWORD OFFSET {s}\n' for s in pointers)
@@ -390,6 +409,9 @@ def assembly(model):
         out += (ROOT/'native/entry/system_phase2.asm.inc').read_text(encoding='utf-8')+'\n'
     if model.get('system_phase3'):
         out += (ROOT/'native/entry/system_phase3.asm.inc').read_text(encoding='utf-8')+'\n'
+    if model.get('game_entry'):
+        game=module('native_original_server_entry_data','vm-game-entry.py')
+        out+=game.data(model['game_entry'])+'\n'+(ROOT/'native/entry/game_main.asm.inc').read_text(encoding='utf-8')+'\n'
     if root_text:out += root_text+(ROOT/'native/kernels/provider_native_root_snapshot.asm.inc').read_text(encoding='utf-8')+'\n'
     out += template+'\nEND\n'
     return out, set(externals)

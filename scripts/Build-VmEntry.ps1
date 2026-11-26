@@ -1,5 +1,5 @@
 param([Parameter(Mandatory=$true)][string]$Directory,[Parameter(Mandatory=$true)][string]$AcceptedVerificationSha256,
-[string]$OutputDirectory,[switch]$ConstructorOnly,[switch]$ConstructChild,[switch]$StartChild,[switch]$ChildTaskMainThread,[switch]$SignalControl,[switch]$SystemPhase2,[switch]$SystemPhase3,[switch]$ParallelAssembly)
+[string]$OutputDirectory,[switch]$ConstructorOnly,[switch]$ConstructChild,[switch]$StartChild,[switch]$ChildTaskMainThread,[switch]$SignalControl,[switch]$SystemPhase2,[switch]$SystemPhase3,[switch]$ServerHelp,[switch]$ParallelAssembly)
 $ErrorActionPreference='Stop';$project=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 if($ChildTaskMainThread){$StartChild=$true}
 if($StartChild){$ConstructChild=$true}
@@ -23,6 +23,7 @@ if($ChildTaskMainThread){$args_+='--child-task-main-thread'}
 if($SignalControl){$args_+='--signal-control'}
 if($SystemPhase2){$args_+='--system-phase2'}
 if($SystemPhase3){$args_+='--system-phase3'}
+if($ServerHelp){$args_+='--server-help'}
 if($ParallelAssembly){$args_+='--parallel-assembly'}
 & D:/Dev/Python312/python.exe @args_
 if($LASTEXITCODE -ne 0){throw 'Assembly-owned VM entry build failed'}

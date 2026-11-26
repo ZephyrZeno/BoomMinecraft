@@ -104,6 +104,13 @@ IFDEF VM_ENTRY_SYSTEM_PHASE3
  test eax,eax
  jz vpe_capture
 ENDIF
+IFDEF VM_ENTRY_GAME_MAIN
+ lea rcx,boom_vm_entry_context
+ lea rdx,boom_vm_entry_report
+ call boom_vm_call_game_main
+ test eax,eax
+ jz vpe_capture
+ENDIF
  mov DWORD PTR [boom_vm_entry_report+72],1
  mov DWORD PTR [boom_vm_entry_report+80],0
 vpe_capture:

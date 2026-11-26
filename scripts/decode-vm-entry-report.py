@@ -16,14 +16,40 @@ def check(value,message):
     if not value:raise ValueError(message)
 
 
+def game_arguments(manifest):
+    game=manifest['binding_model'].get('game_entry')
+    check(isinstance(game,dict),'Original Game entry model required')
+    arguments=game.get('arguments')
+    argv=game.get('argv')
+    if argv is not None:
+        check(isinstance(argv,dict) and isinstance(argv.get('rows'),list),'Invalid source Game argv rows')
+        rows=argv['rows'];values=[]
+        for index,row in enumerate(rows):
+            check(isinstance(row,dict) and row.get('index')==index and isinstance(row.get('text'),str),'Invalid source Game argument')
+            values.append(row['text'])
+        check(type(argv.get('argc')) is int and argv['argc']==len(values),'Source Game argc differs from argument rows')
+        if arguments is not None:check(arguments==values,'Game argument representations differ')
+        arguments=values
+    check(isinstance(arguments,(list,tuple)) and all(isinstance(v,str) for v in arguments) and len(arguments)<=64,
+        'Explicit bounded Game arguments required')
+    check(list(arguments)==['--help'],'ServerHelp must bind exactly the explicit --help argument')
+    return list(arguments)
+
+
 def report_layout(manifest):
     model=manifest['binding_model'];phase2=bool(manifest.get('system_phase2'));phase3=bool(manifest.get('system_phase3'))
+    game=bool(manifest.get('server_help'))
     for key,value in (('system_phase2',phase2),('system_phase3',phase3)):
         if key in model:check(bool(model[key])==value,'Manifest/model '+key+' request differs')
     check(not phase3 or phase2,'System phase3 requires phase2')
+    check(bool(model.get('game_entry'))==game,'Manifest/model Game entry request differs')
+    if game:
+        check(phase3 and phase2 and manifest.get('include_System_phase1') is True,'Game entry requires original System phases1/2/3')
+        game_arguments(manifest)
     roots=bool(model.get('provider_native_root_spans'))
     check(not (model.get('unsafe_park') or model.get('file_input')) or roots,'Native owner metadata requires selected root spans')
-    if phase3:shape=544,13
+    if game:shape=576,14
+    elif phase3:shape=544,13
     elif roots:shape=512,12
     elif model.get('object_wait'):shape=448,11
     elif model.get('winnt_filesystem'):shape=400,10
@@ -97,7 +123,7 @@ def decode(raw,manifest,exit_code,diagnostics=None,*,filesystem_metadata=None,so
         filesystem=dict(registration_state=ready,original_File_path_id_cached=bool(bound),optional_final_path_API_available=bool(optional),
             original_File_class_id=u(396),original_path_offset=filesystem_metadata['field']['offset'])
     elif length>=400:empty(384,400,'Windows filesystem')
-    phase=None;phase3=None;phase_rejected=False
+    phase=None;phase3=None;game=None;phase_rejected=False;game_requested=bool(manifest.get('server_help'))
     if manifest.get('system_phase2'):
         p1=boolean(272,'phase1 returned');called=boolean(276,'phase2 called');returned=boolean(280,'phase2 returned')
         code=struct.unpack_from('<i',raw,284)[0] if returned else None;before,after=u(288),u(292)
@@ -115,15 +141,41 @@ def decode(raw,manifest,exit_code,diagnostics=None,*,filesystem_metadata=None,so
             ctx3=dict(kind=u(528),pc=u(532),method=u(536),depth=u(540))
             check(not c3 or (success and b3==2),'Phase3 call requires completed phase2 and VM level2')
             check(not r3 or (c3 and ctx3['kind']==0),'Phase3 return has no successful original call')
-            if c3:check(ctx3==main,'Phase3 Context differs from latest main Context')
+            third_success=success and c3 and r3 and b3==2 and a3==4 and ctx3['kind']==0 and ctx3['depth']==0
+            if c3:
+                # A later Main/<clinit>/argv failure replaces only the latest
+                # main capture. The successful earlier phase3 snapshot remains.
+                if not (game_requested and third_success):check(ctx3==main,'Phase3 Context differs from latest main Context')
             else:
                 check(not r3 and not any(ctx3.values()),'Uncalled phase3 published a return or Context')
                 check(not returned or main['kind']==0,'Exceptional latest main Context has no phase3 call')
-            phase_success=success and c3 and r3 and b3==2 and a3==4 and ctx3['kind']==0 and ctx3['depth']==0
+            phase_success=third_success
             phase3=dict(called=c3,returned=r3,VM_level_before=b3,VM_level_after=a3,**ctx3,completed=phase_success)
+        if game_requested:
+            initialized=boolean(544,'Game class initialized');game_called=boolean(548,'Game main called');game_returned=boolean(552,'Game main returned')
+            argc=u(556);game_context=dict(kind=u(560),pc=u(564),method=u(568),depth=u(572));arguments=game_arguments(manifest)
+            check(not game_returned or game_called,'Game Main return has no original call')
+            check(not game_called or initialized,'Game Main call precedes its original class initializer')
+            if not phase3['completed']:
+                empty(544,576,'uncalled Game')
+                game_success=False
+            else:
+                check(argc==len(arguments),'Game report argc differs from the source argument count')
+                check(game_context==main,'Game Context differs from latest main Context')
+                check(not game_returned or (game_context['kind']==0 and game_context['depth']==0),
+                    'Returned Game Main has an exceptional or live Context')
+                if game_called and game_context['kind']==0:check(game_returned,'Normal Game Main call did not publish its return')
+                if not game_called:check(game_context['kind']!=0,'Uncalled Game Main has no argv or initializer failure Context')
+                game_success=initialized and game_called and game_returned and game_context['kind']==0 and game_context['depth']==0
+            game=dict(requested=True,mode='server_help',arguments=arguments,class_initialized=initialized,main_called=game_called,
+                main_returned=game_returned,argc=argc,**game_context,completed=bool(game_success),
+                help_is_full_game_startup=False,Java_argv_host_written=False)
+            phase_success=game_success
         check(entry==phase_success,'Main-thread return differs from requested original System phase outcome')
         phase_rejected=p1 and main['kind']==0 and not phase_success
         if phase3 and phase3['called'] and not phase3['returned'] and phase3['kind']!=0 and state==0:
+            phase_rejected=True
+        if game and phase3['completed'] and not game['completed'] and game['kind'] not in (0,SOURCE_STOP) and state==0:
             phase_rejected=True
         completed=completed and phase_success
     owners=None;roots=bool(model.get('provider_native_root_spans'))
@@ -175,6 +227,10 @@ def decode(raw,manifest,exit_code,diagnostics=None,*,filesystem_metadata=None,so
         execution_report_bytes=length,execution_report_abi=abi)
     if phase:result['main_System_phases']=phase
     if phase3:result['System_phase3']=phase3
+    if game:
+        result['game_entry']=game
+        result['original_game_Main_called']=game['main_called'];result['original_game_Main_returned']=game['main_returned']
+        result['server_help_completed']=bool(completed)
     if owners:result['native_owner_snapshot']=owners
     if reference:result['reference_processing']=reference
     if waiting:result['object_wait']=waiting

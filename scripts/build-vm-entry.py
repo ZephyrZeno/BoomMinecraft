@@ -11,14 +11,14 @@ spec.loader.exec_module(M)
 S = M.S
 
 
-def build(directory, accepted_sha, output, assembler, linker, synchronization, kernel32, include_system, construct_child=False, start_child=False, child_task_main_thread=False, signal_control=False, system_phase2=False, parallel_assembly=False, system_phase3=False):
+def build(directory, accepted_sha, output, assembler, linker, synchronization, kernel32, include_system, construct_child=False, start_child=False, child_task_main_thread=False, signal_control=False, system_phase2=False, parallel_assembly=False, system_phase3=False, server_help=False):
     directory, output = Path(directory).resolve(), Path(output).resolve()
     S.check(output.is_relative_to(S.ART/'vm-entry-images') and not output.exists(), 'Use a fresh native entry output directory')
     closure, proof, old = M.accepted(directory, accepted_sha)
     selected_families={S.read(S.checked(closure['runtime_provider_packs'][i]['manifest']))['family']
         for i in closure.get('selected_runtime_provider_packs',[])}
     winsock='normal-native-libraries-v1' in selected_families
-    model = M.binding_model(closure, include_system, construct_child, start_child, child_task_main_thread, signal_control, system_phase2, system_phase3)
+    model = M.binding_model(closure, include_system, construct_child, start_child, child_task_main_thread, signal_control, system_phase2, system_phase3, server_help)
     original_objects = M.source_objects(closure)
     runtime = Path(old['runtime']).resolve()
     runtime_metadata = S.read(runtime.with_name('runtime.json'))
@@ -59,6 +59,9 @@ def build(directory, accepted_sha, output, assembler, linker, synchronization, k
         inputs += [S.artifact(M.ROOT/p) for p in ('scripts/vm-system-phase2.py','native/entry/system_phase2.asm.inc')]
     if system_phase3:
         inputs += [S.artifact(M.ROOT/p) for p in ('scripts/vm-system-phase3.py','native/entry/system_phase3.asm.inc')]
+    if server_help:
+        inputs += [S.artifact(M.ROOT/p) for p in ('scripts/vm-game-entry.py','native/entry/game_main.asm.inc')]
+        inputs.append(model['game_entry']['source_archive'])
     output.mkdir(parents=True)
     source, imports = M.assembly(model)
     (output/'vm-entry.asm').write_text(source, encoding='utf-8')
@@ -107,7 +110,7 @@ def build(directory, accepted_sha, output, assembler, linker, synchronization, k
         include_System_phase1=include_system, construct_child=construct_child, start_child=start_child,
         child_task_main_thread=child_task_main_thread,
         signal_control=signal_control,
-        system_phase2=system_phase2, system_phase3=system_phase3, execution_report_bytes=M.report_layout(model)[0],
+        system_phase2=system_phase2, system_phase3=system_phase3, server_help=server_help, execution_report_bytes=M.report_layout(model)[0],
         execution_report_abi=M.report_layout(model)[1],
         binding_model=model, original_source_objects=original_objects,
         inputs=inputs, tools=tools, reassembled_objects=objects, reused_closure_objects=reused, original_assembly_read_in_place=True,
@@ -134,6 +137,7 @@ if __name__ == '__main__':
     p.add_argument('--signal-control', action='store_true')
     p.add_argument('--system-phase2', action='store_true')
     p.add_argument('--system-phase3', action='store_true')
+    p.add_argument('--server-help', action='store_true')
     p.add_argument('--parallel-assembly',action='store_true')
     a = p.parse_args()
-    build(a.directory, a.accepted_verification_sha256, a.output, a.assembler, a.linker, a.synchronization, a.kernel32, not a.constructor_only, a.construct_child, a.start_child, a.child_task_main_thread, a.signal_control or a.system_phase2 or a.system_phase3, a.system_phase2 or a.system_phase3,a.parallel_assembly,a.system_phase3)
+    build(a.directory, a.accepted_verification_sha256, a.output, a.assembler, a.linker, a.synchronization, a.kernel32, not a.constructor_only, a.construct_child, a.start_child, a.child_task_main_thread, a.signal_control or a.system_phase2 or a.system_phase3 or a.server_help, a.system_phase2 or a.system_phase3 or a.server_help,a.parallel_assembly,a.system_phase3 or a.server_help,a.server_help)
