@@ -27,7 +27,19 @@ CLASS_NAMES = ('java/lang/Thread', 'java/lang/ThreadGroup', 'java/security/Acces
                'java/lang/Thread$FieldHolder', 'jdk/internal/misc/VM', 'java/lang/String')
 
 
-def prepare(batch, plan, runtime, output, profile, provider_paths, continue_system=False, construct_child=False, start_child=False, child_task_main_thread=False, system_phase2=False, system_phase3=False, server_help=False):
+def append_source_roots(existing,additional,width):
+    """Keep the VM prerequisites first; extra roots are source requests only."""
+    result=list(existing)
+    for row in additional:
+        S.check(isinstance(row,(tuple,list)) and len(row)==width and
+                all(isinstance(value,str) and value for value in row),'Invalid additional source root')
+        row=tuple(row)
+        if row not in result:result.append(row)
+    return result
+
+
+def prepare(batch, plan, runtime, output, profile, provider_paths, continue_system=False, construct_child=False, start_child=False, child_task_main_thread=False, system_phase2=False, system_phase3=False, server_help=False,
+            *,extra_class_roots=(),extra_method_roots=()):
     S.check(not server_help or system_phase3,'Original server Main needs the complete original System initialization')
     S.check(not system_phase3 or system_phase2, 'Original phase 3 requires original module bootstrap')
     S.check(not system_phase2 or continue_system, 'Module bootstrap needs System phase 1')
@@ -96,6 +108,8 @@ def prepare(batch, plan, runtime, output, profile, provider_paths, continue_syst
     if server_help:
         class_roots.append(('vanilla-application','net/minecraft/server/Main'))
         entries.append(('vanilla-application','net/minecraft/server/Main','main','([Ljava/lang/String;)V'))
+    class_roots=append_source_roots(class_roots,extra_class_roots,2)
+    entries=append_source_roots(entries,extra_method_roots,4)
     manifest = source.prepare(batch, plan, output, class_roots, entries,
         diagnostic=dict(admit_methods=p['admitted_methods'], admit_classes=p.get('admitted_classes', []),
             known_symbols=known, data_providers=providers, global_identity=identity,context_rows=system_phase2),
@@ -123,6 +137,10 @@ def prepare(batch, plan, runtime, output, profile, provider_paths, continue_syst
                                   r['owner']=='java/lang/System' and r['name']=='initPhase1'),None),
         constructor_specialization=False, constructor_branches_removed=False, fake_Thread_field_state=False,
         source_configuration_only=True, full_VM_bootstrap=False, game_started=False)
+    if extra_class_roots or extra_method_roots:
+        config['additional_source_class_roots']=[list(row) for row in extra_class_roots]
+        config['additional_source_method_roots']=[list(row) for row in extra_method_roots]
+        config['additional_source_roots_counted_as_execution']=False
     config['inputs'] = [S.artifact(p) for p in [Path(__file__), ROOT/'native/runtime/vm_thread_bootstrap.asm',
         ROOT/'tests/host/NormalVmThreadBootstrapProbe.cs', ROOT/'scripts/Run-NormalVmThreadBootstrap.ps1',
         output/'closure.json', output/'diagnostic.json', output/'initialization-closure.asm', runtime, runtime.with_name('runtime.json')]]
@@ -143,5 +161,9 @@ if __name__ == '__main__':
     p.add_argument('--construct-child', action='store_true')
     p.add_argument('--start-child', action='store_true')
     p.add_argument('--child-task-main-thread', action='store_true')
+    p.add_argument('--source-class',action='append',default=[],help='Additional original loader:class source root, not execution evidence')
+    p.add_argument('--source-entry',action='append',default=[],help='Additional original loader:class:method:descriptor source root')
     a = p.parse_args()
-    prepare(a.batch, a.plan, a.runtime, a.output, a.profile, a.provider_pack, a.continue_system_phase1 or a.system_phase2 or a.system_phase3 or a.server_help, a.construct_child, a.start_child, a.child_task_main_thread, a.system_phase2 or a.system_phase3 or a.server_help, a.system_phase3 or a.server_help, a.server_help)
+    prepare(a.batch, a.plan, a.runtime, a.output, a.profile, a.provider_pack, a.continue_system_phase1 or a.system_phase2 or a.system_phase3 or a.server_help, a.construct_child, a.start_child, a.child_task_main_thread, a.system_phase2 or a.system_phase3 or a.server_help, a.system_phase3 or a.server_help, a.server_help,
+        extra_class_roots=[tuple(value.split(':',1)) for value in a.source_class],
+        extra_method_roots=[tuple(value.split(':',3)) for value in a.source_entry])

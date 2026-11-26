@@ -13,9 +13,13 @@ The original initializer calls `com/mojang/logging/LogUtils.getLogger` and store
 the result into Main's original static Logger field. That Java dependency must
 be selected and executed normally; the bridge does not bypass logging.
 
-The implementation is not yet linked to a newly selected Main image. Its
-current receipt is static source/real COFF evidence, not execution of `--help`,
-a world, or Minecraft. Help completion will itself remain a bounded entry test.
+The original Main is linked into the verified native31 entry. Actual execution
+completes all three original System phases and enters Main's original logger
+initialization, where the standard entry stops at the missing
+`Class.getDeclaredMethods0` implementation. Main's body and help output have not
+completed. The current107 source rebuild and its extra original Java
+dependencies are recorded in [VM_ADDITIONAL_SOURCE_ROOTS.md](VM_ADDITIONAL_SOURCE_ROOTS.md).
+Help completion will itself remain a bounded entry test.
 
 ## Owner API
 
