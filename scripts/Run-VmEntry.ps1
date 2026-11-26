@@ -78,7 +78,7 @@ if(-not $completed -and ($exitCode -ne 86 -or $kind -ne 45057 -or $state -ne 2) 
 $result=[ordered]@{scope='native_assembly_process_original_VM_bootstrap_prefix_only';diagnostic_only=$true;completed_requested_prefix=$completed;completed_requested_entries=$completed;
 native_process_exit_code=$exitCode;context_kind=$kind;context_pc=(U32 16);context_method=(U32 20);context_depth=(U32 24);record_state=$state;first_row=$row;
 main_requested_entry_returned_normally=((U32 72) -eq 1);
-bootstrap_state=$boot;original_primordial_constructors_completed=($boot -eq 2);System_phase1_called=((U32 76) -eq 1);System_phase1_completed=($m.include_System_phase1 -and $completed);
+bootstrap_state=$boot;original_primordial_constructors_completed=($boot -eq 2);System_phase1_called=((U32 76) -eq 1);System_phase1_completed=$(if($phaseObservation){$phaseObservation.phase1_returned}else{$m.include_System_phase1 -and $completed});
 original_child_Thread_constructor_completed=((U32 84) -eq 1);
 observed_child_Java_id=(U64 88);observed_next_Java_id=(U64 96);observed_main_Java_id=(U64 104);
 original_ThreadIdentifiers_next_observed=($m.construct_child -and -not $m.signal_control -and (U64 88) -eq 2 -and (U64 96) -eq 3);

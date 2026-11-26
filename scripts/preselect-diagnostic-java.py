@@ -8,6 +8,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import re
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -27,7 +28,38 @@ def read(path):
     return json.loads(Path(path).read_text(encoding='utf-8-sig'))
 
 
-def preselect(batch, selection, profile, output, max_extra=16384):
+def package_classes(closure, summary, prefixes, inputs):
+    requested = set()
+    for value in prefixes:
+        loader, separator, package = value.partition(':')
+        check(separator and loader and re.fullmatch(r'[A-Za-z0-9_$]+(?:/[A-Za-z0-9_$]+)*', package),
+              'Package selection requires loader:internal/package')
+        requested.add((loader, package + '/'))
+    if not requested:
+        return {}, []
+    plan = Path(closure['plan']).resolve()
+    manifest = plan / 'summary.json'
+    check(manifest.is_relative_to(ROOT/'.boom'), 'Package plan must be a project input')
+    source = read(manifest)
+    check(source['input_fingerprint'] == summary['input_fingerprint'] and closure['batch_ir_identity'] == summary['ir_identity'],
+          'Package selection and bytecode batch have different input identities')
+    record = source['artifacts']['classes']
+    classes = Path(record['path']).resolve()
+    check(classes.is_relative_to(ROOT/'.boom') and sha(classes) == record['digest']['sha256'] == closure['source_classes_sha256'],
+          'Package selection class provenance changed')
+    inputs.update({str(manifest): sha(manifest), str(classes): record['digest']['sha256']})
+    chosen = {}
+    with classes.open(encoding='utf-8') as stream:
+        for line in stream:
+            row = json.loads(line)
+            if any(row['origin']['loader'] == loader and row['name'].startswith(package) for loader,package in requested):
+                check(row['id'] not in chosen, 'Duplicate package class identity')
+                chosen[row['id']] = row['origin']['sha256']
+    check(chosen, 'Requested packages contain no classes in the verified plan')
+    return chosen, sorted(loader + ':' + package[:-1] for loader,package in requested)
+
+
+def preselect(batch, selection, profile, output, max_extra=16384, packages=()):
     batch, selection, profile, output = map(lambda p: Path(p).resolve(), (batch, selection, profile, output))
     check(all(p.is_relative_to(ROOT/'.boom') for p in (batch, selection, profile, output)) and not output.exists(),
           'Preselection requires project artifacts and a fresh output')
@@ -37,12 +69,17 @@ def preselect(batch, selection, profile, output, max_extra=16384):
     inputs = {str(p): sha(p) for p in (summary_path, closure_path, proof_path, profile, selection/'initialization-closure.asm')}
     check(proof.get('verified') and proof.get('diagnostic_only') and not proof.get('source_closure_complete'),
           'Preselection needs an independently source-proved diagnostic selection')
+    check(proof['closure_manifest_sha256'] == inputs[str(closure_path)], 'Source selection manifest changed')
     check(Path(closure['batch']).resolve() == batch and closure['source_batch_summary_sha256'] == inputs[str(summary_path)] == actual['source_batch_summary_sha256'],
           'Preselection source batch differs')
     assembly = selection/'initialization-closure.asm'
     check(hashlib.sha256(assembly.read_text(encoding='utf-8').encode()).hexdigest() == proof['closure_assembly_sha256'],
           'Preselection source image assembly changed')
     wanted = {c['class_id']: c['source_sha256'] for c in closure['selected_classes']}
+    priority, package_names = package_classes(closure, summary, packages, inputs)
+    check(all(i not in wanted or wanted[i] == h for i,h in priority.items()),
+          'Selected classes and package plan disagree about their source')
+    wanted.update(priority)
     original = set(actual['admitted_methods'])
     candidates = {}
     for shard in summary['shards']:
@@ -63,7 +100,7 @@ def preselect(batch, selection, profile, output, max_extra=16384):
     check(not wanted, 'Preselection source classes are missing')
     chosen = set()
     owners = []
-    for owner, ids in sorted(candidates.items()):
+    for owner, ids in sorted(candidates.items(), key=lambda item: (item[0] not in priority, item[0])):
         if ids and len(chosen) + len(ids) <= max_extra:
             chosen.update(ids)
             owners.append(owner)
@@ -76,6 +113,10 @@ def preselect(batch, selection, profile, output, max_extra=16384):
         max_extra_methods=max_extra, inputs_sha256=inputs, tool_sha256=sha(__file__),
         extra_methods_previously_executed=False, extra_class_initialization_roots=0,
         native_implementations_added=0, game_started=False)
+    if package_names:
+        result['source_only_preselection'].update(rule='generated_Java_methods_of_verified_selected_classes_and_packages',
+            requested_packages=package_names, matching_package_classes=len(priority),
+            selected_package_classes=sorted(set(owners).intersection(priority)))
     with output.open('x', encoding='utf-8') as stream:
         stream.write(json.dumps(result, indent=2) + '\n')
     return result
@@ -88,6 +129,7 @@ if __name__ == '__main__':
     p.add_argument('--profile', type=Path, required=True)
     p.add_argument('--output', type=Path, required=True)
     p.add_argument('--max-extra-methods', type=int, default=16384)
+    p.add_argument('--package', action='append', default=[], help='Prefer all generated Java methods in loader:internal/package')
     a = p.parse_args()
-    result = preselect(a.batch, a.selection, a.profile, a.output, a.max_extra_methods)
+    result = preselect(a.batch, a.selection, a.profile, a.output, a.max_extra_methods, a.package)
     print(json.dumps(result['source_only_preselection']))

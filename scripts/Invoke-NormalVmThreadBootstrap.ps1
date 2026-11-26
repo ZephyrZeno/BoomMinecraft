@@ -1,7 +1,7 @@
 param([Parameter(Mandatory=$true)][string]$Batch,[Parameter(Mandatory=$true)][string]$Plan,
 [Parameter(Mandatory=$true)][string]$Runtime,[string]$SeedDiagnosticDirectory,[string]$SeedResultFile,
 [Parameter(Mandatory=$true)][string[]]$ProviderPack,[string]$OutputDirectory,[ValidateRange(1,64)][int]$MaxRounds=8,[switch]$ContinueSystemPhase1,[switch]$NativeProcess,[switch]$ConstructChild,[switch]$StartChild,[switch]$ChildTaskMainThread,[switch]$SignalControl,[switch]$SystemPhase2,
-[string]$SourceSelectionDirectory,[ValidateRange(1,65536)][int]$MaxPreselectedMethods=16384)
+[string]$SourceSelectionDirectory,[ValidateRange(1,65536)][int]$MaxPreselectedMethods=16384,[string[]]$PreselectPackage)
 $ErrorActionPreference='Stop';$project=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 if(([bool]$SeedDiagnosticDirectory) -eq ([bool]$SeedResultFile)){throw 'Specify one source seed directory or a verified prefix result file'}
 $previousSeed=if($SeedResultFile){(Resolve-Path -LiteralPath $SeedResultFile).Path}else{(Resolve-Path -LiteralPath (Join-Path $SeedDiagnosticDirectory 'result.json')).Path}
@@ -29,6 +29,7 @@ if($LASTEXITCODE -ne 0){throw 'Original-source VM thread selection seed failed'}
 $seed=Get-Content -LiteralPath $seedFile -Raw|ConvertFrom-Json
 $sourceProfiles=[Collections.Generic.List[object]]::new()
 if($SourceSelectionDirectory){$SourceSelectionDirectory=(Resolve-Path -LiteralPath $SourceSelectionDirectory).Path}
+if($PreselectPackage.Count -and -not $SourceSelectionDirectory){throw 'Package preselection requires a verified source selection directory'}
 $methods=@($seed.admitted_methods);$admittedClasses=@($seed.admitted_classes);$rounds=[Collections.Generic.List[object]]::new();$stopReason='round_limit';$failure=$null
 $sourceHash=(Get-FileHash -LiteralPath (Join-Path $batchPath 'summary.json') -Algorithm SHA256).Hash.ToLowerInvariant()
 for($i=0;$i -lt $MaxRounds;$i++){
@@ -40,7 +41,9 @@ for($i=0;$i -lt $MaxRounds;$i++){
         $inputProfile=Join-Path $root ('admission-input-{0:D3}.json' -f $i)
         Copy-Item -LiteralPath $profile -Destination $inputProfile
         $selectionProfile=Join-Path $root ('source-only-profile-{0:D3}.json' -f $i)
-        & D:/Dev/Python312/python.exe (Join-Path $PSScriptRoot 'preselect-diagnostic-java.py') $batchPath --selection $SourceSelectionDirectory --profile $inputProfile --output $selectionProfile --max-extra-methods $MaxPreselectedMethods > (Join-Path $root ('source-only-profile-'+$i+'.log'))
+        $preselectArgs=@((Join-Path $PSScriptRoot 'preselect-diagnostic-java.py'),$batchPath,'--selection',$SourceSelectionDirectory,'--profile',$inputProfile,'--output',$selectionProfile,'--max-extra-methods',$MaxPreselectedMethods)
+        foreach($package in $PreselectPackage){$preselectArgs+=@('--package',$package)}
+        & D:/Dev/Python312/python.exe @preselectArgs > (Join-Path $root ('source-only-profile-'+$i+'.log'))
         if($LASTEXITCODE -ne 0){throw 'Source-only generated Java preselection failed'}
         $sourceProfiles.Add([ordered]@{path=$selectionProfile;sha256=(Get-FileHash -LiteralPath $selectionProfile -Algorithm SHA256).Hash.ToLowerInvariant()})
     }

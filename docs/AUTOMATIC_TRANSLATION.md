@@ -12,6 +12,8 @@ Windows 的文件系统注册需要定位原始 `java.io.File.path`，还会向�
 
 v139 的实际原生运行已经完成上述文件系统注册。镜像纳入 20,266 个 Java 方法，主线程推进到 `SystemModules$default.moduleDescriptors`。引用线程进入真实等待并在关闭时完成受控退出，后台终结线程停在 `Object.wait0`，最终堆、帧和线程登记均已清理。模块描述符方法已有汇编产物，现已由自动纳入程序依据实际来源行加入后续验证。
 
+v141 增加按加载器和包名预选的方法。`Invoke-NormalVmThreadBootstrap.ps1` 的 `-PreselectPackage @('bootstrap:java/lang/module','bootstrap:jdk/internal/module')` 与 `-SourceSelectionDirectory` 一起使用；底层命令 `preselect-diagnostic-java.py` 可重复传入 `--package`。选取严格匹配加载器和 `/` 分隔的包边界，校验原始类索引、批次身份及归档摘要，在方法预算内优先纳入整个声明类的已生成 Java 方法。不会增加类初始化根、补造 native 或把预选计作执行。实际锁定服务端输入匹配 91 个模块系统类；无此选项时保留原有规则。三个新增边界回归测试已通过。
+
 v127 新增[原始终结策略查询](FINALIZATION_POLICY.md)，保留 Java 字节码批次及当前汇编运行时。实际启动两个原版后台工作者后，共享来源诊断前沿推进到 Object.notifyAll。独立[引用传输内核](REFERENCE_PENDING_RUNTIME.md)完成真实等待、停止唤醒和根保护测试，尚未接到原版 native；正常通知、监视器展开与完整游戏仍需继续补齐。
 
 v126 沿用整批 Java 汇编和目标文件，新增[线程优先级绑定](NORMAL_THREAD_PRIORITY.md)并更新工作者启动适配器。13 个未变模块与帧视图通过当前源码重新校验，无需重编约 49.8 万个 Java 方法。实际原生 System 前沿已从 Thread.setPriority0 推进到 Finalizer.isFinalizationEnabled；引用处理与终结所需的 VM 语义仍需实现，游戏未启动。
