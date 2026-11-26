@@ -70,8 +70,16 @@ def preselect(batch, selection, profile, output, max_extra=16384, packages=()):
     check(proof.get('verified') and proof.get('diagnostic_only') and not proof.get('source_closure_complete'),
           'Preselection needs an independently source-proved diagnostic selection')
     check(proof['closure_manifest_sha256'] == inputs[str(closure_path)], 'Source selection manifest changed')
-    check(Path(closure['batch']).resolve() == batch and closure['source_batch_summary_sha256'] == inputs[str(summary_path)] == actual['source_batch_summary_sha256'],
+    source_batch = Path(closure['batch']).resolve()
+    source_summary_path = source_batch/'summary.json'
+    check(source_batch.is_relative_to(ROOT/'.boom') and actual['source_batch_summary_sha256'] == inputs[str(summary_path)],
           'Preselection source batch differs')
+    inputs[str(source_summary_path)] = sha(source_summary_path)
+    source_summary = read(source_summary_path)
+    check(closure['source_batch_summary_sha256'] == inputs[str(source_summary_path)] and
+          closure['batch_ir_identity'] == source_summary['ir_identity'] == summary['ir_identity'] and
+          source_summary['input_fingerprint'] == summary['input_fingerprint'],
+          'Preselection original source input or IR changed')
     assembly = selection/'initialization-closure.asm'
     check(hashlib.sha256(assembly.read_text(encoding='utf-8').encode()).hexdigest() == proof['closure_assembly_sha256'],
           'Preselection source image assembly changed')
@@ -117,6 +125,13 @@ def preselect(batch, selection, profile, output, max_extra=16384, packages=()):
         result['source_only_preselection'].update(rule='generated_Java_methods_of_verified_selected_classes_and_packages',
             requested_packages=package_names, matching_package_classes=len(priority),
             selected_package_classes=sorted(set(owners).intersection(priority)))
+    if source_batch != batch:
+        result['source_only_preselection']['source_selection_reuse'] = dict(
+            previous_batch=str(source_batch), previous_batch_summary_sha256=inputs[str(source_summary_path)],
+            current_batch=str(batch), current_batch_summary_sha256=inputs[str(summary_path)],
+            rule='same_input_and_IR_each_original_class_rechecked_in_current_archives',
+            native_bindings_reused=False, source_initialization_roots_reused=False,
+            current_selected_methods_previously_executed=False)
     with output.open('x', encoding='utf-8') as stream:
         stream.write(json.dumps(result, indent=2) + '\n')
     return result

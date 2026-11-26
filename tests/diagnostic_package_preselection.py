@@ -81,6 +81,25 @@ class PackagePreselectionTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     M.preselect(batch,selection,profile,root/'out.json',2,[package])
 
+    def test_source_only_selection_can_cross_identical_Java_batches_and_rejects_changed_inputs(self):
+        with tempfile.TemporaryDirectory(dir=ROOT/'.boom') as folder:
+            root=Path(folder);batch,selection,plan,profile=self.fixture(root)
+            derived=root/'derived';derived.mkdir()
+            source=json.loads((batch/'summary.json').read_text())
+            source['native_metadata_abi']=2
+            write(derived/'summary.json',source)
+            write(profile,dict(source_batch_summary_sha256=M.sha(derived/'summary.json'),admitted_methods=[99]))
+            result=M.preselect(derived,selection,profile,root/'cross.json',2,['bootstrap:java/lang/module'])
+            self.assertEqual(result['admitted_methods'],[50,51,99])
+            reuse=result['source_only_preselection']['source_selection_reuse']
+            self.assertFalse(reuse['native_bindings_reused'])
+            self.assertFalse(reuse['current_selected_methods_previously_executed'])
+            source['input_fingerprint']='different_input'
+            write(derived/'summary.json',source)
+            write(profile,dict(source_batch_summary_sha256=M.sha(derived/'summary.json'),admitted_methods=[99]))
+            with self.assertRaisesRegex(ValueError,'source input or IR changed'):
+                M.preselect(derived,selection,profile,root/'bad.json',2)
+
 
 if __name__=='__main__':
     unittest.main()
