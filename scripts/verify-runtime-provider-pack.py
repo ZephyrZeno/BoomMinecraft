@@ -53,6 +53,7 @@ def verify(path,batch,plan):
     if m['family'] in services.FAMILIES:
         S.check(m['schema']==1 and m['kind']=='assembly_runtime_provider_pack','Invalid source native service manifest')
         return services.verify(path,batch,plan,m,S)
+    S.check(not m.get('native_root_spans'),'Legacy family cannot declare native oop roots absent from its verified source model')
     S.check(m['schema']==1 and m['kind']=='assembly_runtime_provider_pack' and m['family'] in ('cds-no-archive-v1','object-identity-v1','normal-constructors-v1','class-flags-v1','normal-constructor-invocation-v1','normal-file-bootstrap-v1','normal-scoped-memory-registration-v1','normal-throwable-v1','normal-signal-lookup-v1','normal-thread-primitives-v1','normal-access-context-v1','normal-thread-start-v1','normal-thread-priority-v1','normal-signal-control-v1','normal-windows-startup-v1','normal-finalization-policy-v1','normal-object-notification-v1','normal-unsafe-class-initialization-v1'),'Unknown runtime provider semantics')
     if m['family']=='normal-unsafe-class-initialization-v1':
         verifier=S.module('verified_normal_unsafe_class_init','verify-unsafe-class-init.py')

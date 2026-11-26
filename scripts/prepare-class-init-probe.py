@@ -473,7 +473,14 @@ def prepare(batch,plan,output,class_roots=None,method_roots=None,scan=False,cont
     if selected_unsafe_field_natives:objects.extend(u['object']['path'] for u in summary['unsafe_fields']['units'])
     if selected_lookup_natives:objects.append(summary['class_lookup']['units'][0]['object']['path'])
     if selected_unsafe_memory_natives:objects.extend(u['object']['path'] for u in summary['unsafe_memory']['units'])
+    native_root_spans=[]
+    if packs:
+        root_spec=importlib.util.spec_from_file_location('selected_native_root_projection',Path(__file__).with_name('provider-native-roots.py'))
+        root_projection=importlib.util.module_from_spec(root_spec);root_spec.loader.exec_module(root_projection)
+        native_root_spans=root_projection.selection(packs,sorted(selected_packs),objects)
     exports=['boom_probe_static_roots','boom_probe_static_root_count','boom_java_string_literals_bind_heap','boom_java_string_literal_pool',*enum_methods.values()]
+    if native_root_spans:
+        exports.extend(('boom_java_string_literal_roots','boom_java_string_literal_root_count'))
     for i in sorted(selected_packs):exports.extend(packs[i]['manifest']['exports'])
     if summary['schema']>=23:exports.extend(('boom_trace_pool','boom_release_trace_pool'))
     if selected_frame_natives:
@@ -558,7 +565,7 @@ def prepare(batch,plan,output,class_roots=None,method_roots=None,scan=False,cont
         admitted_classes=sorted(diagnostic.get('admit_classes',[])),
         unprovided_diagnostic_symbols=[r['symbol'] for r in diagnostic_manifest['rows']],lazy_dispatch=True)
     if packs:manifest.update(runtime_provider_packs=provider_module.references(packs),selected_runtime_provider_packs=sorted(selected_packs),
-        selected_runtime_provider_natives=selected_pack_natives,base_Java_codegen_rerun=False,selected_diagnostic_Java_reassembled=True)
+        selected_runtime_provider_natives=selected_pack_natives,base_Java_codegen_rerun=False,selected_diagnostic_Java_reassembled=True,selected_provider_native_root_spans=native_root_spans)
     if overlay:manifest['runtime_frame_overlay']=overlay
     if diagnostic is not None and diagnostic.get('context_rows'):manifest['diagnostic_context_rows']=True
     if all_source_initializer_map:manifest['all_source_initializer_map']=True

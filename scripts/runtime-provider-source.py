@@ -130,7 +130,10 @@ TOOL_FILES=('scripts/build-runtime-provider-pack.py','scripts/runtime-provider-s
             'native/runtime/win32_path_attributes.asm',
             'scripts/module-definitions-source.py',
             'native/providers/module_definitions_normal.asm.inc',
-            'native/runtime/module_objects.asm')
+            'native/runtime/module_objects.asm',
+            'scripts/file-input-source.py','native/providers/file_input_readonly.asm.inc',
+            'scripts/unsafe-park-source.py','native/providers/unsafe_park.asm.inc',
+            'scripts/provider-native-roots.py','native/kernels/provider_native_root_snapshot.asm.inc')
 
 
 def tools_identity():return {p:digest(ROOT/p)['sha256'] for p in TOOL_FILES}

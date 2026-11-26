@@ -1,6 +1,87 @@
 {
   "schema": 1,
   "families": {
+    "normal-file-input-readonly-v1": {
+      "owner": "java/io/FileInputStream",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/file_input_readonly.asm.inc",
+      "pool": "boom_provider_file_input_pool",
+      "service": "boom_provider_file_input_service",
+      "methods": [
+        {
+          "name": "open0",
+          "descriptor": "(Ljava/lang/String;)V",
+          "access": 258,
+          "operation": 0
+        },
+        {
+          "name": "read0",
+          "descriptor": "()I",
+          "access": 258,
+          "operation": 1
+        },
+        {
+          "name": "readBytes",
+          "descriptor": "([BII)I",
+          "access": 258,
+          "operation": 2
+        },
+        {
+          "name": "length0",
+          "descriptor": "()J",
+          "access": 258,
+          "operation": 3
+        },
+        {
+          "name": "position0",
+          "descriptor": "()J",
+          "access": 258,
+          "operation": 4
+        },
+        {
+          "name": "skip0",
+          "descriptor": "(J)J",
+          "access": 258,
+          "operation": 5
+        },
+        {
+          "name": "available0",
+          "descriptor": "()I",
+          "access": 258,
+          "operation": 6
+        },
+        {
+          "name": "close0",
+          "descriptor": "()V",
+          "access": 258,
+          "operation": 7,
+          "owner": "java/io/FileDescriptor"
+        }
+      ]
+    },
+    "normal-unsafe-park-v1": {
+      "owner": "jdk/internal/misc/Unsafe",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/unsafe_park.asm.inc",
+      "pool": "boom_provider_unsafe_park_pool",
+      "service": "boom_provider_unsafe_park_service",
+      "methods": [
+        {
+          "name": "park",
+          "descriptor": "(ZJ)V",
+          "access": 257,
+          "operation": 0
+        },
+        {
+          "name": "unpark",
+          "descriptor": "(Ljava/lang/Object;)V",
+          "access": 257,
+          "operation": 1
+        }
+      ]
+    },
     "normal-module-definitions-v1": {
       "owner": "java/lang/Module",
       "loader": "bootstrap",

@@ -5,6 +5,8 @@ import zipfile
 
 
 FAMILIES = {
+    'normal-file-input-readonly-v1': ('file-input-source.py','file_input','file_input_readonly.asm.inc'),
+    'normal-unsafe-park-v1': ('unsafe-park-source.py','unsafe_park','unsafe_park.asm.inc'),
     'normal-module-definitions-v1': ('module-definitions-source.py','module_definitions','module_definitions_normal.asm.inc'),
     'normal-windows-canonical-v1': ('windows-canonical-source.py','windows_canonical','windows_canonical.asm.inc'),
     'normal-windows-file-queries-v1': ('windows-file-queries-source.py','windows_file_queries','windows_file_queries.asm.inc'),
@@ -51,11 +53,13 @@ def verify(path, batch, plan, m, S):
     S.check(m['assembled'] and m['native_entries_traced'] and not any(m[k] for k in ('all_native_frames','java_codegen_rerun',
             'base_Java_ASM_and_COFF_modified','all_family_natives_implemented','linked','executed','game_started','world_created')),
             'Native service evidence scope differs')
-    S.check(m['leaf_guest_services'] is False and m['native_java_upcalls'] == (key in ('winnt_filesystem','object_wait','native_library','library_name','windows_canonical','windows_file_queries','module_definitions')) and
+    S.check(m['leaf_guest_services'] is False and m['native_java_upcalls'] == (key in ('winnt_filesystem','object_wait','native_library','library_name','windows_canonical','windows_file_queries','module_definitions','file_input','unsafe_park')) and
             source_frame(batch,plan,S.checked(m['frame_overlay']['manifest']),meta,S) == m['frame_overlay'],
             'Original source frame configuration differs')
+    roots=S.module('verified_physical_native_roots','provider-native-roots.py')
+    physical_roots=roots.provider_projection(m,meta)
     proc, data = C.native_imports(meta)
-    if key in ('object_wait','boot_unnamed','reference_referent','native_library','library_name','windows_canonical','windows_file_queries','module_definitions'):
+    if key in ('object_wait','boot_unnamed','reference_referent','native_library','library_name','windows_canonical','windows_file_queries','module_definitions','file_input','unsafe_park'):
         S.check(m['required_java_methods']==meta.get('required_java_methods',[]) and
                 m['required_provider_families']==meta.get('required_provider_families',[]),
                 'Original required Java methods or service dependencies differ')
@@ -86,7 +90,10 @@ def verify(path, batch, plan, m, S):
         with zipfile.ZipFile(summary[k]['index']['path']) as z:
             S.check(all(json.loads(l)['method'] not in ids for l in z.open('natives.jsonl' if k=='frames' else 'methods.jsonl')),
                     'Native service replaces a base provider')
-    return dict(schema=1,verified=True,scope='original_'+key+'_source_frames_and_COFF',provider_manifest=str(path),
+    proof=dict(schema=1,verified=True,scope='original_'+key+'_source_frames_and_COFF',provider_manifest=str(path),
                 provider_manifest_sha256=S.digest(path)['sha256'],verifier_sha256=S.digest(Path(__file__))['sha256'],
                 base_batch_summary_sha256=identity['batch_summary']['digest']['sha256'],source_native_methods=len(methods),
                 linked=False,executed=False,game_started=False,world_created=False)
+
+    if physical_roots:proof['source_native_root_spans']=physical_roots
+    return proof

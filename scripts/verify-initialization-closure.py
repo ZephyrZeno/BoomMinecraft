@@ -455,6 +455,13 @@ def verify(directory,allow_diagnostics=False):
             definitions,imports=coff.coff_symbols(Path(p['object']['path']),set(p.get('allowed_foreign_imports',[])))
             check(not native_exports&definitions,'Provider conflicts with selected base definitions');native_exports.update(definitions)
         provider_native_count=len(selected_pack_native)
+    root_spec=importlib.util.spec_from_file_location('independent_native_root_projection',Path(__file__).with_name('provider-native-roots.py'))
+    root_projection=importlib.util.module_from_spec(root_spec);root_spec.loader.exec_module(root_projection)
+    expected_native_roots=root_projection.selection(packs,manifest.get('selected_runtime_provider_packs',[]),manifest['objects'])
+    check(manifest.get('selected_provider_native_root_spans',[])==expected_native_roots,'Closure omitted or changed physically selected native oop roots')
+    if expected_native_roots:
+        check({'boom_java_string_literal_roots','boom_java_string_literal_root_count'}<=set(manifest['exports']),
+              'Native root consumer omitted its source string literal root bank')
     check(all_source_initializer_map is needs_source_initializer_map,'Provider and Class initializer map scope differ')
     for symbol in undefined:
         check(symbol in native_exports or not re.fullmatch(r'boom_m\d+(?:_body)?|boom_class\d+|boom_s\d+_\d+|boom_batch_call_\d+_\d+_\d+',symbol),'Closure omitted a Java/class/call dependency')
@@ -480,7 +487,7 @@ def verify(directory,allow_diagnostics=False):
                 source_Unsafe_field_natives=len(selected_unsafe_fields),
                 source_Unsafe_memory_natives=len(selected_unsafe_memory),source_Class_lookup_natives=len(selected_lookup),
                 source_String_concat_sites=len(concat_sites),
-                source_runtime_provider_natives=provider_native_count,
+                source_runtime_provider_natives=provider_native_count,source_provider_native_root_spans=expected_native_roots,
                 source_exception_handler_tables=len(handler_paths),
                 closure_assembly_sha256=hashlib.sha256(assembly.encode()).hexdigest(),game_started=False,full_game_ready=False)
 
