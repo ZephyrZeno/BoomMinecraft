@@ -15,7 +15,7 @@ OWNERS={'java/lang/Object','java/lang/Thread','java/lang/Throwable','java/lang/E
         'java/lang/StackTraceElement','java/lang/Thread$FieldHolder','java/util/TimerThread','java/util/TaskQueue'}
 METHODS={'<init>','<clinit>','fillInStackTrace','getAndClearInterrupt','wait','interrupt','isVirtual','awaitSpace',
          'checkStateForReceive','getStackTraceDepth','getOurStackTrace','start','join','isAlive','alive','run','runWith',
-         'exit','threadContainer','dispatchUncaughtException','mainLoop','isEmpty','clear'}
+         'exit','clearReferences','threadContainer','dispatchUncaughtException','mainLoop','isEmpty','clear'}
 ROOTS=('java/io/PipedInputStream','java/lang/Thread','java/lang/Object','java/lang/InterruptedException',
        'java/io/InterruptedIOException','java/util/TimerThread','java/util/TaskQueue')
 ENTRIES=(('java/io/PipedInputStream','awaitSpace'),('java/lang/Object','wait'),('java/lang/Thread','interrupt'),

@@ -22,6 +22,12 @@
 
 2026-11-26 的独立汇编内核测试覆盖递归持有恢复、对象隔离、单个/广播通知、真实超时、通知与中断的两种次序、48 次重复等待、16 个平台线程受控退出和实际源字段映射。
 
-原始有帧入口测试完成六次源等待：两次正常返回、三次构造实际 InterruptedException、一次受控取消。原始 `PipedInputStream` 将中断异常转为真实 `InterruptedIOException`。该测试用正常 `System$2` 堆对象提供完整 Phase1 在 SharedSecrets 中安装的 JavaLangAccess；这是明确的准备夹具边界。
+v145 原始有帧入口测试使用已验收的 22 包输入清单，实际链接其中 17 个提供器；该源镜像通过独立的源码、ASM 和 COFF 验证后，完成七次源等待：两次正常返回、三次构造实际 InterruptedException、两次受控取消。原始 `PipedInputStream` 将中断异常转为真实 `InterruptedIOException`。
 
-内核可通过 `D:\Dev\Python312\python.exe tests/monitor_wait/build.py --runtime <汇编运行时目录>` 复验；加 `--source-state` 可核对已有原始源镜像。`build_framed.py` 从锁定批次、计划和提供器列表重建原始有帧入口测试。原始 Thread.start/join、TimerThread 关闭和完整初始化进程的合流验证继续单独记录，以上结果不表示 Minecraft 已启动。
+原始平台 `Thread.start()`、无期限 `Thread.join()`、`Thread.run()`、`Thread.exit()` 与 `clearReferences()` 均执行。测试在启动前持有真实子线程监视器两层，`join()` 经一次原始 wait0 释放并恢复递归持有，由真实 `tl_exit` 发布终止状态并通知唤醒。源 Java run 和 exit 各正常返回一次，VM 失败状态为零，失败 Context 全零。
+
+空 `TaskQueue` 上的原始 `TimerThread.run()/mainLoop()` 进入 Object.wait 后受控关闭：一次源 run 尝试、零次正常 run 返回、一次原始 Thread.exit 正常返回。它与另一名真实等待者共消费两个受控停止令牌，随后等待域、线程注册表、追踪池及堆全部完成清理。
+
+Thread/TimerThread 的 holder、interruptLock 和空队列由测试夹具准备；原始 `System$2` 堆对象提供完整 Phase1 会在 SharedSecrets 中安装的 JavaLangAccess。这些准备不表示测试已执行完整 Phase1 或 Thread/TimerThread 的原始构造流程。
+
+内核可通过 `D:\Dev\Python312\python.exe tests/monitor_wait/build.py --runtime <汇编运行时目录>` 复验；加 `--source-state` 可核对已有原始源镜像。`build_framed.py` 从锁定批次、计划和提供器列表重建原始有帧入口测试。完整初始化进程的合流验证继续单独记录，以上结果不表示 Minecraft 已启动，也不覆盖定时任务调度、虚拟线程或有限时长 join。

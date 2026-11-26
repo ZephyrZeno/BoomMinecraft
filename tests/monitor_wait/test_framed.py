@@ -50,7 +50,7 @@ def run(runtime,selection,out):
     require(all(mid in methods and methods[mid]['code_sha256'] for mid in entries.values()),
             'Every requested Java entry requires its verified original bytecode')
     lifecycle_methods={
-        'java/lang/Thread':(('start','()V'),('join','()V'),('join','(J)V'),('run','()V'),('exit','()V'),
+        'java/lang/Thread':(('start','()V'),('join','()V'),('join','(J)V'),('run','()V'),('exit','()V'),('clearReferences','()V'),
                             ('isAlive','()Z'),('alive','()Z')),
         'java/util/TimerThread':(('run','()V'),('mainLoop','()V')),
         'java/util/TaskQueue':(('isEmpty','()Z'),),
@@ -58,7 +58,7 @@ def run(runtime,selection,out):
     class_names={r['class_id']:r['name'] for r in closure['selected_classes']}
     original_callbacks={f"{class_names[row['class_id']]}.{row['name']}{row['descriptor']}":
                         dict(method=mid,code_sha256=row['code_sha256']) for mid,row in methods.items()
-                        if (row['name'],row['descriptor']) in lifecycle_methods.get(class_names[row['class_id']],())}
+                        if (row['name'],row['descriptor']) in lifecycle_methods.get(class_names.get(row['class_id']),())}
     require(len(original_callbacks)==sum(map(len,lifecycle_methods.values())) and
             all(row['code_sha256'] for row in original_callbacks.values()),'thread lifecycle source bytecode')
     with os.add_dll_directory(str(runtime)):
@@ -315,6 +315,13 @@ def run(runtime,selection,out):
     require(leave(heap,target,Context())==17 and join_waits==1,'join passed through source wait0')
     reap_child(target)
     delta=[Q.from_address(lifecycle+k).value-n for k,n in zip(trace_offsets,before)]
+    diagnostic_pool=symbol(guest,'boom_diagnostic_pool')
+    diagnostic_id=word(diagnostic_pool,32) if word(diagnostic_pool,8)==2 else None
+    diagnostic=json.loads((selection/'diagnostic.json').read_bytes())
+    lifecycle_trace=dict(counter_delta=delta,failure_state=word(lifecycle,120),
+        failure_context=list(Context.from_address(ptr(lifecycle,224))),
+        diagnostic=next((r for r in diagnostic['rows'] if r['id']==diagnostic_id),None))
+    record('original_Thread_lifecycle_trace',lifecycle_trace)
     require(delta==[1,1,1,1],'original Java run and exit both completed exactly once')
     record('original_Thread_start_join_exit',{'source_run_returns':delta[1],'source_exit_returns':delta[3],
                                              'wait0_calls':join_waits,'restored_recursion':2})
