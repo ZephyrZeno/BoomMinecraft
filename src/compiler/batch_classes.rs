@@ -195,6 +195,7 @@ pub struct Summary {
     pub reverse_slots: usize,
     pub loader_keys: Vec<String>,
     pub modules: Vec<Module>,
+    pub bootstrap_unnamed_module_slot: usize,
     pub source_shape: Shape,
     pub kernel_sha256: BTreeMap<String, String>,
     pub index: Artifact,
@@ -205,6 +206,21 @@ pub struct Summary {
     pub automatic_gc: bool,
     pub linked: bool,
 }
+
+// Keep all source-assigned IDs stable, including java.base at zero. The boot
+// loader creates an unnamed Module even if every compiled boot class is named.
+fn bootstrap_unnamed_slot(keys: &mut Vec<(String, Option<String>)>) -> usize {
+    if let Some(id) = keys
+        .iter()
+        .position(|(loader, name)| loader == "bootstrap" && name.is_none())
+    {
+        return id;
+    }
+    let id = keys.len();
+    keys.push(("bootstrap".into(), None));
+    id
+}
+
 pub(super) fn generate(
     catalog: &Catalog,
     layouts: &[Layout],
@@ -297,7 +313,8 @@ pub(super) fn generate(
     }
     let base = ("bootstrap".to_string(), Some("java.base".to_string()));
     module_keys.remove(&base);
-    let keys: Vec<_> = std::iter::once(base).chain(module_keys).collect();
+    let mut keys: Vec<_> = std::iter::once(base).chain(module_keys).collect();
+    let bootstrap_unnamed_module_slot = bootstrap_unnamed_slot(&mut keys);
     ensure!(keys.len() <= 65536, "Class module identity budget exceeded");
     let module_ids: BTreeMap<_, _> = keys
         .iter()
@@ -527,6 +544,7 @@ pub(super) fn generate(
             reverse_slots,
             loader_keys,
             modules,
+            bootstrap_unnamed_module_slot,
             source_shape: shape,
             kernel_sha256: BTreeMap::from([(
                 "native/runtime/java_classes.asm".into(),
@@ -550,6 +568,21 @@ pub(super) fn generate(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn bootstrap_unnamed_key_keeps_existing_ids_and_is_unique() {
+        let original = vec![
+            ("bootstrap".to_string(), Some("java.base".to_string())),
+            ("vanilla-application".to_string(), None),
+        ];
+        let mut keys = original.clone();
+        assert_eq!(bootstrap_unnamed_slot(&mut keys), 2);
+        assert_eq!(keys[..2], original[..]);
+        assert_eq!(bootstrap_unnamed_slot(&mut keys), 2);
+        assert_eq!(keys.len(), 3);
+        keys.swap(1, 2);
+        assert_eq!(bootstrap_unnamed_slot(&mut keys), 1);
+        assert_eq!(keys.len(), 3);
+    }
     #[test]
     fn literal_does_not_initialize_represented_class() {
         let b = literal_body("boom_batch_literal_load_7_3", 42);

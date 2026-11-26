@@ -5,6 +5,7 @@ import zipfile
 
 
 FAMILIES = {
+    'normal-boot-unnamed-module-v1': ('boot-unnamed-source.py','boot_unnamed','boot_unnamed_normal.asm.inc'),
     'normal-object-wait-v1': ('object-wait-source.py','object_wait','object_wait.asm.inc'),
     'normal-reference-processing-v1': ('reference-processing-source.py','reference_processing','reference_processing.asm.inc'),
     'normal-winnt-filesystem-v1': ('winnt-filesystem-source.py','winnt_filesystem','winnt_filesystem.asm.inc'),
@@ -36,7 +37,7 @@ def verify(path, batch, plan, m, S):
             m['methods'] == methods and m['owner_source'] == owner and m['owner_sources'] == owners, 'Original native source differs')
     record = S.checked(m[key+'_metadata'])
     S.check(record.parent == path.parent and S.read(record) == meta and m['policy'] == C.POLICY and
-            m['required_class_ids'] == meta['required_classes'] and m['required_base_modules'] == [] and
+            m['required_class_ids'] == meta['required_classes'] and m['required_base_modules'] == meta.get('required_base_modules',[]) and
             (m['context_bytes'],m['pool_bytes'],m['pool_abi']) == (32,meta['pool_bytes'],meta['pool_abi']) and
             (m['pool_symbol'],m['service_symbol']) == (C.POOL,C.SERVICE) and m['allowed_foreign_imports'] == sorted(C.FOREIGN),
             'Original native binding ABI/policy differs')
@@ -47,14 +48,15 @@ def verify(path, batch, plan, m, S):
             source_frame(batch,plan,S.checked(m['frame_overlay']['manifest']),meta,S) == m['frame_overlay'],
             'Original source frame configuration differs')
     proc, data = C.native_imports(meta)
-    if key=='object_wait':
+    if key in ('object_wait','boot_unnamed'):
         S.check(m['required_java_methods']==meta['required_java_methods'] and
                 m['required_provider_families']==meta['required_provider_families'],
-                'Missing source exception constructor or shared VM stop controller')
+                'Original required Java methods or service dependencies differ')
     declared = {f"boom_class{c['id']}" for c in owners} | {'boom_class_ensure32'}
     expected = 'option casemap:none\nEXTERN boom_class_ensure32:PROC\n' + ''.join(f"EXTERN boom_class{c['id']}:BYTE\n" for c in owners)
     expected += ''.join(f"EXTERN {n}:{'PROC' if n in proc else 'BYTE'}\n" for n in sorted(proc|data)) + C.data(meta)
-    exports = C.CONTROL | {C.POOL,C.SERVICE}
+    exports = C.CONTROL | {C.SERVICE}
+    if C.POOL not in data:exports.add(C.POOL)
     R = S.module('verify_source_service_wrapper','verify-batch-frames.py')
     for row in methods:
         i = row['method']

@@ -1,6 +1,17 @@
 {
   "schema": 1,
   "families": {
+    "normal-boot-unnamed-module-v1": {
+      "owner": "jdk/internal/loader/BootLoader",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/boot_unnamed_normal.asm.inc",
+      "pool": "boom_java_class_pool",
+      "service": "boom_boot_unnamed_normal",
+      "methods": [
+        { "name": "setBootLoaderUnnamedModule0", "descriptor": "(Ljava/lang/Module;)V", "access": 266, "operation": 0 }
+      ]
+    },
     "normal-scoped-memory-registration-v1": {
       "owner": "jdk/internal/misc/ScopedMemoryAccess",
       "loader": "bootstrap",

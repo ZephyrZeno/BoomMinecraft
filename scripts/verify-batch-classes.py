@@ -75,7 +75,7 @@ def names_body(shape,capacity,string,names,canonical):
     parts.append(f'.data?\nALIGN 8\nPUBLIC boom_java_class_name_roots\nboom_java_class_name_roots QWORD {count*2} DUP(?)\njava_class_name_states DWORD {count} DUP(?)\n.code\n')
     return ''.join(parts)
 
-def identities(classes,types):
+def identities(classes,types,bootstrap_unnamed_slot=None):
     loaders=['bootstrap']+sorted({t['defining_loader'] for t in types.values()}-{'bootstrap'});loader_ids={s:i for i,s in enumerate(loaders)}
     keys=set()
     for t in types.values():
@@ -84,6 +84,12 @@ def identities(classes,types):
         keys.add((t['defining_loader'],origin['source_id'][4:] if origin['source_id'].startswith('jdk:') else None))
     base=('bootstrap','java.base');keys.discard(base)
     keys=[base]+sorted(keys,key=lambda k:(k[0],k[1] is not None,k[1] or ''))
+    if bootstrap_unnamed_slot is not None:
+        boot=('bootstrap',None)
+        if boot not in keys:keys.append(boot)
+        check(type(bootstrap_unnamed_slot) is int and keys.index(boot)==bootstrap_unnamed_slot,
+              'Declared bootstrap unnamed module slot differs from stable source module IDs')
+    check(len(keys)<=65536,'Class module identity budget exceeded')
     mods=[dict(id=i,name=n,loader=loader_ids[l]) for i,(l,n) in enumerate(keys)];mod_ids={key:i for i,key in enumerate(keys)}
     rows={};object_id=next(c['id'] for c in classes if (c['origin']['loader'],c['name'])==('bootstrap','java/lang/Object'))
     names={(c['origin']['loader'],c['name']):c['id'] for c in classes}
@@ -123,7 +129,10 @@ def verify(root,batch,plan,inventory,requests,available,artifact,coff_symbols,fi
     layouts={r['class_id']:r['candidate'] for r in map(json.loads,artifact(root,batch['layouts']).read_text(encoding='utf-8').splitlines())}
     with zipfile.ZipFile(artifact(root,batch['runtime_metadata']['index'],'runtime-metadata')) as z:types={r['id']:r for r in map(json.loads,z.read('types.jsonl').splitlines())}
     with_names=batch['schema']>=11
-    shape=shape_model(classes,layouts,with_names);loaders,modules,rows=identities(classes,types);capacity=batch['runtime_metadata']['type_capacity'];reverse=1
+    bootstrap_unnamed_slot=s.get('bootstrap_unnamed_module_slot')
+    check('bootstrap_unnamed_module_slot' not in s or type(bootstrap_unnamed_slot) is int,
+          'Bootstrap unnamed module slot must be an explicit integer')
+    shape=shape_model(classes,layouts,with_names);loaders,modules,rows=identities(classes,types,bootstrap_unnamed_slot);capacity=batch['runtime_metadata']['type_capacity'];reverse=1
     while reverse<capacity*2:reverse*=2
     check(s['source_shape']==shape and s['loader_keys']==loaders and s['modules']==modules,'Normal Class layout/loader/module source differs')
     check((s['type_capacity'],s['provided_types'],s['root_cells'],s['reverse_slots'])==(capacity,len(rows),capacity+len(loaders)+len(modules),reverse),'Class mirror registry counts differ')

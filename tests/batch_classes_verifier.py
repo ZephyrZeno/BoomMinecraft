@@ -8,6 +8,24 @@ V=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(V)
 
 
 class NormalClassSourceTests(unittest.TestCase):
+    def test_explicit_bootstrap_unnamed_slot_preserves_source_rows(self):
+        classes,_,types=self.model()
+        loaders,previous,rows=V.identities(classes,types)
+        index=len(previous)
+        current,modules,unchanged=V.identities(classes,types,index)
+        self.assertEqual(current,loaders)
+        self.assertEqual(modules,previous+[dict(id=index,name=None,loader=0)])
+        self.assertEqual(rows,unchanged)
+        for wrong in (index-1,index+1,True):
+            with self.assertRaises(ValueError):V.identities(classes,types,wrong)
+
+    def test_existing_bootstrap_unnamed_key_keeps_source_position(self):
+        classes,_,types=self.model()
+        classes[3]['origin']['source_id']='local:bootstrap'
+        loaders,original,rows=V.identities(classes,types)
+        [key]=[r['id'] for r in original if r['name'] is None and r['loader']==0]
+        self.assertEqual(V.identities(classes,types,key),(loaders,original,rows))
+
     def model(self):
         def c(id_,name,loader='bootstrap',source='jdk:java.base',flags=0x21):
             return dict(id=id_,name=name,access=flags,superclass='' if id_==0 else 'java/lang/Object',fields=[],origin=dict(loader=loader,source_id=source,sha256=str(id_),java_class_major=65))

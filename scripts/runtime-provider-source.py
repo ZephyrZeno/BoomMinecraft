@@ -105,6 +105,7 @@ TOOL_FILES=('scripts/build-runtime-provider-pack.py','scripts/runtime-provider-s
             'scripts/unsafe-class-init-source.py','scripts/verify-unsafe-class-init.py','native/providers/unsafe_class_initialization.asm.inc',
             'scripts/framed-runtime-service.py','scripts/reference-processing-source.py','native/providers/reference_processing.asm.inc',
             'scripts/object-wait-source.py','native/providers/object_wait.asm.inc',
+            'scripts/boot-unnamed-source.py','native/providers/boot_unnamed_normal.asm.inc','scripts/verify-translation-ir.py',
             'scripts/winnt-filesystem-source.py','native/providers/winnt_filesystem.asm.inc',
             'scripts/revalidate-runtime-provider-cache.py',
             'scripts/native-frame-overlay.py')

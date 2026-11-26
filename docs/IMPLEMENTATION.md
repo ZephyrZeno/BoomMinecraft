@@ -1,5 +1,11 @@
 # BoomMinecraft 自研汇编后端实现与验证记录
 
+## 正常 BootLoader 模块发布 v145（2026-11-26）
+
+正式汇编 provider 已接入原始 BootLoader.setBootLoaderUnnamedModule0，原 Java 冷初始化完成，五个静态字段与正常 JCLS 模块根保持一致。八个 OS 线程并发冷初始化只发布一个 Module，重复调用及错误参数检查通过。编译器在末尾追加 bootstrap unnamed 槽，保留已有模块编号与所有普通 Java COFF；完整派生批次及正式源码／ASM／COFF 验证通过。详见[正常 BootLoader 模块发布](NORMAL_BOOTLOADER_MODULE.md)。
+
+320 项 Python 与 200 项 Rust 单元测试通过。21 个旧 provider 已按新批次、帧和当前工具重新验证，与新增 provider 合成同一 22 包输入；完整原生启动链及原始 Thread.join／Timer、NIO 正在分别执行验收。独立 BootLoader 测试的 System 准备仍有缺口，不能据此记为完整 System 或游戏启动。保留普通 Java COFF 的开发进程已实际从 BootLoader 推进到 ClassLoader.registerNatives，完整选择证明另行执行。
+
 ## 等待与窄字段原子操作合流 v143（2026-11-26）
 
 原生 v141 进程进入 System.initPhase2 后，在 Module.enableNativeAccess 的原始 Java 窄字段 CAS 算法中停下。UFMP ABI2 现用独立虚拟字段槽保留该 Java 对齐算法，同时以汇编 byte/word CAS 更新实际字段，避免误选字段或访问对象尾部以外的存储。四种真实源布局、32 项原始 Java byte/short 用例、九项错误视图/ABI 检查以及八个 OS 线程的 2,048 次成功竞争更新通过；原始 Module.implAddEnableNativeAccess 已在存储夹具中真实返回。详见[窄字段原子操作](NARROW_FIELD_ATOMICS.md)。

@@ -8,6 +8,8 @@ An experimental AOT compiler, assembly runtime, and launcher for Minecraft: Java
 
 当前已验证原始 `Unsafe` 类初始化调用、Windows 文件系统字段注册、引用等待和对象监视器等待，以及原始 Java 对中断异常的捕获。Windows 文件元数据内核通过 JDK 对照，窗口调用桥通过无窗口契约测试。完整模块引导、图形运行时和创建世界仍在实现。多核线程内核已有并发测试，游戏性能提升需要在完整启动后测量。
 
+v145 新增[正常 BootLoader 模块发布](docs/NORMAL_BOOTLOADER_MODULE.md)：正式汇编绑定通过原 Java 冷初始化和八线程并发检查，完整派生批次验证保留普通 Java 方法产物。22 包共同输入已就绪，完整原生启动链继续验收。
+
 首个目标版本为 Java 版 1.21.1，完成原版后再推进模组兼容。类加载器身份、变换链和优化失效边界提前纳入设计。启动器提供“启动游戏”入口，输入准备、翻译和构建由启动流程调用。
 
 - [架构设计](docs/DESIGN.md)

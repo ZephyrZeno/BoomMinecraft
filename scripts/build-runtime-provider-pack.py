@@ -41,7 +41,7 @@ def prepare(batch,plan,output,family,frame_overlay=None):
         frame_reference=framed_services.source_frame(batch,plan,frame_overlay,metadata,S)
         procs,data=C.native_imports(metadata);extra=sorted(procs|data);imports+=extra
         source+=''.join(f"EXTERN {n}:{'PROC' if n in procs else 'BYTE'}\n" for n in extra)+C.data(metadata)
-        policy=C.POLICY;dependencies=metadata['required_classes'];modules=[];pool_abi=metadata['pool_abi']
+        policy=C.POLICY;dependencies=metadata['required_classes'];modules=metadata.get('required_base_modules',[]);pool_abi=metadata['pool_abi']
         pool_bytes=metadata['pool_bytes'];framed=True;runtime_kernels=C.KERNELS;additional_exports=sorted(C.CONTROL)
     elif family=='normal-unsafe-class-initialization-v1':
         C=S.module('normal_unsafe_class_init','unsafe-class-init-source.py');metadata_kind='unsafe_class_init'
@@ -217,7 +217,7 @@ def prepare(batch,plan,output,family,frame_overlay=None):
     result=dict(schema=1,kind='assembly_runtime_provider_pack',family=family,base=identity,methods=members,
         native_methods=len(members),owner_source=owner,owner_sources=sorted(owners.values(),key=lambda c:c['id']),context_bytes=32,policy=policy,
         required_class_ids=dependencies,required_base_modules=modules,pool_symbol=rule['pool'],service_symbol=rule['service'],pool_abi=pool_abi,pool_bytes=pool_bytes,
-        exports=[rule['pool'],rule['service']]+[f"boom_m{m['method']}{suffix}" for m in members for suffix in ('','_native')]+additional_exports,
+        exports=([rule['pool']] if rule['pool'] not in imports else [])+[rule['service']]+[f"boom_m{m['method']}{suffix}" for m in members for suffix in ('','_native')]+additional_exports,
         imports=imports,
         assembly=S.artifact(path),kernel_sha256=S.digest(S.ROOT/rule['kernel'])['sha256'],tool_sources=S.tools_identity(),
         runtime_kernel_sha256={'native/runtime/'+n:S.digest(S.ROOT/'native/runtime'/n)['sha256'] for n in runtime_kernels},
@@ -227,7 +227,7 @@ def prepare(batch,plan,output,family,frame_overlay=None):
         record=output/(metadata_kind+'.json');S.write(record,metadata);result[metadata_kind+'_metadata']=S.artifact(record)
         result.update(native_entries_traced=True,native_java_upcalls=metadata_kind in ('winnt_filesystem','object_wait'),leaf_guest_services=False,
                       all_native_frames=False,frame_overlay=frame_reference,allowed_foreign_imports=sorted(C.FOREIGN))
-        if metadata_kind=='object_wait':
+        if metadata_kind in ('object_wait','boot_unnamed'):
             result.update(required_java_methods=metadata['required_java_methods'],required_provider_families=metadata['required_provider_families'])
     elif metadata_kind=='unsafe_class_init':
         S.write(output/'unsafe-class-init.json',metadata);result['unsafe_class_init_metadata']=S.artifact(output/'unsafe-class-init.json')
