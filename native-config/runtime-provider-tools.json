@@ -1,0 +1,1556 @@
+{
+  "schema": 1,
+  "kind": "runtime-provider-tool-manifest",
+  "legacy_prefix": {
+    "count": 105,
+    "sha256": "e9a87cfad93b62c64784041f3eb4a3451da1bea658d0f5ba880e6c718bab5780"
+  },
+  "tool_order": [
+    "scripts/build-runtime-provider-pack.py",
+    "scripts/runtime-provider-source.py",
+    "scripts/verify-runtime-provider-pack.py",
+    "scripts/verify-batch-frames.py",
+    "scripts/verify-batch-assembly.py",
+    "scripts/Build-RuntimeProviderPack.ps1",
+    "native-config/runtime-providers.json",
+    "native/providers/native-wrapper.asm.tpl",
+    "native/providers/cds.asm.inc",
+    "native/providers/identity.asm.inc",
+    "scripts/constructor-provider-source.py",
+    "scripts/verify-constructor-provider.py",
+    "scripts/verify-batch-metadata.py",
+    "native/providers/constructors.asm.inc",
+    "scripts/system-class-inputs.py",
+    "scripts/class-flags-source.py",
+    "scripts/verify-class-flags-provider.py",
+    "native/providers/class_flags.asm.inc",
+    "scripts/constructor-invocation-source.py",
+    "scripts/verify-constructor-invocation.py",
+    "native/providers/constructor_invoke.asm.inc",
+    "native/providers/constructor_callsite.asm.inc",
+    "native/providers/constructor_unbox.asm.inc",
+    "native/providers/constructor_widen.asm.inc",
+    "scripts/file-bootstrap-source.py",
+    "scripts/verify-file-bootstrap.py",
+    "native/providers/file_bootstrap.asm.inc",
+    "scripts/scoped-memory-source.py",
+    "scripts/verify-scoped-memory.py",
+    "native/providers/scoped_memory.asm.inc",
+    "scripts/normal-throwable-source.py",
+    "scripts/verify-normal-throwable.py",
+    "native/providers/normal_throwable.asm.inc",
+    "scripts/signal-lookup-source.py",
+    "scripts/verify-signal-lookup.py",
+    "native/providers/signal_lookup.asm.inc",
+    "scripts/normal-thread-source.py",
+    "scripts/verify-normal-thread.py",
+    "native/providers/normal_thread.asm.inc",
+    "scripts/normal-access-source.py",
+    "scripts/verify-normal-access.py",
+    "native/providers/normal_access.asm.inc",
+    "scripts/normal-thread-start-source.py",
+    "scripts/verify-normal-thread-start.py",
+    "native/providers/normal_thread_start.asm.inc",
+    "scripts/normal-thread-priority-source.py",
+    "scripts/verify-normal-thread-priority.py",
+    "native/providers/normal_thread_priority.asm.inc",
+    "scripts/normal-signal-control-source.py",
+    "scripts/verify-normal-signal-control.py",
+    "native/providers/normal_signal_control.asm.inc",
+    "scripts/windows-startup-source.py",
+    "scripts/verify-windows-startup-provider.py",
+    "native/providers/windows_startup.asm.inc",
+    "scripts/finalization-policy-source.py",
+    "scripts/verify-finalization-policy.py",
+    "native/providers/finalization_policy.asm.inc",
+    "scripts/object-notification-source.py",
+    "scripts/verify-object-notification.py",
+    "native/providers/object_notification.asm.inc",
+    "scripts/unsafe-class-init-source.py",
+    "scripts/verify-unsafe-class-init.py",
+    "native/providers/unsafe_class_initialization.asm.inc",
+    "scripts/framed-runtime-service.py",
+    "scripts/reference-processing-source.py",
+    "native/providers/reference_processing.asm.inc",
+    "scripts/object-wait-source.py",
+    "native/providers/object_wait.asm.inc",
+    "scripts/boot-unnamed-source.py",
+    "native/providers/boot_unnamed_normal.asm.inc",
+    "scripts/verify-translation-ir.py",
+    "scripts/class-loader-assertions-source.py",
+    "scripts/class-loader-assertions-candidate.py",
+    "native/providers/class_loader_assertions.asm.inc",
+    "scripts/winnt-filesystem-source.py",
+    "native/providers/winnt_filesystem.asm.inc",
+    "scripts/revalidate-runtime-provider-cache.py",
+    "scripts/reference-referent-source.py",
+    "native/providers/reference_referent_get.asm.inc",
+    "native/providers/reference_referent_read.asm.inc",
+    "scripts/native-library-source.py",
+    "scripts/native-library-helpers-source.py",
+    "native/providers/native_library_lifecycle.asm.inc",
+    "native/providers/builtin_net_platform.asm.inc",
+    "native/providers/builtin_module_context.asm.inc",
+    "scripts/library-name-source.py",
+    "native/providers/library_name_normal.asm.inc",
+    "native/providers/win32_library_name.asm.inc",
+    "native/kernels/java_string_literals.inc",
+    "scripts/native-frame-overlay.py",
+    "scripts/windows-canonical-source.py",
+    "native/providers/windows_canonical.asm.inc",
+    "native/runtime/windows_canonical_path.asm",
+    "scripts/windows-file-queries-source.py",
+    "native/providers/windows_file_queries.asm.inc",
+    "native/runtime/win32_path_attributes.asm",
+    "scripts/module-definitions-source.py",
+    "native/providers/module_definitions_normal.asm.inc",
+    "native/runtime/module_objects.asm",
+    "scripts/file-input-source.py",
+    "native/providers/file_input_readonly.asm.inc",
+    "scripts/unsafe-park-source.py",
+    "native/providers/unsafe_park.asm.inc",
+    "scripts/provider-native-roots.py",
+    "native/kernels/provider_native_root_snapshot.asm.inc",
+    "scripts/provider-tool-manifest.py",
+    "native-config/runtime-provider-tools.json"
+  ],
+  "shared_files": [
+    "scripts/build-runtime-provider-pack.py",
+    "scripts/runtime-provider-source.py",
+    "scripts/verify-runtime-provider-pack.py",
+    "scripts/verify-batch-frames.py",
+    "scripts/verify-batch-assembly.py",
+    "scripts/Build-RuntimeProviderPack.ps1",
+    "native-config/runtime-providers.json",
+    "native/providers/native-wrapper.asm.tpl",
+    "scripts/verify-batch-metadata.py",
+    "scripts/system-class-inputs.py",
+    "native/providers/constructor_callsite.asm.inc",
+    "native/providers/constructor_unbox.asm.inc",
+    "native/providers/constructor_widen.asm.inc",
+    "scripts/framed-runtime-service.py",
+    "scripts/verify-translation-ir.py",
+    "scripts/class-loader-assertions-candidate.py",
+    "scripts/revalidate-runtime-provider-cache.py",
+    "native/providers/reference_referent_read.asm.inc",
+    "scripts/native-library-helpers-source.py",
+    "native/providers/builtin_net_platform.asm.inc",
+    "native/providers/builtin_module_context.asm.inc",
+    "native/providers/win32_library_name.asm.inc",
+    "native/kernels/java_string_literals.inc",
+    "scripts/native-frame-overlay.py",
+    "native/runtime/windows_canonical_path.asm",
+    "native/runtime/win32_path_attributes.asm",
+    "native/runtime/module_objects.asm",
+    "scripts/provider-native-roots.py",
+    "native/kernels/provider_native_root_snapshot.asm.inc",
+    "scripts/provider-tool-manifest.py",
+    "native-config/runtime-provider-tools.json"
+  ],
+  "families": {
+    "normal-file-input-readonly-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/io/FileInputStream"
+      },
+      "model": "scripts/file-input-source.py",
+      "verifier": "scripts/framed-runtime-service.py",
+      "kernel": "native/providers/file_input_readonly.asm.inc",
+      "owned_files": [
+        "scripts/file-input-source.py",
+        "native/providers/file_input_readonly.asm.inc"
+      ]
+    },
+    "normal-unsafe-park-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "jdk/internal/misc/Unsafe"
+      },
+      "model": "scripts/unsafe-park-source.py",
+      "verifier": "scripts/framed-runtime-service.py",
+      "kernel": "native/providers/unsafe_park.asm.inc",
+      "owned_files": [
+        "scripts/unsafe-park-source.py",
+        "native/providers/unsafe_park.asm.inc"
+      ]
+    },
+    "normal-module-definitions-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/lang/Module"
+      },
+      "model": "scripts/module-definitions-source.py",
+      "verifier": "scripts/framed-runtime-service.py",
+      "kernel": "native/providers/module_definitions_normal.asm.inc",
+      "owned_files": [
+        "scripts/module-definitions-source.py",
+        "native/providers/module_definitions_normal.asm.inc"
+      ]
+    },
+    "normal-windows-canonical-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/io/WinNTFileSystem"
+      },
+      "model": "scripts/windows-canonical-source.py",
+      "verifier": "scripts/framed-runtime-service.py",
+      "kernel": "native/providers/windows_canonical.asm.inc",
+      "owned_files": [
+        "scripts/windows-canonical-source.py",
+        "native/providers/windows_canonical.asm.inc"
+      ]
+    },
+    "normal-windows-file-queries-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/io/WinNTFileSystem"
+      },
+      "model": "scripts/windows-file-queries-source.py",
+      "verifier": "scripts/framed-runtime-service.py",
+      "kernel": "native/providers/windows_file_queries.asm.inc",
+      "owned_files": [
+        "scripts/windows-file-queries-source.py",
+        "native/providers/windows_file_queries.asm.inc"
+      ]
+    },
+    "normal-class-loader-assertions-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/lang/ClassLoader"
+      },
+      "model": "scripts/class-loader-assertions-source.py",
+      "verifier": "scripts/framed-runtime-service.py",
+      "kernel": "native/providers/class_loader_assertions.asm.inc",
+      "owned_files": [
+        "scripts/class-loader-assertions-source.py",
+        "native/providers/class_loader_assertions.asm.inc"
+      ]
+    },
+    "normal-boot-unnamed-module-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "jdk/internal/loader/BootLoader"
+      },
+      "model": "scripts/boot-unnamed-source.py",
+      "verifier": "scripts/framed-runtime-service.py",
+      "kernel": "native/providers/boot_unnamed_normal.asm.inc",
+      "owned_files": [
+        "scripts/boot-unnamed-source.py",
+        "native/providers/boot_unnamed_normal.asm.inc"
+      ]
+    },
+    "normal-scoped-memory-registration-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "jdk/internal/misc/ScopedMemoryAccess"
+      },
+      "model": "scripts/scoped-memory-source.py",
+      "verifier": "scripts/verify-scoped-memory.py",
+      "kernel": "native/providers/scoped_memory.asm.inc",
+      "owned_files": [
+        "scripts/scoped-memory-source.py",
+        "scripts/verify-scoped-memory.py",
+        "native/providers/scoped_memory.asm.inc"
+      ]
+    },
+    "normal-throwable-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/lang/Throwable"
+      },
+      "model": "scripts/normal-throwable-source.py",
+      "verifier": "scripts/verify-normal-throwable.py",
+      "kernel": "native/providers/normal_throwable.asm.inc",
+      "owned_files": [
+        "scripts/normal-throwable-source.py",
+        "scripts/verify-normal-throwable.py",
+        "native/providers/normal_throwable.asm.inc"
+      ]
+    },
+    "normal-file-bootstrap-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/io/FileInputStream"
+      },
+      "model": "scripts/file-bootstrap-source.py",
+      "verifier": "scripts/verify-file-bootstrap.py",
+      "kernel": "native/providers/file_bootstrap.asm.inc",
+      "owned_files": [
+        "scripts/file-bootstrap-source.py",
+        "scripts/verify-file-bootstrap.py",
+        "native/providers/file_bootstrap.asm.inc"
+      ]
+    },
+    "normal-constructor-invocation-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "jdk/internal/reflect/DirectConstructorHandleAccessor$NativeAccessor"
+      },
+      "model": "scripts/constructor-invocation-source.py",
+      "verifier": "scripts/verify-constructor-invocation.py",
+      "kernel": "native/providers/constructor_invoke.asm.inc",
+      "owned_files": [
+        "scripts/constructor-invocation-source.py",
+        "scripts/verify-constructor-invocation.py",
+        "native/providers/constructor_invoke.asm.inc"
+      ]
+    },
+    "class-flags-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "jdk/internal/reflect/Reflection"
+      },
+      "model": "scripts/class-flags-source.py",
+      "verifier": "scripts/verify-class-flags-provider.py",
+      "kernel": "native/providers/class_flags.asm.inc",
+      "owned_files": [
+        "scripts/class-flags-source.py",
+        "scripts/verify-class-flags-provider.py",
+        "native/providers/class_flags.asm.inc"
+      ]
+    },
+    "cds-no-archive-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "jdk/internal/misc/CDS"
+      },
+      "model": null,
+      "verifier": "scripts/verify-runtime-provider-pack.py",
+      "kernel": "native/providers/cds.asm.inc",
+      "owned_files": [
+        "native/providers/cds.asm.inc"
+      ]
+    },
+    "normal-constructors-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/lang/Class"
+      },
+      "model": "scripts/constructor-provider-source.py",
+      "verifier": "scripts/verify-constructor-provider.py",
+      "kernel": "native/providers/constructors.asm.inc",
+      "owned_files": [
+        "scripts/constructor-provider-source.py",
+        "scripts/verify-constructor-provider.py",
+        "native/providers/constructors.asm.inc"
+      ]
+    },
+    "object-identity-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/lang/Object"
+      },
+      "model": null,
+      "verifier": "scripts/verify-runtime-provider-pack.py",
+      "kernel": "native/providers/identity.asm.inc",
+      "owned_files": [
+        "native/providers/identity.asm.inc"
+      ]
+    },
+    "normal-signal-lookup-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "jdk/internal/misc/Signal"
+      },
+      "model": "scripts/signal-lookup-source.py",
+      "verifier": "scripts/verify-signal-lookup.py",
+      "kernel": "native/providers/signal_lookup.asm.inc",
+      "owned_files": [
+        "scripts/signal-lookup-source.py",
+        "scripts/verify-signal-lookup.py",
+        "native/providers/signal_lookup.asm.inc"
+      ]
+    },
+    "normal-thread-primitives-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/lang/Thread"
+      },
+      "model": "scripts/normal-thread-source.py",
+      "verifier": "scripts/verify-normal-thread.py",
+      "kernel": "native/providers/normal_thread.asm.inc",
+      "owned_files": [
+        "scripts/normal-thread-source.py",
+        "scripts/verify-normal-thread.py",
+        "native/providers/normal_thread.asm.inc"
+      ]
+    },
+    "normal-access-context-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/security/AccessController"
+      },
+      "model": "scripts/normal-access-source.py",
+      "verifier": "scripts/verify-normal-access.py",
+      "kernel": "native/providers/normal_access.asm.inc",
+      "owned_files": [
+        "scripts/normal-access-source.py",
+        "scripts/verify-normal-access.py",
+        "native/providers/normal_access.asm.inc"
+      ]
+    },
+    "normal-object-wait-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/lang/Object"
+      },
+      "model": "scripts/object-wait-source.py",
+      "verifier": "scripts/framed-runtime-service.py",
+      "kernel": "native/providers/object_wait.asm.inc",
+      "owned_files": [
+        "scripts/object-wait-source.py",
+        "native/providers/object_wait.asm.inc"
+      ]
+    },
+    "normal-reference-processing-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/lang/ref/Reference"
+      },
+      "model": "scripts/reference-processing-source.py",
+      "verifier": "scripts/framed-runtime-service.py",
+      "kernel": "native/providers/reference_processing.asm.inc",
+      "owned_files": [
+        "scripts/reference-processing-source.py",
+        "native/providers/reference_processing.asm.inc"
+      ]
+    },
+    "normal-winnt-filesystem-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/io/WinNTFileSystem"
+      },
+      "model": "scripts/winnt-filesystem-source.py",
+      "verifier": "scripts/framed-runtime-service.py",
+      "kernel": "native/providers/winnt_filesystem.asm.inc",
+      "owned_files": [
+        "scripts/winnt-filesystem-source.py",
+        "native/providers/winnt_filesystem.asm.inc"
+      ]
+    },
+    "normal-unsafe-class-initialization-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "jdk/internal/misc/Unsafe"
+      },
+      "model": "scripts/unsafe-class-init-source.py",
+      "verifier": "scripts/verify-unsafe-class-init.py",
+      "kernel": "native/providers/unsafe_class_initialization.asm.inc",
+      "owned_files": [
+        "scripts/unsafe-class-init-source.py",
+        "scripts/verify-unsafe-class-init.py",
+        "native/providers/unsafe_class_initialization.asm.inc"
+      ]
+    },
+    "normal-object-notification-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/lang/Object"
+      },
+      "model": "scripts/object-notification-source.py",
+      "verifier": "scripts/verify-object-notification.py",
+      "kernel": "native/providers/object_notification.asm.inc",
+      "owned_files": [
+        "scripts/object-notification-source.py",
+        "scripts/verify-object-notification.py",
+        "native/providers/object_notification.asm.inc"
+      ]
+    },
+    "normal-finalization-policy-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/lang/ref/Finalizer"
+      },
+      "model": "scripts/finalization-policy-source.py",
+      "verifier": "scripts/verify-finalization-policy.py",
+      "kernel": "native/providers/finalization_policy.asm.inc",
+      "owned_files": [
+        "scripts/finalization-policy-source.py",
+        "scripts/verify-finalization-policy.py",
+        "native/providers/finalization_policy.asm.inc"
+      ]
+    },
+    "normal-windows-startup-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "sun/io/Win32ErrorMode"
+      },
+      "model": "scripts/windows-startup-source.py",
+      "verifier": "scripts/verify-windows-startup-provider.py",
+      "kernel": "native/providers/windows_startup.asm.inc",
+      "owned_files": [
+        "scripts/windows-startup-source.py",
+        "scripts/verify-windows-startup-provider.py",
+        "native/providers/windows_startup.asm.inc"
+      ]
+    },
+    "normal-signal-control-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "jdk/internal/misc/Signal"
+      },
+      "model": "scripts/normal-signal-control-source.py",
+      "verifier": "scripts/verify-normal-signal-control.py",
+      "kernel": "native/providers/normal_signal_control.asm.inc",
+      "owned_files": [
+        "scripts/normal-signal-control-source.py",
+        "scripts/verify-normal-signal-control.py",
+        "native/providers/normal_signal_control.asm.inc"
+      ]
+    },
+    "normal-thread-priority-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/lang/Thread"
+      },
+      "model": "scripts/normal-thread-priority-source.py",
+      "verifier": "scripts/verify-normal-thread-priority.py",
+      "kernel": "native/providers/normal_thread_priority.asm.inc",
+      "owned_files": [
+        "scripts/normal-thread-priority-source.py",
+        "scripts/verify-normal-thread-priority.py",
+        "native/providers/normal_thread_priority.asm.inc"
+      ]
+    },
+    "normal-thread-start-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/lang/Thread"
+      },
+      "model": "scripts/normal-thread-start-source.py",
+      "verifier": "scripts/verify-normal-thread-start.py",
+      "kernel": "native/providers/normal_thread_start.asm.inc",
+      "owned_files": [
+        "scripts/normal-thread-start-source.py",
+        "scripts/verify-normal-thread-start.py",
+        "native/providers/normal_thread_start.asm.inc"
+      ]
+    },
+    "normal-reference-referent-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/lang/ref/Reference"
+      },
+      "model": "scripts/reference-referent-source.py",
+      "verifier": "scripts/framed-runtime-service.py",
+      "kernel": "native/providers/reference_referent_get.asm.inc",
+      "owned_files": [
+        "scripts/reference-referent-source.py",
+        "native/providers/reference_referent_get.asm.inc"
+      ]
+    },
+    "normal-native-libraries-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "jdk/internal/loader/NativeLibraries"
+      },
+      "model": "scripts/native-library-source.py",
+      "verifier": "scripts/framed-runtime-service.py",
+      "kernel": "native/providers/native_library_lifecycle.asm.inc",
+      "owned_files": [
+        "scripts/native-library-source.py",
+        "native/providers/native_library_lifecycle.asm.inc"
+      ]
+    },
+    "normal-library-name-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/lang/System"
+      },
+      "model": "scripts/library-name-source.py",
+      "verifier": "scripts/framed-runtime-service.py",
+      "kernel": "native/providers/library_name_normal.asm.inc",
+      "owned_files": [
+        "scripts/library-name-source.py",
+        "native/providers/library_name_normal.asm.inc"
+      ]
+    }
+  },
+  "dependency_audits": {
+    "scripts/build-runtime-provider-pack.py": {
+      "tool_sources": [
+        "native/providers/native-wrapper.asm.tpl",
+        "scripts/class-flags-source.py",
+        "scripts/constructor-invocation-source.py",
+        "scripts/constructor-provider-source.py",
+        "scripts/file-bootstrap-source.py",
+        "scripts/finalization-policy-source.py",
+        "scripts/framed-runtime-service.py",
+        "scripts/native-frame-overlay.py",
+        "scripts/normal-access-source.py",
+        "scripts/normal-signal-control-source.py",
+        "scripts/normal-thread-priority-source.py",
+        "scripts/normal-thread-source.py",
+        "scripts/normal-thread-start-source.py",
+        "scripts/normal-throwable-source.py",
+        "scripts/object-notification-source.py",
+        "scripts/provider-native-roots.py",
+        "scripts/runtime-provider-source.py",
+        "scripts/scoped-memory-source.py",
+        "scripts/signal-lookup-source.py",
+        "scripts/unsafe-class-init-source.py",
+        "scripts/verify-batch-frames.py",
+        "scripts/windows-startup-source.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": [
+        "S.module('source_' + metadata_kind, module)"
+      ]
+    },
+    "scripts/runtime-provider-source.py": {
+      "tool_sources": [
+        "native/kernels/java_string_literals.inc",
+        "native/kernels/provider_native_root_snapshot.asm.inc",
+        "native/providers/boot_unnamed_normal.asm.inc",
+        "native/providers/builtin_module_context.asm.inc",
+        "native/providers/builtin_net_platform.asm.inc",
+        "native/providers/cds.asm.inc",
+        "native/providers/class_flags.asm.inc",
+        "native/providers/class_loader_assertions.asm.inc",
+        "native/providers/constructor_callsite.asm.inc",
+        "native/providers/constructor_invoke.asm.inc",
+        "native/providers/constructor_unbox.asm.inc",
+        "native/providers/constructor_widen.asm.inc",
+        "native/providers/constructors.asm.inc",
+        "native/providers/file_bootstrap.asm.inc",
+        "native/providers/file_input_readonly.asm.inc",
+        "native/providers/finalization_policy.asm.inc",
+        "native/providers/identity.asm.inc",
+        "native/providers/library_name_normal.asm.inc",
+        "native/providers/module_definitions_normal.asm.inc",
+        "native/providers/native-wrapper.asm.tpl",
+        "native/providers/native_library_lifecycle.asm.inc",
+        "native/providers/normal_access.asm.inc",
+        "native/providers/normal_signal_control.asm.inc",
+        "native/providers/normal_thread.asm.inc",
+        "native/providers/normal_thread_priority.asm.inc",
+        "native/providers/normal_thread_start.asm.inc",
+        "native/providers/normal_throwable.asm.inc",
+        "native/providers/object_notification.asm.inc",
+        "native/providers/object_wait.asm.inc",
+        "native/providers/reference_processing.asm.inc",
+        "native/providers/reference_referent_get.asm.inc",
+        "native/providers/reference_referent_read.asm.inc",
+        "native/providers/scoped_memory.asm.inc",
+        "native/providers/signal_lookup.asm.inc",
+        "native/providers/unsafe_class_initialization.asm.inc",
+        "native/providers/unsafe_park.asm.inc",
+        "native/providers/win32_library_name.asm.inc",
+        "native/providers/windows_canonical.asm.inc",
+        "native/providers/windows_file_queries.asm.inc",
+        "native/providers/windows_startup.asm.inc",
+        "native/providers/winnt_filesystem.asm.inc",
+        "native/runtime/module_objects.asm",
+        "native/runtime/win32_path_attributes.asm",
+        "native/runtime/windows_canonical_path.asm",
+        "scripts/Build-RuntimeProviderPack.ps1",
+        "scripts/boot-unnamed-source.py",
+        "scripts/build-runtime-provider-pack.py",
+        "scripts/class-flags-source.py",
+        "scripts/class-loader-assertions-candidate.py",
+        "scripts/class-loader-assertions-source.py",
+        "scripts/constructor-invocation-source.py",
+        "scripts/constructor-provider-source.py",
+        "scripts/file-bootstrap-source.py",
+        "scripts/file-input-source.py",
+        "scripts/finalization-policy-source.py",
+        "scripts/framed-runtime-service.py",
+        "scripts/library-name-source.py",
+        "scripts/module-definitions-source.py",
+        "scripts/native-frame-overlay.py",
+        "scripts/native-library-helpers-source.py",
+        "scripts/native-library-source.py",
+        "scripts/normal-access-source.py",
+        "scripts/normal-signal-control-source.py",
+        "scripts/normal-thread-priority-source.py",
+        "scripts/normal-thread-source.py",
+        "scripts/normal-thread-start-source.py",
+        "scripts/normal-throwable-source.py",
+        "scripts/object-notification-source.py",
+        "scripts/object-wait-source.py",
+        "scripts/provider-native-roots.py",
+        "scripts/reference-processing-source.py",
+        "scripts/reference-referent-source.py",
+        "scripts/revalidate-runtime-provider-cache.py",
+        "scripts/runtime-provider-source.py",
+        "scripts/scoped-memory-source.py",
+        "scripts/signal-lookup-source.py",
+        "scripts/system-class-inputs.py",
+        "scripts/unsafe-class-init-source.py",
+        "scripts/unsafe-park-source.py",
+        "scripts/verify-batch-assembly.py",
+        "scripts/verify-batch-frames.py",
+        "scripts/verify-batch-metadata.py",
+        "scripts/verify-class-flags-provider.py",
+        "scripts/verify-constructor-invocation.py",
+        "scripts/verify-constructor-provider.py",
+        "scripts/verify-file-bootstrap.py",
+        "scripts/verify-finalization-policy.py",
+        "scripts/verify-normal-access.py",
+        "scripts/verify-normal-signal-control.py",
+        "scripts/verify-normal-thread-priority.py",
+        "scripts/verify-normal-thread-start.py",
+        "scripts/verify-normal-thread.py",
+        "scripts/verify-normal-throwable.py",
+        "scripts/verify-object-notification.py",
+        "scripts/verify-runtime-provider-pack.py",
+        "scripts/verify-scoped-memory.py",
+        "scripts/verify-signal-lookup.py",
+        "scripts/verify-translation-ir.py",
+        "scripts/verify-unsafe-class-init.py",
+        "scripts/verify-windows-startup-provider.py",
+        "scripts/windows-canonical-source.py",
+        "scripts/windows-file-queries-source.py",
+        "scripts/windows-startup-source.py",
+        "scripts/winnt-filesystem-source.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/verify-runtime-provider-pack.py": {
+      "tool_sources": [
+        "native/providers/cds.asm.inc",
+        "native/providers/identity.asm.inc",
+        "scripts/framed-runtime-service.py",
+        "scripts/runtime-provider-source.py",
+        "scripts/verify-batch-assembly.py",
+        "scripts/verify-batch-frames.py",
+        "scripts/verify-class-flags-provider.py",
+        "scripts/verify-constructor-invocation.py",
+        "scripts/verify-constructor-provider.py",
+        "scripts/verify-file-bootstrap.py",
+        "scripts/verify-finalization-policy.py",
+        "scripts/verify-normal-access.py",
+        "scripts/verify-normal-signal-control.py",
+        "scripts/verify-normal-thread-priority.py",
+        "scripts/verify-normal-thread-start.py",
+        "scripts/verify-normal-thread.py",
+        "scripts/verify-normal-throwable.py",
+        "scripts/verify-object-notification.py",
+        "scripts/verify-scoped-memory.py",
+        "scripts/verify-signal-lookup.py",
+        "scripts/verify-unsafe-class-init.py",
+        "scripts/verify-windows-startup-provider.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/verify-batch-frames.py": {
+      "tool_sources": [
+        "scripts/verify-batch-metadata.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/verify-batch-assembly.py": {
+      "tool_sources": [],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/constructor-provider-source.py": {
+      "tool_sources": [
+        "scripts/system-class-inputs.py",
+        "scripts/verify-batch-frames.py",
+        "scripts/verify-batch-metadata.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/verify-constructor-provider.py": {
+      "tool_sources": [
+        "native/providers/constructors.asm.inc",
+        "scripts/constructor-provider-source.py",
+        "scripts/verify-batch-assembly.py",
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/verify-batch-metadata.py": {
+      "tool_sources": [],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/system-class-inputs.py": {
+      "tool_sources": [],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/class-flags-source.py": {
+      "tool_sources": [
+        "scripts/constructor-provider-source.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/verify-class-flags-provider.py": {
+      "tool_sources": [
+        "native/providers/class_flags.asm.inc",
+        "scripts/class-flags-source.py",
+        "scripts/verify-batch-assembly.py",
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/constructor-invocation-source.py": {
+      "tool_sources": [
+        "native/providers/constructor_callsite.asm.inc",
+        "native/providers/constructor_invoke.asm.inc",
+        "native/providers/constructor_unbox.asm.inc",
+        "native/providers/constructor_widen.asm.inc",
+        "scripts/constructor-provider-source.py",
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/verify-constructor-invocation.py": {
+      "tool_sources": [
+        "native/providers/constructor_invoke.asm.inc",
+        "scripts/constructor-invocation-source.py",
+        "scripts/native-frame-overlay.py",
+        "scripts/verify-batch-assembly.py",
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/file-bootstrap-source.py": {
+      "tool_sources": [
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/file_descriptors.asm",
+        "native/runtime/file_streams.asm",
+        "native/runtime/objects.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/verify-file-bootstrap.py": {
+      "tool_sources": [
+        "native/providers/file_bootstrap.asm.inc",
+        "scripts/file-bootstrap-source.py",
+        "scripts/verify-batch-assembly.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/scoped-memory-source.py": {
+      "tool_sources": [
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/scoped_memory.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/verify-scoped-memory.py": {
+      "tool_sources": [
+        "native/providers/scoped_memory.asm.inc",
+        "scripts/scoped-memory-source.py",
+        "scripts/verify-batch-assembly.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/normal-throwable-source.py": {
+      "tool_sources": [
+        "scripts/runtime-provider-source.py",
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/arrays.asm",
+        "native/runtime/classes32.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/verify-normal-throwable.py": {
+      "tool_sources": [
+        "native/providers/normal_throwable.asm.inc",
+        "scripts/native-frame-overlay.py",
+        "scripts/normal-throwable-source.py",
+        "scripts/verify-batch-assembly.py",
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/signal-lookup-source.py": {
+      "tool_sources": [
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/objects.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/verify-signal-lookup.py": {
+      "tool_sources": [
+        "native/providers/signal_lookup.asm.inc",
+        "scripts/signal-lookup-source.py",
+        "scripts/verify-batch-assembly.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/normal-thread-source.py": {
+      "tool_sources": [
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/thread_natives.asm",
+        "native/runtime/thread_registry.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/verify-normal-thread.py": {
+      "tool_sources": [
+        "native/providers/normal_thread.asm.inc",
+        "scripts/normal-thread-source.py",
+        "scripts/verify-batch-assembly.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/normal-access-source.py": {
+      "tool_sources": [
+        "native/providers/normal_access.asm.inc",
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/java_classes.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/thread_registry.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/verify-normal-access.py": {
+      "tool_sources": [
+        "native/providers/normal_access.asm.inc",
+        "scripts/native-frame-overlay.py",
+        "scripts/normal-access-source.py",
+        "scripts/verify-batch-assembly.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/normal-thread-start-source.py": {
+      "tool_sources": [
+        "native/providers/normal_thread_start.asm.inc",
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/field_address.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/monitors.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/thread_natives.asm",
+        "native/runtime/thread_registry.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/verify-normal-thread-start.py": {
+      "tool_sources": [
+        "native/providers/normal_thread_start.asm.inc",
+        "scripts/normal-thread-start-source.py",
+        "scripts/verify-batch-assembly.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/normal-thread-priority-source.py": {
+      "tool_sources": [
+        "native/providers/normal_thread_priority.asm.inc",
+        "scripts/normal-thread-start-source.py",
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/field_address.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/thread_natives.asm",
+        "native/runtime/thread_registry.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/verify-normal-thread-priority.py": {
+      "tool_sources": [
+        "native/providers/normal_thread_priority.asm.inc",
+        "scripts/normal-thread-priority-source.py",
+        "scripts/verify-batch-assembly.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/normal-signal-control-source.py": {
+      "tool_sources": [
+        "native/providers/normal_signal_control.asm.inc",
+        "scripts/normal-thread-start-source.py",
+        "scripts/signal-lookup-source.py",
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/field_address.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/java_properties.asm",
+        "native/runtime/monitors.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/signal_control.asm",
+        "native/runtime/signal_natives.asm",
+        "native/runtime/thread_registry.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/verify-normal-signal-control.py": {
+      "tool_sources": [
+        "native/providers/normal_signal_control.asm.inc",
+        "scripts/normal-signal-control-source.py",
+        "scripts/verify-batch-assembly.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/windows-startup-source.py": {
+      "tool_sources": [
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/windows_startup.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/verify-windows-startup-provider.py": {
+      "tool_sources": [
+        "native/providers/windows_startup.asm.inc",
+        "scripts/verify-batch-assembly.py",
+        "scripts/windows-startup-source.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/finalization-policy-source.py": {
+      "tool_sources": [
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/verify-finalization-policy.py": {
+      "tool_sources": [
+        "native/providers/finalization_policy.asm.inc",
+        "scripts/finalization-policy-source.py",
+        "scripts/verify-batch-assembly.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/object-notification-source.py": {
+      "tool_sources": [
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/monitors.asm",
+        "native/runtime/object_wait.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/verify-object-notification.py": {
+      "tool_sources": [
+        "native/providers/object_notification.asm.inc",
+        "scripts/object-notification-source.py",
+        "scripts/verify-batch-assembly.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/unsafe-class-init-source.py": {
+      "tool_sources": [
+        "scripts/native-frame-overlay.py",
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/exceptions.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/java_classes.asm",
+        "native/runtime/objects.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/verify-unsafe-class-init.py": {
+      "tool_sources": [
+        "native/providers/unsafe_class_initialization.asm.inc",
+        "scripts/unsafe-class-init-source.py",
+        "scripts/verify-batch-assembly.py",
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/framed-runtime-service.py": {
+      "tool_sources": [
+        "native/providers/boot_unnamed_normal.asm.inc",
+        "native/providers/class_loader_assertions.asm.inc",
+        "native/providers/file_input_readonly.asm.inc",
+        "native/providers/library_name_normal.asm.inc",
+        "native/providers/module_definitions_normal.asm.inc",
+        "native/providers/native_library_lifecycle.asm.inc",
+        "native/providers/object_wait.asm.inc",
+        "native/providers/reference_processing.asm.inc",
+        "native/providers/reference_referent_get.asm.inc",
+        "native/providers/unsafe_park.asm.inc",
+        "native/providers/windows_canonical.asm.inc",
+        "native/providers/windows_file_queries.asm.inc",
+        "native/providers/winnt_filesystem.asm.inc",
+        "scripts/native-frame-overlay.py",
+        "scripts/provider-native-roots.py",
+        "scripts/verify-batch-assembly.py",
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": [
+        "S.module('verify_' + key, module)"
+      ]
+    },
+    "scripts/reference-processing-source.py": {
+      "tool_sources": [
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/monitor_abort.asm",
+        "native/runtime/monitors.asm",
+        "native/runtime/object_wait.asm",
+        "native/runtime/reference_pending.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/object-wait-source.py": {
+      "tool_sources": [
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/field_address.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/monitor_abort.asm",
+        "native/runtime/monitors.asm",
+        "native/runtime/object_wait.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/thread_registry.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/boot-unnamed-source.py": {
+      "tool_sources": [
+        "scripts/file-bootstrap-source.py",
+        "scripts/verify-translation-ir.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/java_classes.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/verify-translation-ir.py": {
+      "tool_sources": [],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/class-loader-assertions-source.py": {
+      "tool_sources": [
+        "scripts/class-loader-assertions-candidate.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/java_class_bootstrap.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/typed_arrays.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/class-loader-assertions-candidate.py": {
+      "tool_sources": [
+        "native/providers/class_loader_assertions.asm.inc",
+        "scripts/file-bootstrap-source.py",
+        "scripts/runtime-provider-source.py",
+        "scripts/verify-batch-assembly.py",
+        "scripts/verify-batch-frames.py",
+        "scripts/verify-translation-ir.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/winnt-filesystem-source.py": {
+      "tool_sources": [
+        "scripts/file-bootstrap-source.py",
+        "scripts/verify-batch-frames.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/objects.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/revalidate-runtime-provider-cache.py": {
+      "tool_sources": [
+        "scripts/native-frame-overlay.py",
+        "scripts/runtime-provider-source.py",
+        "scripts/verify-runtime-provider-pack.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/reference-referent-source.py": {
+      "tool_sources": [
+        "native/providers/reference_referent_read.asm.inc",
+        "scripts/verify-translation-ir.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/field_address.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/native-library-source.py": {
+      "tool_sources": [
+        "native/providers/builtin_module_context.asm.inc",
+        "native/providers/builtin_net_platform.asm.inc",
+        "scripts/file-bootstrap-source.py",
+        "scripts/native-library-helpers-source.py",
+        "scripts/verify-translation-ir.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/java_properties.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/thread_natives.asm",
+        "native/runtime/thread_registry.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/native-library-helpers-source.py": {
+      "tool_sources": [],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/library-name-source.py": {
+      "tool_sources": [
+        "native/kernels/java_string_literals.inc",
+        "native/providers/library_name_normal.asm.inc",
+        "native/providers/win32_library_name.asm.inc",
+        "scripts/file-bootstrap-source.py",
+        "scripts/verify-translation-ir.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/java_properties.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/native-frame-overlay.py": {
+      "tool_sources": [
+        "scripts/constructor-provider-source.py",
+        "scripts/native-frame-overlay.py",
+        "scripts/runtime-provider-source.py",
+        "scripts/system-class-inputs.py",
+        "scripts/verify-batch-assembly.py",
+        "scripts/verify-batch-frames.py",
+        "scripts/verify-batch-metadata.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/windows-canonical-source.py": {
+      "tool_sources": [
+        "native/kernels/java_string_literals.inc",
+        "native/runtime/windows_canonical_path.asm",
+        "scripts/file-bootstrap-source.py",
+        "scripts/verify-translation-ir.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/java_properties.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/windows-file-queries-source.py": {
+      "tool_sources": [
+        "native/kernels/java_string_literals.inc",
+        "native/runtime/win32_path_attributes.asm",
+        "scripts/file-bootstrap-source.py",
+        "scripts/verify-translation-ir.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/field_address.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/java_properties.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/module-definitions-source.py": {
+      "tool_sources": [
+        "native/runtime/module_objects.asm",
+        "scripts/file-bootstrap-source.py",
+        "scripts/verify-translation-ir.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/field_address.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/java_classes.asm",
+        "native/runtime/java_properties.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/file-input-source.py": {
+      "tool_sources": [
+        "scripts/file-bootstrap-source.py",
+        "scripts/verify-translation-ir.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/file_descriptors.asm",
+        "native/runtime/file_streams.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/java_properties.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/unsafe-park-source.py": {
+      "tool_sources": [
+        "scripts/normal-thread-start-source.py",
+        "scripts/object-wait-source.py",
+        "scripts/verify-translation-ir.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/field_address.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/monitor_abort.asm",
+        "native/runtime/monitors.asm",
+        "native/runtime/object_wait.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/reference_pending.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/thread_natives.asm",
+        "native/runtime/thread_registry.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/provider-native-roots.py": {
+      "tool_sources": [],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    }
+  },
+  "api_scopes": {
+    "scripts/verify-batch-assembly.py": [
+      "check",
+      "file_digest",
+      "coff_symbols"
+    ]
+  },
+  "dynamic_loads": [
+    {
+      "source": "scripts/build-runtime-provider-pack.py",
+      "expression": "S.module('source_' + metadata_kind, module)",
+      "table": "scripts/framed-runtime-service.py",
+      "assignment": "FAMILIES",
+      "column": 0
+    },
+    {
+      "source": "scripts/framed-runtime-service.py",
+      "expression": "S.module('verify_' + key, module)",
+      "table": "scripts/framed-runtime-service.py",
+      "assignment": "FAMILIES",
+      "column": 0
+    }
+  ],
+  "loaders": {
+    "builder": "scripts/build-runtime-provider-pack.py",
+    "verifier": "scripts/verify-runtime-provider-pack.py",
+    "framed_table": "scripts/framed-runtime-service.py",
+    "assignment": "FAMILIES"
+  },
+  "data_bound_imports": {
+    "scripts/native-library-source.py": {
+      "importlib.util.spec_from_file_location('formal_native_library_helpers', path)": "scripts/native-library-helpers-source.py"
+    }
+  },
+  "native_includes": {
+    "native/providers/native-wrapper.asm.tpl": [],
+    "native/providers/cds.asm.inc": [],
+    "native/providers/identity.asm.inc": [],
+    "native/providers/constructors.asm.inc": [],
+    "native/providers/class_flags.asm.inc": [],
+    "native/providers/constructor_invoke.asm.inc": [],
+    "native/providers/constructor_callsite.asm.inc": [],
+    "native/providers/constructor_unbox.asm.inc": [],
+    "native/providers/constructor_widen.asm.inc": [],
+    "native/providers/file_bootstrap.asm.inc": [],
+    "native/providers/scoped_memory.asm.inc": [],
+    "native/providers/normal_throwable.asm.inc": [],
+    "native/providers/signal_lookup.asm.inc": [],
+    "native/providers/normal_thread.asm.inc": [],
+    "native/providers/normal_access.asm.inc": [],
+    "native/providers/normal_thread_start.asm.inc": [],
+    "native/providers/normal_thread_priority.asm.inc": [],
+    "native/providers/normal_signal_control.asm.inc": [],
+    "native/providers/windows_startup.asm.inc": [],
+    "native/providers/finalization_policy.asm.inc": [],
+    "native/providers/object_notification.asm.inc": [],
+    "native/providers/unsafe_class_initialization.asm.inc": [],
+    "native/providers/reference_processing.asm.inc": [],
+    "native/providers/object_wait.asm.inc": [],
+    "native/providers/boot_unnamed_normal.asm.inc": [],
+    "native/providers/class_loader_assertions.asm.inc": [],
+    "native/providers/winnt_filesystem.asm.inc": [],
+    "native/providers/reference_referent_get.asm.inc": [],
+    "native/providers/reference_referent_read.asm.inc": [],
+    "native/providers/native_library_lifecycle.asm.inc": [],
+    "native/providers/builtin_net_platform.asm.inc": [],
+    "native/providers/builtin_module_context.asm.inc": [],
+    "native/providers/library_name_normal.asm.inc": [],
+    "native/providers/win32_library_name.asm.inc": [],
+    "native/kernels/java_string_literals.inc": [],
+    "native/providers/windows_canonical.asm.inc": [],
+    "native/runtime/windows_canonical_path.asm": [],
+    "native/providers/windows_file_queries.asm.inc": [],
+    "native/runtime/win32_path_attributes.asm": [],
+    "native/providers/module_definitions_normal.asm.inc": [],
+    "native/runtime/module_objects.asm": [],
+    "native/providers/file_input_readonly.asm.inc": [],
+    "native/providers/unsafe_park.asm.inc": [],
+    "native/kernels/provider_native_root_snapshot.asm.inc": []
+  }
+}
