@@ -11,6 +11,7 @@ import zipfile
 
 SPEC=importlib.util.spec_from_file_location('diagnostic_profile',Path(__file__).resolve().parents[1]/'scripts/update-diagnostic-profile.py')
 M=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(M)
+CONTEXT_LAYOUTS=((8,320),(9,384),(10,400),(11,448),(12,512),(13,544),(14,576))
 
 
 class DiagnosticProfileTests(unittest.TestCase):
@@ -82,7 +83,7 @@ class DiagnosticProfileTests(unittest.TestCase):
     def test_independent_thread_admissions_follow_native_rows_and_keep_each_owner(self):
         directory=Path(__file__).resolve().parents[1]/'.boom/vm-entry-images'
         directory.mkdir(parents=True,exist_ok=True)
-        for abi,size in ((8,320),(9,384),(10,400),(11,448)):
+        for abi,size in CONTEXT_LAYOUTS:
             with self.subTest(abi=abi),tempfile.TemporaryDirectory(dir=directory) as tmp:
                 root=Path(tmp);event,path,image,raw=self.native_context_fixture(root,abi,size)
                 result=M.update(root,path,[9])
@@ -99,10 +100,10 @@ class DiagnosticProfileTests(unittest.TestCase):
     def test_native_ABI_requires_its_exact_report_size_even_with_matching_hash(self):
         directory=Path(__file__).resolve().parents[1]/'.boom/vm-entry-images'
         directory.mkdir(parents=True,exist_ok=True)
-        for abi,size in ((8,320),(9,384),(10,400),(11,448)):
+        for abi,size in CONTEXT_LAYOUTS:
             with self.subTest(abi=abi),tempfile.TemporaryDirectory(dir=directory) as tmp:
                 root=Path(tmp);event,path,image,raw=self.native_context_fixture(root,abi,size)
-                for wrong in (7,8,9,10,11,12):
+                for wrong in (7,8,9,10,11,12,13,14,15):
                     if wrong==abi:continue
                     changed=bytearray(raw);struct.pack_into('<I',changed,4,wrong)
                     (image/'vm-entry-status.bin').write_bytes(changed)
@@ -119,7 +120,7 @@ class DiagnosticProfileTests(unittest.TestCase):
     def test_native_table_hash_and_main_context_remain_sealed_in_every_report_ABI(self):
         directory=Path(__file__).resolve().parents[1]/'.boom/vm-entry-images'
         directory.mkdir(parents=True,exist_ok=True)
-        for abi,size in ((8,320),(9,384),(10,400),(11,448)):
+        for abi,size in CONTEXT_LAYOUTS:
             with self.subTest(abi=abi),tempfile.TemporaryDirectory(dir=directory) as tmp:
                 root=Path(tmp);event,path,image,raw=self.native_context_fixture(root,abi,size)
                 for word,value in ((0,0),(7,0),(8,0),(74,0),(78,3)):

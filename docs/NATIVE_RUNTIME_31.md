@@ -22,3 +22,5 @@ Parker 在真实 primordial FLS／OWAI 打开后打开，在共享停止及所�
 Scoped 状态 `.boom/accepted-main-prefix-v152-31.json` 的 SHA256 为 `1ce895f550b1b8a1c0f6587288db42dd7519e507aa58216740522c05599c3f6f`。发布前两遍检查 420 个实际产物，归档 29 份源工具／内核；仅验收当前输入、System 三阶段、argv、日志前缀、根传递及停止清理。没有穷尽执行所有 31 包 native，没有完整 Main／help／游戏成功标志。
 
 最初外层 run 保留 failed journal：原游戏 JAR 的来源记录带额外 SHA1，原 native 清单比较器只生成 size／SHA256，导致误报输入变化。实际大小与两个摘要均一致。修复先验证全部原摘要再规范化 native 记录，并用新的 native 目录重建／独立校验／执行，复用已通过的源选择；未覆盖旧失败或重命名旧记录。回归验证接受未变的双摘要原始输入、拒绝伪 SHA1 与修改后的字节。原 pending31 与 accepted29 均保持原样。
+
+实际执行回执另存回原源选择的辅助输出，并发布明确标注恢复过程的 `result.json`，原 failed journal 的字节未变。自动 Java 补全现在严格接受 Report512／544／576 与各自 ABI12／13／14 的组合，继续从封存二进制中的首个／主线程源行验证目标。7种报告格式均覆盖伪摘要、错 ABI／长度、交换源行和修改诊断表的拒绝检查。此次 stop 是缺 native 语义，不新增 Java 执行许可；60666 个源预选方法仍不计作实际执行。
