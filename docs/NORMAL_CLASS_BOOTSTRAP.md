@@ -42,3 +42,11 @@ Rust 191、Python 107 项测试通过，fmt 与 clippy 通过。运行时为 79 
 schema 15 的三个原生入口和共享绑定规则已纳入自动流水线。System.initPhase1 直接扫描的前沿由 765 降为 762，其中 605 项仍是已有分派规则的继续展开动作，缺失请求由 160 降为 157。全输入家族数保持 407／577，待提供请求分别为 31,268／37,430。静态数量不代表启动进度百分比。
 
 启动器继续只提供启动入口。完整原版未启动，发布目录仍为 v70。
+
+## ClassLoader 断言快照对照（2026-11-26）
+
+`java/reference/ClassLoaderAssertionsReference.java` 是独立开发对照，通过锁定 JDK 的原始 `ClassLoader.retrieveDirectives` 读取五个源字段。`scripts/test-class-loader-assertions-oracle.py` 核对批次的原始系统目录与实际 JDK 模块镜像摘要，在项目 `.boom` 的新目录编译并运行对照，不参与游戏运行。
+
+八组实际 JVM 配置全部通过：应用默认开／关、系统默认开／关，以及是否存在两个类和两个包的覆盖规则。快照的 `deflt` 始终为应用默认值；系统 `Object` 的断言状态单独核对。四个数组保持真实 `String[]`／`boolean[]` 类型及名称与开关配对，两次读取所得对象和数组共十个不同引用。没有覆盖规则时四个数组为空。
+
+结果在 `.boom/class-loader-assertions-oracle/v145-defaults-and-overrides/result.json`，SHA256 为 `e3559733a8b0855631c6e3e8686c7b80fc3e3dfc76613ffe7f2b8b8222249f97`。该结果只验证 JVM 参考行为；当前汇编配置仍不支持类／包覆盖，ClassLoader 汇编实现和原始初始化执行另行验收。
