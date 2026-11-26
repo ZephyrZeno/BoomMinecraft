@@ -102,3 +102,15 @@ The eight boundary tests and a fresh1025-call JDK oracle also passed; the latter
 receipt is `.boom/stack-walk/root-review-oracle-v155-a/verification.json`, SHA256
 `c885982d59600d048afc289920a20ec84438a5cc6e1eb51a3f84cf1251afdd37`.
 These checks retain the explicit `callback_execution_verified=false` boundary.
+
+The separate development emitter `scripts/stack-walk-component.py` and
+`native/entry/stack_walk_component.asm.inc` insert one test call after the
+intact System123 owner, before its normal cleanup. Original owner bytes outside
+that insertion and the new test helper must match exactly. Its small decoder
+keeps the phase3 snapshot separate from a later test failure and requires the
+original worker/native-owner cleanup. Six boundary tests passed. The root's
+emission receipt `.boom/stack-walk/root-review-emitter-v157-a/emitter.json`
+has SHA256 `8e9e0401fc331082d3de4c0ce79c31ef98a39a8e844bf978f8ab67b0a656549e`.
+The emitter explicitly checks the archived131-source historical proof; it does
+not relabel it as current full selection. This helper has not been linked or
+executed and does not establish callback acceptance.
