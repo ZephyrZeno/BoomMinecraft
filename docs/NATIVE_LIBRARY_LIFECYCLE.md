@@ -1,6 +1,6 @@
 # 自研原生库装载生命周期
 
-原始 WindowsNativeDispatcher 初始化在登记引导模块之后会请求 `net` 和 `nio`。当前开发候选已实际到达 NativeLibraries.findBuiltinLib，以下装载协议尚待实现；已有文件查询和网络可用性内核不能单独充当装载成功。
+原始 WindowsNativeDispatcher 初始化在登记引导模块之后会请求 `net` 和 `nio`。直接 Dispatcher 边界探针已命中 NativeLibraries.findBuiltinLib；严格正常初始化顺序当前先停在 Phase1 的反射调用。以下装载协议尚待实现；已有文件查询和网络可用性内核不能单独充当装载成功。
 
 ## 锁定的原始入口
 
