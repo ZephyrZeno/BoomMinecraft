@@ -2,7 +2,15 @@
 
 `Build-VmEntry.ps1` 把已独立校验的原始 Java 汇编、运行时提供者对象和新生成的 VM 绑定表链接为原生 `boom-vm-entry.exe`。游戏执行路径不加载 C#／CLR、JVM 或 CRT。Python 只在构建时读取锁定输入，PowerShell 只构建、启动隔离进程和读取验证记录。
 
-## v146 第 26 组原生进程
+## v149 原版 System 第一、二阶段正常返回
+
+[正式 29 组输入](NATIVE_RUNTIME_29.md)的完整原生进程已正常完成原始 System.initPhase1 和 initPhase2，VM 初始化级别由 1 到达 2，主 Context 为 0，进程退出码为 0。完整选择含 5818 类、56665 个原 Java 方法与 149383 个汇编函数；独立来源校验自然退出 0，用时 626.968 秒。这些选择数量不计作全部都已执行。
+
+两个后台原 Thread.exit 和 OS 记录回收各完成两次；工作者失败、最终监视器持有和锁均为零，引用等待／Object.wait 关闭以及清理标志 7 通过。448 字节 ABI11 报告 SHA256 为 `323ef50feaa5e0be74300949effcf2f55f1ba16ca05c58d02f2f2692f98e04a7`，实际执行回执为 `52c22140b4f765071fb296ece9e3985058d6c4a8cd271a442f55c363d419d96f`。Scoped accepted29 为 `.boom/accepted-native-modules-v149-29.json`，SHA256 `99f48017acc81733bab549d19b953588c1010cae8d098b500c4fda580077afea`。
+
+完整原 Java 模块启动链已越过此前的 Module.defineModule0 停点。第三阶段、Minecraft 入口、世界、完整动态类加载和自动／并发内存回收尚未完成；完整 VM／游戏启动标志仍为 false。
+
+## v146／v147 第 26／28 组原生进程（历史记录）
 
 注册两组 Windows 路径／文件查询后，[正式 28 组输入](NATIVE_RUNTIME_28.md)的完整原生镜像已实际越过 WinNTFileSystem.canonicalize0 和 getBooleanAttributes0，新的停止点为 Module.defineModule0（42293，当前选择 row 105103）。源选择含 5374 类、50860 个原 Java 方法和 12704 格正常根，独立完整校验自然退出 0；原始 Phase1 返回、Phase2 进入但未完成。两个后台原 Thread.exit／记录回收、零工作者失败、零监视器持有和清理标志 7 均通过。
 
