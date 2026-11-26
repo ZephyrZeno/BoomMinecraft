@@ -34,3 +34,13 @@ Winsock 必须在真实拥有者的有效生命周期内保持初始化。现有
 测试应验证原始 findBuiltinLib→load→字段发布链，Boolean 属性的真实取值、不同 OS 线程的装载竞争、已有异常保留、未知或错误名称、错误句柄/版本、回调失败后的未发布状态，以及有资源在用时的关闭拒绝。应在返回成功后用实际 socket 调用证明 Winsock 仍有效，并在最终关闭后核对本项目的资源计数。
 
 生命周期内核测试、原始 Java 装载链和正式初始化进程分别记验收结果。只有最后一项覆盖 Minecraft 所需的实际启动路径，才能推进游戏启动结论。
+
+## 已验证的 net 平台资源拥有层
+
+`native/providers/builtin_net_platform.asm.inc` 实现独立 MASM `NETM80/2` 拥有层。成功启动后保留一份实际 Winsock 引用，八个 OS 线程竞争启动只调用一次 WSAStartup。调用者持有租约期间关闭返回忙状态；关闭一个拥有者不影响另一个拥有者的真实 socket 调用。两个偏好值、实际 IPv4／IPv6 探测和十六次重新启动均通过。
+
+状态区分关闭、就绪和失败但仍持有资源。探测 socket 关闭失败时保留真实句柄；再次启动和取得租约均拒绝。显式关闭先重试句柄，成功后再执行 WSACleanup；清理失败仍保留失败状态，直到后续关闭真正完成。不能把残留的 Winsock 引用视作初始化成功。
+
+`scripts/test-builtin-net-platform.py` 同时构建生产导入测试 DLL 和独立故障测试 DLL。后者仅在测试链接时重绑三个调用，注入连续两次 closesocket 失败和一次 WSACleanup 失败。测试核对中间真实句柄仍有效、未提前清理、另一个拥有者仍可用，最终三份实际探测 socket 全部关闭，进程恢复 WSANOTINITIALISED。生产 COFF 保持七个直接 Win32／Winsock 导入。
+
+主 agent 独立重复测试记录在 `.boom/builtin-net-platform-tests/root-v145-failure-recovery/result.json`，SHA256 为 `b1fd2a8074c19d9ea067886f3de66e0bd953bd209f583d78f790907fed8e4e51`。这层尚未连接原始 Boolean 属性读取、线程附着检查、JNI_OnLoad 或 NativeLibraries 字段发布；它不能记作原生库装载或游戏启动完成。
