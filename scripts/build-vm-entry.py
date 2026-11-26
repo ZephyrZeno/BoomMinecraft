@@ -61,7 +61,7 @@ def build(directory, accepted_sha, output, assembler, linker, synchronization, k
         inputs += [S.artifact(M.ROOT/p) for p in ('scripts/vm-system-phase3.py','native/entry/system_phase3.asm.inc')]
     if server_help:
         inputs += [S.artifact(M.ROOT/p) for p in ('scripts/vm-game-entry.py','native/entry/game_main.asm.inc')]
-        inputs.append(model['game_entry']['source_archive'])
+        inputs.append(M.native_input_artifact(model['game_entry']['source_archive']))
     output.mkdir(parents=True)
     source, imports = M.assembly(model)
     (output/'vm-entry.asm').write_text(source, encoding='utf-8')

@@ -2,6 +2,10 @@
 
 `Build-VmEntry.ps1` 把已独立校验的原始 Java 汇编、运行时提供者对象和新生成的 VM 绑定表链接为原生 `boom-vm-entry.exe`。游戏执行路径不加载 C#／CLR、JVM 或 CRT。Python 只在构建时读取锁定输入，PowerShell 只构建、启动隔离进程和读取验证记录。
 
+## v152 正常 31 包的 Main 日志初始化前缀
+
+[31 包入口](NATIVE_RUNTIME_31.md)已在新完整源选择上完成原 System 三阶段、ASM argv、Parker 开关、完整源／native 根快照及原后台线程清理。实际 Main 类日志初始化在 getDeclaredMethods0 的源 native 缺口停止，Main 方法体尚未开始；未以 help／探针代替游戏启动。
+
 ## v150 原版 System 三阶段正常返回
 
 [第三阶段](SYSTEM_PHASE3.md)已在同一独立完整验证的 29 组源选择上实际完成。新的原生入口及 Report544/ABI13 解码器分别封存、独立校验后，原 System.initPhase1／2／3 正常返回，VM 级别到达 4；进程退出码 0、主 Context 0／depth0、两个后台线程退出并回收，清理标志 7。没有重新生成原 Java Code、赋写 VM 级别或用 JVM／CLR 执行。

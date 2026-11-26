@@ -6,7 +6,7 @@ An experimental AOT compiler, assembly runtime, and launcher for Minecraft: Java
 
 **项目处于开发阶段，完整 Minecraft 客户端尚未启动。** 2026 年 11 月 27 日，包含 56,665 个选入 Java 方法和 [29 组运行时输入](docs/NATIVE_RUNTIME_29.md)的原生镜像通过独立来源／ASM／COFF 完整校验和实际执行。原始 `System.initPhase1`、`System.initPhase2` 与 [initPhase3](docs/SYSTEM_PHASE3.md) 均正常返回，VM 初始化级别到达 4，进程退出码为 0。两个后台线程正常退出并回收，等待域与监视器清理通过；Minecraft 入口和世界仍未完成。链接数量与实际执行范围分别记录。
 
-当前已验证原始 `Unsafe` 类初始化调用、Windows 文件系统字段注册、模块定义、引用等待和对象监视器等待，以及原始 Java 对中断异常的捕获。Windows 文件元数据内核通过 JDK 对照，窗口调用桥通过无窗口契约测试。图形运行时和创建世界仍在实现。多核线程内核已有并发测试，游戏性能提升需要在完整启动后测量。[原生根的汇编快照](docs/PROVIDER_NATIVE_ROOTS.md)已通过完整静止集合和真实文件／线程引用的回收验证，尚未接入自动收集。[31 包输入](docs/IO_PARK_FORMAL_INPUTS.md)已准备，完整执行验收尚待进行；[Lambda 通用展开](docs/NORMAL_LAMBDA_EXPANSION.md)已在独立候选中执行原严格 Builder，正式稀疏类型接线仍待完成。
+当前[31 包原生入口](docs/NATIVE_RUNTIME_31.md)已实际完成 System 三阶段、正常 argv、Parker 生命周期及完整源／native 根快照，随后在原 Main 日志初始化中停于未实现的 `Class.getDeclaredMethods0`。Main 方法体与帮助输出尚未执行完成。Windows 文件元数据内核通过 JDK 对照，窗口调用桥通过无窗口契约测试。图形运行时和创建世界仍在实现。多核线程内核已有并发测试，游戏性能提升需要在完整启动后测量；自动／并发收集未实现。[Lambda 通用展开](docs/NORMAL_LAMBDA_EXPANSION.md)已在独立候选中执行原严格 Builder，正式稀疏类型接线仍待完成。
 
 v145 新增[正常 BootLoader 模块发布](docs/NORMAL_BOOTLOADER_MODULE.md)，正式原生初始化链已验收相应前缀。[ClassLoader 汇编实现](docs/CLASS_LOADER_ASSERTIONS.md)已作为第 23 包通过独立源选择、原 Java 冷初始化、八线程、真实堆耗尽及正常根图 GC 检查。动态模块／类加载、后续 VM 初始化和游戏启动仍未完成。
 

@@ -61,7 +61,7 @@ def verify(directory):
     if model.get('game_entry'):
         for name in ('scripts/vm-game-entry.py','native/entry/game_main.asm.inc'):
             S.check(S.artifact(M.ROOT/name) in manifest['inputs'],'Missing original server Main source owner contract')
-        S.check(model['game_entry']['source_archive'] in manifest['inputs'],'Missing locked original server input archive')
+        S.check(M.native_input_artifact(model['game_entry']['source_archive']) in manifest['inputs'],'Missing locked original server input archive')
     expected, imports = M.assembly(model)
     S.check(S.checked(manifest['assembly']).read_text(encoding='utf-8') == expected, 'Native binding/process MASM differs')
     coff = M.module('native_vm_entry_coff_check', 'verify-batch-assembly.py')

@@ -31,6 +31,18 @@ CTOR_SPECS = (
     ('java/lang/Thread', '(Ljava/lang/ThreadGroup;Ljava/lang/String;ILjava/lang/Runnable;JLjava/security/AccessControlContext;)V'))
 
 
+def native_input_artifact(record):
+    """Validate legacy input hashes, then use the native manifest's canonical shape."""
+    expected=record['digest']
+    S.check({'size','sha256'}<=set(expected)<= {'size','sha256','sha1'},'Unsupported source input digest schema')
+    path=Path(record['path']).resolve();actual=S.artifact(path)
+    S.check(all(actual['digest'][key]==expected[key] for key in ('size','sha256')),'Original native source input changed')
+    if 'sha1' in expected:
+        with path.open('rb') as stream:
+            S.check(hashlib.file_digest(stream,'sha1').hexdigest()==expected['sha1'],'Original native source input SHA1 changed')
+    return actual
+
+
 def accepted(directory, proof_sha):
     directory = Path(directory).resolve()
     S.check(directory.is_relative_to(S.ART/'diagnostic-startup'), 'Use an isolated original-source diagnostic')
