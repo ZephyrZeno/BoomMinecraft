@@ -34,6 +34,8 @@ Map 测试将原 `System.mapLibraryName`、`String(char[])`、`String.toCharArra
 
 ## 已完成的正式运行
 
+本节的运行、原测试器及独立重验入口均对应 Git 提交 `de3bad1`。原测试器 SHA256 为 `350ff494c844cf4f55e90923abb8e5c618a11250f441c109583e18f7ae58d656`，独立重验入口为 `8dcf97a421ee0b0b3a7f9c50a6f980c12b39ddd62a7a64cf8b6b74011a216c57`；这两个历史源版本可以从该提交恢复。
+
 输入为 `.boom/pending-native-three-families-v145-three-families-26-9e4944c57a424d038bb7679b56009811.json`，状态仍是 `pending_runtime_acceptance`。公共 helper SHA256 为 `906dbfe4699c3c2f05f7d8f40dcbcf1d09e3a84aa6611e44e6b7ba49d3485db2`。
 
 正常源码选择和独立证明位于：
@@ -48,7 +50,7 @@ Map 测试将原 `System.mapLibraryName`、`String(char[])`、`String.toCharArra
 
 独立重验入口是 `scripts/recheck-formal-map-library-name.py`。它严格比对并封存原函数 AST：`execute` 仅改变 oracle 的输出目录；`oracle` 仅将错误摘要比较替换为实际计算全部 `size/sha1/sha256` 后逐项比较。其余运行、GC、清理、19 个 JDK 用例的源码、命令及输出断言完全相同，首条完整 `F.verify(images_file)` 也保留。它没有重新 prepare、修改原测试器、修改 Java/COFF 或改写旧收据。
 
-重验命令为：
+下面是该历史快照下的重验命令。复现须恢复 `de3bad1` 的相关源码，并保持旧收据的原隔离路径约束；当前标准测试器已修正 oracle，不能直接用其新 hash 消费旧 `images.json` 或重绑定历史收据：
 
 ```powershell
 D:/Dev/Python312/python.exe -B scripts/recheck-formal-map-library-name.py `
@@ -61,3 +63,17 @@ D:/Dev/Python312/python.exe -B scripts/recheck-formal-map-library-name.py `
 实际结果为初始 System/String/Raw 状态全 0，Raw 失败根为静态根区偏移 15224；8 个冷 OS 线程经普通 wrapper 完成 System 初始化。14 个正常名字及 4 个长名通过；4 个原异常回溯均为深度 1，含 Map 方法 43956、BCI 0。null、外来指针、错误类及已有异常检查通过。另 8 个 OS 线程完成 1120 次重复映射。7 个实际链接的完整根区参与静止期快照，原汇编 GC 回收 8459 个对象，根区未改变，堆和 trace pool 均正常关闭。
 
 properties 的 109 个根槽在本轮自然全空，因此本轮不声称其活对象保留已测。原 Raw 类和失败根始终未经 host 修改；锁定 JDK 的 19 个对照全部一致。这些结果仍只覆盖正式 26 输入下的 focused Map 源码镜像，不提升为完整 VM、世界或 Minecraft 启动验收。
+
+## 标准 CLI 的 oracle 修复
+
+标准 `test-formal-map-library-name.py` 已改为实际计算并匹配 catalog 的完整 `size/sha1/sha256`，不再把只有两个字段的摘要字典与三字段字典直接比较。独立重验脚本保留为历史源恢复工具，不为当前标准 CLI 改写旧收据。
+
+新标准 oracle 的 AST 与 `de3bad1` 成功重验的 oracle 完全相同；其摘要计算与成功重验 helper 相同，仅无重验专用的日志追加。`execute` 源码逐字相同，所有 runtime、GC、清理和其他模块 AST 均未变。新临时目录 `.boom/map-library-name-oracle-fix/v146-standard-de3bad1-04e9076195fb47efaf23fadd531a48f4/` 已真实运行 19 项 JDK 对照，并分别拒绝篡改的 size、SHA1、SHA256。`verification.json` SHA256 为 `db820fe336a32fefe28c02c7687ec01b7787c23b270f8b976c2a84cabdaa8a89`。
+
+这份小修验证仅覆盖新的 oracle 和 AST 等价性，没有重新 prepare 或重跑 runtime/GC，也不把旧 runtime 收据改称为新脚本的完整执行记录。后续新镜像可直接使用修复后的标准 CLI：
+
+```powershell
+D:/Dev/Python312/python.exe -B scripts/test-formal-map-library-name.py `
+  --state .boom/pending-native-three-families-v145-three-families-26-9e4944c57a424d038bb7679b56009811.json `
+  --output .boom/formal-map-library-name/new-standard-cli-run
+```

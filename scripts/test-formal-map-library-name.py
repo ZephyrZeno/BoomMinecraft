@@ -61,9 +61,22 @@ def source_members(summary,classes):
     return result
 
 
+def _complete_catalog_digests_match(record):
+    path=Path(record['path']).resolve()
+    S.check(path.is_relative_to(Path('D:/Dev')) or path.is_relative_to(S.ART),
+            'Locked oracle catalog escaped the isolated tool/input roots')
+    S.check(set(record['digest'])=={'size','sha1','sha256'},'Unexpected locked JDK catalog digest fields')
+    sha1,sha256=hashlib.sha1(),hashlib.sha256();size=0
+    with path.open('rb') as stream:
+        while chunk:=stream.read(2<<20):
+            size+=len(chunk);sha1.update(chunk);sha256.update(chunk)
+    actual=dict(size=size,sha1=sha1.hexdigest(),sha256=sha256.hexdigest())
+    return actual==record['digest']
+
+
 def oracle(summary,output):
     catalog=S.read(S.checked(summary['frames']['original_system_catalog']));record=catalog['image']
-    S.check(S.digest(record['path'])==record['digest'],'Locked JDK module image changed')
+    S.check(_complete_catalog_digests_match(record),'Locked JDK module image changed')
     home=Path(record['path']).parents[1];java=home/'bin/java.exe';source=output/'MapLibraryNameOracle.java'
     source.write_text('''class MapLibraryNameOracle {
  public static void main(String[] args) {
