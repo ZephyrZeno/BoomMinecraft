@@ -10,6 +10,37 @@ from uuid import uuid4
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('normal_methods_source_test',ROOT/'scripts/normal-methods-source.py')
 N=importlib.util.module_from_spec(spec);spec.loader.exec_module(N)
+candidate_spec=importlib.util.spec_from_file_location('normal_methods_candidate_scope',ROOT/'scripts/normal-methods-candidate.py')
+CANDIDATE=importlib.util.module_from_spec(candidate_spec);candidate_spec.loader.exec_module(CANDIDATE)
+
+
+class MethodCandidateSourceScope(unittest.TestCase):
+    def test_pending_source_stays_pending_in_the_candidate(self):
+        state=dict(status='pending_runtime_acceptance',current_source_provider_verification_complete=True,
+            runtime_acceptance_complete=False,accepted_provider_set_published=False)
+        scope=CANDIDATE.source_scope(state)
+        self.assertFalse(scope['input_runtime_acceptance_complete'])
+        self.assertFalse(scope['candidate_runtime_acceptance_proven'])
+        for changes in ({'runtime_acceptance_complete':True},{'accepted_provider_set_published':True},
+                        {'current_source_provider_verification_complete':False},{'status':'accepted'},
+                        {'status':'prepared'}):
+            with self.subTest(changes=changes),self.assertRaises(ValueError):CANDIDATE.source_scope(dict(state,**changes))
+
+    def test_accepted_input_does_not_accept_an_unexecuted_candidate(self):
+        state=dict(status='accepted',current_source_provider_verification_complete=True,
+            runtime_acceptance_complete=True,accepted_provider_set_published=True)
+        scope=CANDIDATE.source_scope(state)
+        self.assertTrue(scope['input_runtime_acceptance_complete'])
+        self.assertFalse(scope['candidate_runtime_acceptance_proven'])
+
+    def test_missing_or_nonboolean_acceptance_flags_are_rejected(self):
+        state=dict(status='pending_runtime_acceptance',current_source_provider_verification_complete=True,
+            runtime_acceptance_complete=False,accepted_provider_set_published=False)
+        for key in ('current_source_provider_verification_complete','runtime_acceptance_complete','accepted_provider_set_published'):
+            changed=dict(state);changed.pop(key)
+            with self.subTest(missing=key),self.assertRaises(ValueError):CANDIDATE.source_scope(changed)
+            changed=dict(state);changed[key]=int(changed[key])
+            with self.subTest(nonboolean=key),self.assertRaises(ValueError):CANDIDATE.source_scope(changed)
 
 
 def classfile(*,attributes=(),descriptor='()V',flags=0x1041,exception_index=None):

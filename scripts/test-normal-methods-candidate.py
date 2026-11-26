@@ -93,7 +93,7 @@ def test_assembly(model):
     return text,TEST_EXPORTS|{'boom_methods_test_bootstrap'},imports
 
 
-def build(candidate_file,native_file,execution_file,output):
+def build(candidate_file,native_file,execution_file,output,*,allow_equivalent_batch=False):
     output=output.resolve();S.check(output.is_relative_to(S.ART) and not output.exists(),'Fresh ignored methods test output required')
     S.check(B.verify(candidate_file)==S.read(candidate_file.with_name('verification.json')),'Current methods candidate proof differs')
     candidate=S.read(candidate_file);meta=candidate['metadata']['source'];native=S.read(native_file)
@@ -104,9 +104,16 @@ def build(candidate_file,native_file,execution_file,output):
         execution['source_verification_sha256']==S.digest(native_proof_file)['sha256'] and
         native['accepted_source_verification_sha256']==S.digest(proof_file)['sha256'] and proof['verified'] and
         proof['closure_manifest_sha256']==S.digest(closure_file)['sha256'] and
-        closure['source_batch_summary_sha256']==candidate['metadata']['base']['batch_summary']['digest']['sha256'] and
         execution['cleanup_flags']==7 and execution['worker_failure_state']==0,
         'Accepted full source/native process proof differs')
+    equivalence=None
+    if closure['source_batch_summary_sha256']!=candidate['metadata']['base']['batch_summary']['digest']['sha256']:
+        S.check(allow_equivalent_batch,'Different source batches require explicit complete named-batch equivalence')
+        state=S.read(S.checked(candidate['metadata']['input_state']))
+        transition=module('extend-runtime-provider-set')
+        equivalence=transition.equivalent_named_batch(Path(closure['batch']),Path(state['batch']),Path(state['plan']),
+            state['batch_verification_sha256'])
+        S.check(equivalence==state['batch_source_lineage'],'Current state does not bind the exact original Java batch equivalence')
     _,summary,classes=S.base(Path(closure['batch']),Path(closure['plan']))
     names={row['name']:row for row in classes if row['origin']['loader']=='bootstrap'}
     owners={row['id']:row for row in classes};members={}
@@ -195,6 +202,8 @@ def build(candidate_file,native_file,execution_file,output):
         ROOT/'scripts/vm-entry-source.py',ROOT/'scripts/canonical-link-response.py',ROOT/'scripts/probe-native-provider-prefix.py',
         Path(__file__),output/'constructor-vm-entry.asm',output/'test-root-bank.asm',response]:inputs.append(S.artifact(path))
     result=dict(schema=1,scope='unregistered_getDeclaredMethods0_over_accepted_31_source_with_constructor_VM_binding',
+        current_candidate_input_scope=candidate['metadata']['input_scope'],source_batch_equivalence=equivalence,
+        historical_full_selection_reused=equivalence is not None,current_full_selection_reverified=False,
         candidate=S.artifact(candidate_file),candidate_proof=S.artifact(candidate_file.with_name('verification.json')),
         source_manifest=S.artifact(closure_file),source_proof=S.artifact(proof_file),native_manifest=S.artifact(native_file),
         native_proof=S.artifact(native_proof_file),native_execution=S.artifact(execution_file),image=S.artifact(dll),runtime=S.artifact(runtime),
@@ -465,10 +474,12 @@ if __name__=='__main__':
     parser.add_argument('--candidate',type=Path);parser.add_argument('--native',type=Path);parser.add_argument('--execution',type=Path)
     parser.add_argument('--output',type=Path,default=S.ART/'normal-methods'/('execution-'+uuid4().hex))
     parser.add_argument('--images',type=Path);parser.add_argument('--worker',type=Path);parser.add_argument('--recheck-images',type=Path)
+    parser.add_argument('--allow-equivalent-batch',action='store_true')
     args=parser.parse_args()
     if args.worker:print(run(args.worker.resolve()))
     else:
         if args.recheck_images:images=recheck(args.recheck_images.resolve(),args.output.resolve())
         elif args.images:images=args.images.resolve()
-        else:images=build(args.candidate.resolve(),args.native.resolve(),args.execution.resolve(),args.output.resolve())
+        else:images=build(args.candidate.resolve(),args.native.resolve(),args.execution.resolve(),args.output.resolve(),
+                         allow_equivalent_batch=args.allow_equivalent_batch)
         subprocess.run([os.sys.executable,str(Path(__file__).resolve()),'--worker',str(images)],check=True)

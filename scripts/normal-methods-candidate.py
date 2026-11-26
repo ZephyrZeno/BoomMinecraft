@@ -22,12 +22,23 @@ R=module('verify-batch-frames');A=module('verify-batch-assembly')
 KERNEL=ROOT/'native/providers/normal_methods.asm.inc'
 
 
+def source_scope(state):
+    accepted=state['status']=='accepted'
+    S.check(state['status'] in ('accepted','pending_runtime_acceptance') and
+        state.get('current_source_provider_verification_complete') is True and
+        state.get('runtime_acceptance_complete') is accepted and
+        state.get('accepted_provider_set_published') is accepted,
+        'Methods candidate requires an explicit verified accepted/pending source scope')
+    return dict(input_state_status=state['status'],source_verified=True,
+        input_runtime_acceptance_complete=accepted,candidate_runtime_acceptance_proven=False)
+
+
 def contract(state_file):
     state=S.read(state_file);identity,summary,classes=S.base(Path(state['batch']),Path(state['plan']))
+    scope=source_scope(state)
     S.check(state['batch_summary_sha256']==identity['batch_summary']['digest']['sha256'] and
         state['batch_verification_sha256']==identity['base_verification']['digest']['sha256'] and
-        state['status']=='accepted' and state.get('current_source_provider_verification_complete') is True and
-        state['tool_sources']==S.tools_identity(),'Current accepted original provider source required')
+        state['tool_sources']==S.tools_identity(),'Current verified original provider source required')
     meta=C.index(summary,classes,S);frame=Path(state['frame_manifest']);proof=frame.with_name('verification.json')
     receipt=S.read(proof);source=S.read(frame)['source']
     actual_frame=module('native-frame-overlay').verify(frame,Path(state['batch']),Path(state['plan']))
@@ -44,7 +55,7 @@ def contract(state_file):
     kernels={'native/runtime/'+n:S.digest(ROOT/'native/runtime'/n)['sha256'] for n in C.KERNELS}
     S.check(S.digest(runtime/'boom-runtime.dll')['sha256']==state['runtime_sha256']==runtime_meta['sha256'] and
         all(runtime_meta['sources'][name]==sha for name,sha in kernels.items()),'Original assembly runtime kernels differ')
-    return dict(base=identity,input_state=S.artifact(state_file),source=meta,policy=C.POLICY,
+    return dict(base=identity,input_state=S.artifact(state_file),input_scope=scope,source=meta,policy=C.POLICY,
         frame_overlay=dict(manifest=S.artifact(frame),verification=S.artifact(proof)),
         runtime_kernel_sha256=kernels)
 

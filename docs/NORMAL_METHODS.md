@@ -67,3 +67,14 @@ native stop、重新 ML64 并保留原 Main 的全部 Java／数据对象和原 
 随后工具清单切换后，对旧105输入的根 API 复跑被原验证器严格拒绝，未运行 guest，
 失败保留于 `.boom/normal-methods/root-review-execution-v156-a`。不会把旧收据改成当前
 107来源；新的当前 frame／provider 迁移和独立冷复跑继续单独验证。
+
+当前工具来源的冷复跑现已完成：新候选只接受明确 `accepted` 或
+`pending_runtime_acceptance` 的已完整源验输入，核对当前全部工具与 fresh frame；
+pending 的运行验收／发布标志必须保持 false。开发执行器仅在显式
+`--allow-equivalent-batch` 且完整 named batch／原 Java／机器数据等价证明完全匹配
+迁移状态后复用历史 Java 闭包，不改称当前完整 source selection 已复验。
+17项源码／机器／状态边界测试及新 OS 冷进程的全部 API suite 通过。
+`.boom/normal-methods/root-source-current107-v159-a/verification.json` 为
+`328a89f3e0fce6246fd38e7cb223a454f6076035e27700f216e6ad2f3094dd98`；
+`.boom/normal-methods/root-current107-execution-v159-a/execution.json` 为
+`1c081480354b3e5a0654fbd58781c82bf454df5e736577903a6a6d557f935bc3`。
