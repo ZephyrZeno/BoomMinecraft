@@ -1,6 +1,7 @@
 """Reject false native/source/index/profile contracts before linking properties."""
 import copy
 import importlib.util
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -8,6 +9,9 @@ import unittest
 
 SPEC = importlib.util.spec_from_file_location('properties_verifier', Path(__file__).resolve().parents[1]/'scripts/verify-batch-properties.py')
 M = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_module(M)
+REFRESH_SPEC = importlib.util.spec_from_file_location('sparse_unsafe_refresh',
+    Path(__file__).resolve().parents[1]/'scripts/refresh-unsafe-field-batch.py')
+R = importlib.util.module_from_spec(REFRESH_SPEC); REFRESH_SPEC.loader.exec_module(R)
 
 
 def source():
@@ -75,6 +79,41 @@ class PropertyVerifierTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'profile text'): M.vm_values(profile, root)
             profile['class_path'] = 'classes'; profile['java_home'] = str(Path(root)/'other')
             with self.assertRaisesRegex(ValueError, 'java.home'): M.vm_values(profile, root)
+
+    def test_sparse_VM_home_preserves_base_profile_index_assembly_and_object(self):
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp).resolve()/'original'
+            out = Path(temp).resolve()/'sparse'
+            folder = base/'properties'
+            folder.mkdir(parents=True)
+            out.mkdir()
+            for filename in ('index.zip','0000.asm','0000.obj'):
+                (folder/filename).write_bytes(('original '+filename).encode())
+            profile = dict(schema=1,java_home=str(base),class_path='classes',library_path='natives',properties=[])
+            index,asm,obj = (R.artifact(folder/n) for n in ('index.zip','0000.asm','0000.obj'))
+            original = dict(properties=dict(vm_profile=profile,index=index,units=[dict(assembly=asm,object=obj)]))
+            for directory in (base,out):
+                (directory/'summary.json').write_text(json.dumps(original),encoding='utf-8')
+            proof = dict(base_batch=str(base),accepted_base=dict(summary=R.artifact(base/'summary.json')),
+                         derivative=R.artifact(out/'summary.json'))
+            with self.assertRaisesRegex(ValueError,'java.home'):
+                M.vm_values(profile,out)
+            scope = R.vm_image_home_scope(proof,out)
+            self.assertEqual(scope['original_artifacts'],[index,asm,obj])
+            self.assertEqual(M.vm_values(profile,Path(scope['vm_image_home']))['java.home'],str(base))
+            stale = copy.deepcopy(proof)
+            stale['accepted_base']['summary']['digest']['sha256'] = '0'*64
+            with self.assertRaisesRegex(ValueError,'provenance changed'):
+                R.vm_image_home_scope(stale,out)
+            forged = copy.deepcopy(original)
+            forged['properties']['vm_profile']['java_home'] = str(out)
+            (out/'summary.json').write_text(json.dumps(forged),encoding='utf-8')
+            with self.assertRaisesRegex(ValueError,'original VM profile and home'):
+                R.vm_image_home_scope(proof,out)
+            (out/'summary.json').write_text(json.dumps(original),encoding='utf-8')
+            (folder/'0000.obj').write_bytes(b'tampered')
+            with self.assertRaisesRegex(ValueError,'Source artifact changed'):
+                R.vm_image_home_scope(proof,out)
 
 
 if __name__ == '__main__': unittest.main()

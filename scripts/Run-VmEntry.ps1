@@ -25,8 +25,10 @@ $bytes=[IO.File]::ReadAllBytes((Join-Path $root 'vm-entry-status.bin'))
 $contextRows=[bool]$m.binding_model.phase2_context_rows
 $referenceControl=[bool]$m.binding_model.reference_processing
 $winntFilesystem=[bool]$m.binding_model.winnt_filesystem
+$objectWait=[bool]$m.binding_model.object_wait
 $expectedBytes=if($referenceControl){384}elseif($contextRows){320}elseif($m.system_phase2){312}elseif($m.signal_control -or $m.start_child){272}else{112};$expectedABI=if($referenceControl){9}elseif($contextRows){8}elseif($m.system_phase2){7}elseif($m.signal_control -or $m.start_child){6}else{2}
 if($winntFilesystem){$expectedBytes=400;$expectedABI=10}
+if($objectWait){$expectedBytes=448;$expectedABI=11}
 if($bytes.Length -ne $expectedBytes -or [BitConverter]::ToUInt32($bytes,0) -ne 0x52454d56 -or [BitConverter]::ToUInt32($bytes,4) -ne $expectedABI){throw 'Native process status ABI differs'}
 function U32([int]$at){[BitConverter]::ToUInt32($bytes,$at)}
 function U64([int]$at){[BitConverter]::ToUInt64($bytes,$at)}
@@ -57,6 +59,9 @@ if($referenceControl){
     if($referenceObservation.closed -gt $referenceObservation.stopped -or $referenceObservation.stopped -gt $referenceObservation.opened -or $referenceObservation.opened -gt 1 -or $referenceObservation.normal_wait_returns -gt $referenceObservation.waits_entered -or $referenceObservation.stop_tokens_consumed -gt $referenceObservation.stop_tokens_issued){throw 'Inconsistent original Reference worker observations'}
     if($referenceObservation.closed -and ($referenceObservation.final_pool_state -ne 6 -or $referenceObservation.stop_tokens_issued -ne $referenceObservation.stop_tokens_consumed)){throw 'Reference transport closed with live stop tokens'}
     $completed=$completed -and $referenceObservation.closed -eq 1 -and $referenceObservation.owner_error -eq 0 -and $referenceObservation.boundary_error -eq 0
+}
+if($objectWait){
+    $completed=$completed -and (U32 400) -eq 1 -and (U32 404) -eq 1 -and (U32 408) -eq 1 -and (U32 412) -eq 0
 }
 $phaseObservation=$null
 $phaseRejected=$false
@@ -96,6 +101,13 @@ observed_signal_dispatcher_Java_id=$(if($m.signal_control){U64 192}else{0});orig
 full_VM_bootstrap=$false;game_started=$false;world_created=$false}
 if($phaseObservation){$result['main_System_phases']=$phaseObservation}
 if($referenceObservation){$result['reference_processing']=$referenceObservation}
+if($objectWait){
+    $registered=U32 400;$stopped=U32 404;$closed=U32 408;$ownerError=U32 412
+    $calls=U64 416;$interrupts=U64 424;$cancels=U64 432;$normalWakes=U64 440
+    if($registered -gt 1 -or $stopped -gt $registered -or $closed -gt $stopped -or ($interrupts+$cancels+$normalWakes) -gt $calls){throw 'Source Object.wait0 lifecycle or result counters differ'}
+    $result['object_wait']=[ordered]@{opened=[bool]$registered;stop_requested=[bool]$stopped;closed=[bool]$closed;owner_error=$ownerError;
+        source_wait_calls=$calls;source_InterruptedException_objects=$interrupts;issued_VM_cancellations=$cancels;normal_wait_returns=$normalWakes}
+}
 if($winntFilesystem){
     $original=Get-Content -LiteralPath $m.binding_model.winnt_filesystem.metadata.path -Raw|ConvertFrom-Json
     $ready=U32 384;$fieldBound=U32 388;$optional=U32 392

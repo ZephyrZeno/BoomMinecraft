@@ -1,5 +1,4 @@
-; Original Object.notify/notifyAll. The current monitor ABI proves empty wait
-; sets only; its real owner/null/heap/unsupported-state errors are preserved.
+; Original Object.notify/notifyAll share the registered per-heap Java wait set.
 .code
 PUBLIC boom_provider_object_notification_service
 boom_provider_object_notification_service PROC

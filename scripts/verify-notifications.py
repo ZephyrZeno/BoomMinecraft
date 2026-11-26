@@ -1,4 +1,4 @@
-"""Source-bound proof for empty Object.wait-set notification lowering."""
+"""Check source-bound Object notification lowering and its shared wait-set runtime."""
 import hashlib,json,runpy,sys
 from pathlib import Path
 helpers=runpy.run_path(str(Path(__file__).with_name('verify-jdk-bridges.py')))
@@ -11,7 +11,8 @@ assert p['schema']==66 and bindings and not p['full_game_ready']
 assert {b['method'] for b in bindings}=={'notify','notifyAll'} or {b['method'] for b in bindings}=={'notifyAll'}
 sources={s['class_name']:s for s in p['sources']}
 for b in bindings:
-    assert not b['wait_sets_supported'] and b['source_sha256']==sha('native/runtime/monitors.asm')
+    assert b['wait_sets_supported'] and b['source_sha256']==sha('native/runtime/monitors.asm')
+    assert b['wait_source_sha256']==sha('native/runtime/object_wait.asm')
     assert b['origin']==jdk['classes']['java.lang.Object']
     m=next(m for m in methods if m[1:3]==(b['method'],'()V'));assert m[0]==0x111 and not any(n=='Code' for n,_ in m[3])
     caller=sources[b['caller']['binary_name'].replace('.','/')];assert caller['origin']==b['caller'] and sha(caller['path'])==b['caller']['sha256']
@@ -28,4 +29,4 @@ for b in bindings:
         else:raise AssertionError(tag)
         i+=1
     ref=cp[b['constant']];assert ref[0]==10;pair=cp[ref[2]];assert pair[0]==12 and (cp[pair[1]],cp[pair[2]])==(b['method'],'()V')
-print(json.dumps(dict(passed=True,source_native_bindings=len(bindings),original_native_declarations_verified=True,empty_wait_sets_only=True,Object_wait_implemented=False,game_started=False)))
+print(json.dumps(dict(passed=True,source_native_bindings=len(bindings),original_native_declarations_verified=True,shared_wait_set_runtime_verified=True,source_wait0_executed=False,game_started=False)))

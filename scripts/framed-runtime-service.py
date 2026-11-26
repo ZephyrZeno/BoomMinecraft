@@ -5,6 +5,7 @@ import zipfile
 
 
 FAMILIES = {
+    'normal-object-wait-v1': ('object-wait-source.py','object_wait','object_wait.asm.inc'),
     'normal-reference-processing-v1': ('reference-processing-source.py','reference_processing','reference_processing.asm.inc'),
     'normal-winnt-filesystem-v1': ('winnt-filesystem-source.py','winnt_filesystem','winnt_filesystem.asm.inc'),
 }
@@ -30,8 +31,9 @@ def verify(path, batch, plan, m, S):
     identity, summary, classes = S.base(batch,plan)
     meta = C.index(summary,classes,S)
     owner, methods = classes[meta['owner']], meta['methods']
+    owners = [classes[c] for c in sorted({m['class_id'] for m in methods})]
     S.check(m['base'] == identity and m['tool_sources'] == S.tools_identity() and m['native_methods'] == len(methods) and
-            m['methods'] == methods and m['owner_source'] == owner and m['owner_sources'] == [owner], 'Original native source differs')
+            m['methods'] == methods and m['owner_source'] == owner and m['owner_sources'] == owners, 'Original native source differs')
     record = S.checked(m[key+'_metadata'])
     S.check(record.parent == path.parent and S.read(record) == meta and m['policy'] == C.POLICY and
             m['required_class_ids'] == meta['required_classes'] and m['required_base_modules'] == [] and
@@ -41,19 +43,23 @@ def verify(path, batch, plan, m, S):
     S.check(m['assembled'] and m['native_entries_traced'] and not any(m[k] for k in ('all_native_frames','java_codegen_rerun',
             'base_Java_ASM_and_COFF_modified','all_family_natives_implemented','linked','executed','game_started','world_created')),
             'Native service evidence scope differs')
-    S.check(m['leaf_guest_services'] is False and m['native_java_upcalls'] == (key == 'winnt_filesystem') and
+    S.check(m['leaf_guest_services'] is False and m['native_java_upcalls'] == (key in ('winnt_filesystem','object_wait')) and
             source_frame(batch,plan,S.checked(m['frame_overlay']['manifest']),meta,S) == m['frame_overlay'],
             'Original source frame configuration differs')
     proc, data = C.native_imports(meta)
-    declared = {f"boom_class{meta['owner']}",'boom_class_ensure32'}
-    expected = 'option casemap:none\nEXTERN boom_class_ensure32:PROC\n' + f"EXTERN boom_class{meta['owner']}:BYTE\n"
+    if key=='object_wait':
+        S.check(m['required_java_methods']==meta['required_java_methods'] and
+                m['required_provider_families']==meta['required_provider_families'],
+                'Missing source exception constructor or shared VM stop controller')
+    declared = {f"boom_class{c['id']}" for c in owners} | {'boom_class_ensure32'}
+    expected = 'option casemap:none\nEXTERN boom_class_ensure32:PROC\n' + ''.join(f"EXTERN boom_class{c['id']}:BYTE\n" for c in owners)
     expected += ''.join(f"EXTERN {n}:{'PROC' if n in proc else 'BYTE'}\n" for n in sorted(proc|data)) + C.data(meta)
     exports = C.CONTROL | {C.POOL,C.SERVICE}
     R = S.module('verify_source_service_wrapper','verify-batch-frames.py')
     for row in methods:
         i = row['method']
         expected += f'.code\nPUBLIC boom_m{i}\nPUBLIC boom_m{i}_native\n'
-        expected += R.native_adapter(i,meta['owner'],C.POOL,C.SERVICE,row['operation']).removeprefix('.code\n')
+        expected += R.native_adapter(i,row['class_id'],C.POOL,C.SERVICE,row['operation']).removeprefix('.code\n')
         exports.update((f'boom_m{i}',f'boom_m{i}_native'))
     kernel_path = S.ROOT/'native/providers'/kernel
     expected += kernel_path.read_text(encoding='utf-8') + '\nEND\n'

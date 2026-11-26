@@ -183,7 +183,8 @@ def data(shape, array, rows, pairs, texts, fallbacks):
     return out
 
 
-def verify(root, batch, plan, inventory, static_inputs, available, artifact, coff_symbols, file_digest):
+def verify(root, batch, plan, inventory, static_inputs, available, artifact, coff_symbols, file_digest,
+           expected_image_home=None):
     root, plan = Path(root), Path(plan)
     s, shape = batch['properties'], batch['string_literals']['source_layout']
     check((s['abi'], s['context_bytes'], s['pool_abi'], s['native_methods'], s['platform_properties']) == (1, 32, 2, 2, 39),
@@ -198,7 +199,11 @@ def verify(root, batch, plan, inventory, static_inputs, available, artifact, cof
                   (t['defining_loader'], t['name']) == ('bootstrap', '[Ljava/lang/String;')]
     check(len(arrays) == 1 and arrays[0]['kind'] == 3 and arrays[0]['parent_component'] == shape['class_id'] and
           arrays[0]['id'] == s['array_type'], 'Properties must use the normal source String[] descriptor')
-    rows, pairs, texts, fallbacks = model(indices, vm_values(s['vm_profile'], root))
+    # The normal batch owns its VM home. A verified sparse artifact resolver can
+    # retain the source batch's declared original VM home and Properties COFF.
+    if expected_image_home is None:
+        expected_image_home = getattr(artifact,'verified_original_vm_image_home',root)
+    rows, pairs, texts, fallbacks = model(indices, vm_values(s['vm_profile'], expected_image_home))
     check((s['canonical_strings'], s['root_cells'], s['vm_pairs']) == (len(texts), 2*len(texts)+1, len(pairs)),
           'Properties canonical/root/profile count differs')
     with zipfile.ZipFile(artifact(root, s['index'], 'properties')) as z:

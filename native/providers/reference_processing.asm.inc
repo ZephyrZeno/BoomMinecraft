@@ -1,4 +1,4 @@
-; RPRC80/1 per image. VM alone opens, requests stop, joins its workers and closes.
+; RPRC88/2 per image. Optional bound monitor wait domain at +80.
 ; state8, TLS index12, heap cell16, transport24, wait calls32, normal wakes40,
 ; stop tokens issued48, stops consumed56, released acquisitions64, first error72.
 ; Context+24 always belongs to the Java VM exception plan.
@@ -9,7 +9,7 @@ rpr_valid PROC PRIVATE
  jz rpr_valid_done
  cmp DWORD PTR [rcx],043525052h
  jne rpr_valid_done
- cmp DWORD PTR [rcx+4],1
+ cmp DWORD PTR [rcx+4],2
  jne rpr_valid_done
  cmp QWORD PTR [rcx+16],0
  je rpr_valid_done
@@ -135,6 +135,8 @@ boom_provider_reference_close PROC FRAME
  jz rpr_close_bad
  cmp DWORD PTR [rbx+8],4
  jne rpr_close_bad
+ cmp QWORD PTR [rbx+80],0
+ jne rpr_close_busy
  mov rax,QWORD PTR [rbx+48]
  cmp rax,QWORD PTR [rbx+56]
  jne rpr_close_busy
@@ -232,28 +234,11 @@ rpr_service_status:
  jz rpr_service_value
  cmp eax,995
  jne rpr_service_error
- mov eax,DWORD PTR [rsi+8]
- sub eax,3
- cmp eax,1
- ja rpr_service_bad
- mov rcx,QWORD PTR [rsi+24]
- call boom_reference_pending_stopping
- cmp eax,1
- jne rpr_service_bad
- mov ecx,DWORD PTR [rsi+12]
- call TlsGetValue
- test rax,rax
- jnz rpr_service_bad
- mov ecx,DWORD PTR [rsi+12]
- mov rdx,rbx
- call TlsSetValue
- test eax,eax
- jz rpr_service_tls_error
- lock inc QWORD PTR [rsi+48]
- mov DWORD PTR [rbx],0B002h
+ mov rcx,rbx
+ mov rdx,rsi
+ xor r8d,r8d
+ call boom_provider_reference_issue_stop
  jmp rpr_service_zero
-rpr_service_tls_error:
- call GetLastError
 rpr_service_error:
  mov edx,eax
  xor eax,eax
@@ -276,6 +261,78 @@ rpr_service_done:
  pop rbx
  ret
 boom_provider_reference_service ENDP
+
+; (Context32, RPRC88, monitorHandle/null). A reference/monitor wait just returned
+; 995 on this OS thread. Issue one exact-context TLS token after verifying the
+; owner stop, selected transport, and absence of an existing throwable/token.
+PUBLIC boom_provider_reference_issue_stop
+boom_provider_reference_issue_stop PROC FRAME
+ push rbx
+ .pushreg rbx
+ push rsi
+ .pushreg rsi
+ push rdi
+ .pushreg rdi
+ sub rsp,32
+ .allocstack 32
+ .endprolog
+ mov rbx,rcx
+ mov rsi,rdx
+ mov rdi,r8
+ test rbx,rbx
+ jz rpr_issue_done
+ cmp DWORD PTR [rbx],0
+ jne rpr_issue_done
+ cmp QWORD PTR [rbx+16],0
+ jne rpr_issue_bad
+ mov rcx,rsi
+ call rpr_valid
+ test eax,eax
+ jz rpr_issue_bad
+ mov eax,DWORD PTR [rsi+8]
+ sub eax,3
+ cmp eax,1
+ ja rpr_issue_bad
+ mov rcx,QWORD PTR [rsi+24]
+ call boom_reference_pending_stopping
+ cmp eax,1
+ jne rpr_issue_bad
+ test rdi,rdi
+ jz rpr_issue_tls
+ cmp QWORD PTR [rsi+80],rdi
+ jne rpr_issue_bad
+ mov rcx,rdi
+ call boom_monitor_wait_stopping
+ cmp eax,1
+ jne rpr_issue_bad
+rpr_issue_tls:
+ mov ecx,DWORD PTR [rsi+12]
+ call TlsGetValue
+ test rax,rax
+ jnz rpr_issue_bad
+ mov ecx,DWORD PTR [rsi+12]
+ mov rdx,rbx
+ call TlsSetValue
+ test eax,eax
+ jz rpr_issue_error
+ lock inc QWORD PTR [rsi+48]
+ mov DWORD PTR [rbx],0B002h
+ jmp rpr_issue_done
+rpr_issue_error:
+ call GetLastError
+ mov edx,eax
+ xor eax,eax
+ lock cmpxchg DWORD PTR [rsi+72],edx
+rpr_issue_bad:
+ mov DWORD PTR [rbx],7
+rpr_issue_done:
+ xor eax,eax
+ add rsp,32
+ pop rdi
+ pop rsi
+ pop rbx
+ ret
+boom_provider_reference_issue_stop ENDP
 
 ; Only a fully unwound call on the issuing OS thread may consume B002. A B001
 ; diagnostic releases that thread's locks, retaining its source stop and VM plan.

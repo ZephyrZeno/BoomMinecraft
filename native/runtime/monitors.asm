@@ -7,9 +7,11 @@
 ; reused; quiescent collection drops the idle list. No global/striped object lock.
 ; Registry lock order is registry -> allocator. GC takes the same order and refuses
 ; outstanding monitors. This is not an automatic GC/Java safepoint implementation.
-; Native notify/notifyAll implement the proven empty-wait-set case only.
-; Object.wait and Java interruption remain unavailable; reserved28 must be zero.
+; Object.wait shares the node waiter count and holds a root until re-entry.
+; The Java wait set stores distinct notification predicates outside Monitor32.
 option casemap:none
+EXTERN boom_monitor_wait_notify:PROC
+EXTERN boom_monitor_wait_notify_all:PROC
 EXTERN GetCurrentThreadId:PROC
 EXTERN WaitOnAddress:PROC
 EXTERN WakeByAddressAll:PROC
@@ -292,96 +294,11 @@ monitor_exit_done:
     pop rbx
     ret
 boom_monitor_exit ENDP
-; heap RCX,object RDX,Context32 R8 -> kind. No Java wait service can be linked
-; in this ABI1 module. Unknown nonempty wait metadata fails explicitly.
+; All source wrappers, intrinsic call sites, and Thread.exit share this wait set.
 boom_monitor_notify_all PROC
-    jmp boom_monitor_notify
+    jmp boom_monitor_wait_notify_all
 boom_monitor_notify_all ENDP
-boom_monitor_notify PROC FRAME
-    push rbx
-    .pushreg rbx
-    push rsi
-    .pushreg rsi
-    push rdi
-    .pushreg rdi
-    push r12
-    .pushreg r12
-    sub rsp,40
-    .allocstack 40
-    .endprolog
-    mov rbx,rcx
-    mov rsi,rdx
-    mov rdi,r8
-    test rdi,rdi
-    jz monitor_notify_noctx
-    mov eax,DWORD PTR [rdi]
-    test eax,eax
-    jnz monitor_notify_done
-    test rsi,rsi
-    jz monitor_notify_null
-    test rbx,rbx
-    jz monitor_notify_bad
-    cmp DWORD PTR [rbx],048454150h
-    jne monitor_notify_bad
-    cmp DWORD PTR [rbx+4],1
-    jne monitor_notify_bad
-    cmp DWORD PTR [rbx+108],1
-    jne monitor_notify_bad
-    call boom_heap_contains
-    test eax,eax
-    jz monitor_notify_bad
-    call GetCurrentThreadId
-    mov r12d,eax
-    mov rcx,rbx
-    call monitor_registry_lock
-    mov r10,QWORD PTR [rbx+96]
-monitor_notify_find:
-    test r10,r10
-    jz monitor_notify_unowned
-    cmp QWORD PTR [r10],rsi
-    je monitor_notify_found
-    mov r10,QWORD PTR [r10+8]
-    jmp monitor_notify_find
-monitor_notify_found:
-    cmp DWORD PTR [r10+16],r12d
-    jne monitor_notify_unowned
-    cmp DWORD PTR [r10+20],0
-    je monitor_notify_unlock_bad
-    cmp QWORD PTR [rbx+112],0
-    je monitor_notify_unlock_bad
-    cmp DWORD PTR [r10+28],0
-    jne monitor_notify_wait_unavailable
-    xor eax,eax
-    jmp monitor_notify_unlock
-monitor_notify_unowned:
-    mov eax,17
-    jmp monitor_notify_unlock
-monitor_notify_wait_unavailable:
-    mov eax,20
-    jmp monitor_notify_unlock
-monitor_notify_unlock_bad:
-    mov eax,7
-monitor_notify_unlock:
-    mov DWORD PTR [rbx+104],0
-    test eax,eax
-    jz monitor_notify_done
-    jmp monitor_notify_error
-monitor_notify_null:
-    mov eax,4
-    jmp monitor_notify_error
-monitor_notify_bad:
-    mov eax,7
-monitor_notify_error:
-    mov DWORD PTR [rdi],eax
-    jmp monitor_notify_done
-monitor_notify_noctx:
-    mov eax,7
-monitor_notify_done:
-    add rsp,40
-    pop r12
-    pop rdi
-    pop rsi
-    pop rbx
-    ret
+boom_monitor_notify PROC
+    jmp boom_monitor_wait_notify
 boom_monitor_notify ENDP
 END

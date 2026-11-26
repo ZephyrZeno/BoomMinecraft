@@ -21,7 +21,9 @@ class ObjectNotificationTests(unittest.TestCase):
     def test_original_final_native_identities_and_empty_wait_scope(self):
         rows=self.bind(*source())
         self.assertEqual([(r['method'],r['access'],r['operation']) for r in rows],[(8,0x111,0),(9,0x111,1)])
-        self.assertFalse(M.POLICY['Object_wait_implemented'])
+        self.assertEqual(M.POLICY['Java_wait_set'],'same_heap_Object_wait0_queue')
+        self.assertFalse(M.POLICY['notification_requires_waiter'])
+        self.assertIn('object_wait.asm',M.KERNELS)
     def test_substituted_owner_is_rejected(self):
         owner,raw=source()
         for change in [dict(loader='application'),dict(source_id='library:spoof'),dict(generated={'mod':True})]:

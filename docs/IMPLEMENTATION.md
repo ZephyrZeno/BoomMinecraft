@@ -1,5 +1,15 @@
 # BoomMinecraft 自研汇编后端实现与验证记录
 
+## 等待与窄字段原子操作合流 v143（2026-11-26）
+
+原生 v141 进程进入 System.initPhase2 后，在 Module.enableNativeAccess 的原始 Java 窄字段 CAS 算法中停下。UFMP ABI2 现用独立虚拟字段槽保留该 Java 对齐算法，同时以汇编 byte/word CAS 更新实际字段，避免误选字段或访问对象尾部以外的存储。四种真实源布局、32 项原始 Java byte/short 用例、九项错误视图/ABI 检查以及八个 OS 线程的 2,048 次成功竞争更新通过；原始 Module.implAddEnableNativeAccess 已在存储夹具中真实返回。详见[窄字段原子操作](NARROW_FIELD_ATOMICS.md)。
+
+正常监视器加入共享等待集，原始有帧 Object.wait0、Thread.interrupt0 与真实 InterruptedException 构造器已接入。原始 Object.wait 的 finally 和 PipedInputStream 的 typed catch 在源镜像中执行，受控停止使用独立线程令牌。尚未通过的完整 Thread.join、TimerThread 和初始化进程合流单独验收。详见[监视器等待](MONITOR_WAIT.md)。
+
+派生批次保持 53,660 个原始类和 498,179 个已生成 Java 方法，仅重汇编字段池单元；线程计数器及类初始化核的依赖刷新分别保留兼容证明。整批独立验证已通过。VM 目录属性保留原始声明值和原始 Properties 索引/汇编/COFF 摘要；失败的验证尝试日志保留。309 项 Python、199 项 Rust 单元测试通过，新旧字段 ABI 的 C# 开发宿主均执行了基本读写和 CAS。
+
+首个完整 Minecraft 启动及世界创建仍未完成，游戏侧性能尚无完整运行测量。
+
 ## 原生模块初始化与后台线程退出 v139（2026-11-26）
 
 同一原生进程中的原始 System.initPhase1 正常返回，随后调用原始 System.initPhase2。镜像纳入 20,266 个 Java 方法和 2,527 个类，主线程实际走到 `jdk/internal/module/SystemModules$default.moduleDescriptors()`，自动纳入程序已验证这个已生成汇编的方法及其原始声明类。完整 VM 引导、Minecraft 主入口、图形界面与世界创建仍待验证。

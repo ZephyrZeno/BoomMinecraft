@@ -46,17 +46,34 @@ class UnsafeFieldsVerifierTests(unittest.TestCase):
     def test_cookie_family_does_not_encode_receiver_byte_offsets(self):
         fields,names,ranges=M.model(classes(),[dict(id=0)],[],2)
         shape=dict(class_id=8,value_offset=0,coder_offset=12)
-        parts,unit=M.bodies(fields,names,ranges,2,shape,7)
-        combined=''.join(parts)
-        self.assertIn('055464C4400000000h',combined)
-        self.assertIn('QWORD OFFSET boom_field_map0,0',combined)
-        self.assertIn('call boom_class_ensure32',parts[unit])
-        self.assertNotIn('boom_s',combined)
+        for abi,tag in [(1,'055464C4400000000h'),(2,'055464C3200000000h')]:
+            with self.subTest(abi=abi):
+                parts,unit=M.bodies(fields,names,ranges,2,shape,7,abi)
+                combined=''.join(parts)
+                self.assertIn('055464D50h,'+str(abi)+',',combined)
+                self.assertIn(tag+',0',combined)
+                self.assertIn('QWORD OFFSET boom_field_map0,0',combined)
+                self.assertIn('call boom_class_ensure32',parts[unit])
+                self.assertNotIn('boom_s',combined)
+
+    def test_ufl2_slot_boundaries_keep_field_identity(self):
+        self.assertEqual(M.SLOT,dict(cookie_slot_shift=8,cookie_slot_center=128,cookie_max_displacement=7))
+        self.assertNotEqual(M.TAGS[1],M.TAGS[2])
+        for field in (0,1,27622,0xfffffe):
+            slot=M.TAGS[2]|((field+1)<<M.SLOT['cookie_slot_shift'])|M.SLOT['cookie_slot_center']
+            self.assertEqual(slot & 7,0)
+            self.assertLessEqual(slot & 0xffffffff,0xffffff80)
+            for delta in range(-M.SLOT['cookie_max_displacement'],M.SLOT['cookie_max_displacement']+1):
+                adjusted=slot+delta
+                self.assertEqual((adjusted>>32,((adjusted&0xffffffff)>>8)-1),(M.TAGS[2]>>32,field))
+                self.assertEqual((adjusted&0xff)-128,delta)
+        with self.assertRaisesRegex(ValueError,'Unsupported'):
+            M.bodies([],[],[],2,{},7,3)
 
     def test_page_directory_covers_boundary_field(self):
         source=classes()[:1];source[0]['fields']=[dict(name='f'+str(i),descriptor='B',access=1) for i in range(1025)]
         fields,names,ranges=M.model(source,[],[],1)
-        parts,_=M.bodies(fields,names,ranges,2,dict(class_id=8,value_offset=0,coder_offset=12),7)
+        parts,_=M.bodies(fields,names,ranges,2,dict(class_id=8,value_offset=0,coder_offset=12),7,2)
         text=''.join(parts)
         self.assertIn('boom_java_unsafe_field_page1 LABEL BYTE',text)
         self.assertEqual(fields[1024]['id'],1024)

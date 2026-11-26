@@ -9,7 +9,8 @@ import re
 import zipfile
 
 OWNER='jdk/internal/misc/Unsafe'
-TAG=0x55464c4400000000
+TAGS={1:0x55464c4400000000, 2:0x55464c3200000000}
+SLOT={'cookie_slot_shift':8,'cookie_slot_center':0x80,'cookie_max_displacement':7}
 PAGE=1024
 BUDGET=8*1024*1024
 
@@ -66,7 +67,8 @@ def adapter(method,cls):
         f' mov rcx,QWORD PTR [rsp+32]\n mov rdx,QWORD PTR [rsp+40]\n call {n}_native\n add rsp,56\n ret\n{n}_zero:\n xor eax,eax\n add rsp,56\n ret\n{n} ENDP\n'
         f'{n}_native PROC\n lea r8,boom_java_unsafe_field_pool\n mov r9d,0\n jmp boom_java_unsafe_field\n{n}_native ENDP\n')
 
-def bodies(rows,arena,ranges,cls,string,method):
+def bodies(rows,arena,ranges,cls,string,method,abi):
+    check(abi in TAGS and 0<len(rows)<=0xffffff,'Unsupported Unsafe field ABI/capacity')
     blocks=[];pages=(len(rows)+PAGE-1)//PAGE
     s='.const\nALIGN 2\nPUBLIC boom_java_unsafe_field_names\nboom_java_unsafe_field_names LABEL WORD\n'
     for at in range(0,len(arena),16):s+=' WORD '+','.join(map(str,arena[at:at+16]))+'\n'
@@ -81,11 +83,11 @@ def bodies(rows,arena,ranges,cls,string,method):
             s+=(f" DWORD {r['class_id']},{r['field_index']},{r['access']},{r['kind']}\n"
                 f" DWORD {r['name_offset']},{r['name_units']},{r['storage_bytes']},{flags}\n QWORD {address},0\n DWORD {r['id']},0\n QWORD 0\n")
         blocks.append(s)
-    pool=(f'.const\nALIGN 8\nPUBLIC boom_java_unsafe_field_pool\nboom_java_unsafe_field_pool DWORD 055464D50h,1,{len(ranges)},{len(rows)}\n'
+    pool=(f'.const\nALIGN 8\nPUBLIC boom_java_unsafe_field_pool\nboom_java_unsafe_field_pool DWORD 055464D50h,{abi},{len(ranges)},{len(rows)}\n'
         f' QWORD OFFSET boom_heap_ptr,OFFSET boom_java_class_pool,OFFSET boom_runtime_type_map,OFFSET boom_layout{cls}\n'
         f" QWORD OFFSET boom_java_unsafe_pool,OFFSET boom_layout{string['class_id']}\n"
         ' QWORD OFFSET boom_java_unsafe_field_names,OFFSET boom_java_unsafe_field_ranges,OFFSET boom_java_unsafe_field_pages\n'
-        f" DWORD {len(arena)},{pages},{string['value_offset']},{string['coder_offset']},{cls},64\n QWORD 055464C4400000000h,0\n")
+        f" DWORD {len(arena)},{pages},{string['value_offset']},{string['coder_offset']},{cls},64\n QWORD 0{TAGS[abi]:016X}h,0\n")
     blocks.append(pool+adapter(method,cls))
     result=[]
     for block in blocks:
@@ -101,12 +103,15 @@ def verify(root,summary,plan,inventory,available,artifact,coff_symbols,file_dige
         maps=[json.loads(l) for l in z.read('fields.jsonl').splitlines()]
     shape=summary['string_literals']['source_layout']
     fields,names,ranges=model(classes,maps,shape['field_maps'],summary['runtime_metadata']['type_capacity'])
-    source,unit=bodies(fields,names,ranges,cls['id'],shape,methods[0]['method']);methods[0]['assembly_unit']=unit
-    expected=dict(abi=1,context_bytes=32,pool_bytes=128,record_bytes=64,page_fields=PAGE,pages=(len(fields)+PAGE-1)//PAGE,
+    abi=module['abi']
+    source,unit=bodies(fields,names,ranges,cls['id'],shape,methods[0]['method'],abi);methods[0]['assembly_unit']=unit
+    expected=dict(abi=abi,context_bytes=32,pool_bytes=128,record_bytes=64,page_fields=PAGE,pages=(len(fields)+PAGE-1)//PAGE,
         type_capacity=len(ranges),declared_fields=len(fields),instance_fields=sum(not(r['access']&8) for r in fields),
         address_maps=sum(r['address_map'] is not None for r in fields),name_units=len(names),native_methods=1,
         source_native_declarations=sum(bool(inventory[i][8]&0x100) for i in cls['method_ids']),class_id=cls['id'],
-        class_sha256=cls['origin']['sha256'],cookie_tag=TAG)
+        class_sha256=cls['origin']['sha256'],cookie_tag=TAGS[abi])
+    if abi==2:expected.update(SLOT)
+    else:check(not SLOT.keys()&module.keys(),'ABI1 cannot claim the virtual field-slot contract')
     check(all(module.get(k)==v for k,v in expected.items()),'Unsafe field ABI/source counts differ')
     check(all(module[k] is False for k in ('target_class_initialization_required','typed_memory_natives_provided','original_initialization_executed','game_started')),
           'Unsafe field module claims unavailable execution')

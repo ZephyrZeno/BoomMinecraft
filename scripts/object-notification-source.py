@@ -1,8 +1,8 @@
 """Original final Object notifications over the owned assembly monitor service."""
-KERNELS=['classes32.asm','monitors.asm','heap.asm']
+KERNELS=['classes32.asm','monitors.asm','object_wait.asm','heap.asm']
 POLICY=dict(normal_source_layouts=True,monitor_abi=1,real_OS_monitor_owner=True,
-    receivers='all_owned_Java_objects_including_arrays',Java_wait_set='proven_empty_only',
-    nonempty_wait_metadata='explicit_error',Object_wait_implemented=False,Java_interruption=False,
+    receivers='all_owned_Java_objects_including_arrays',Java_wait_set='same_heap_Object_wait0_queue',
+    notification_requires_waiter=False,unrecognized_monitor_abi='explicit_error',
     all_native_frames=False)
 
 

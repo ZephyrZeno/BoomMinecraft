@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 // Development FFI driver. Memory access and atomic work always execute MASM.
 public static class BoomNormalUnsafeMemoryProbe {
-    const ulong Tag=0x55464c4400000000UL;
+    static Func<int,ulong> Cookies(IntPtr pool){int abi=Marshal.ReadInt32(pool,4);ulong tag=unchecked((ulong)Marshal.ReadInt64(pool,112));Need((abi==1&&tag==0x55464c4400000000UL)||(abi==2&&tag==0x55464c3200000000UL),"Unknown source field cookie ABI");return id=>tag|(abi==1?(uint)(id+1):((ulong)(uint)(id+1)<<8)|0x80UL);}
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr Create(ulong bytes);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate int Destroy(IntPtr heap);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate int Bind(IntPtr heap);
@@ -29,7 +29,7 @@ public static class BoomNormalUnsafeMemoryProbe {
     static void Arguments(IntPtr a,IntPtr receiver,IntPtr obj,ulong offset,ulong expected=0,ulong desired=0){
         Marshal.WriteIntPtr(a,receiver);Marshal.WriteIntPtr(a,8,obj);Marshal.WriteInt64(a,16,unchecked((long)offset));Marshal.WriteInt64(a,24,unchecked((long)expected));Marshal.WriteInt64(a,32,unchecked((long)desired));
     }
-    sealed class Field {public int Id,Class,Width,Offset;public IntPtr Object;public ulong Cookie {get{return Tag|(uint)(Id+1);}}}
+    sealed class Field {public int Id,Class,Width,Offset;public IntPtr Object;public ulong Cookie;}
     static ulong Normal(int kind,ulong value){unchecked{switch(kind){case 1:return value&1;case 2:return (ulong)(long)(sbyte)value;case 3:return (ushort)value;case 4:return (ulong)(long)(short)value;case 5:return (ulong)(long)(int)value;case 7:return (uint)value;default:return value;}}}
     static bool Signaling(int kind,ulong bits){if(kind==7){uint n=(uint)bits;return (n&0x7f800000)==0x7f800000&&(n&0x007fffff)!=0&&(n&0x00400000)==0;}return kind==8&&(bits&0x7ff0000000000000UL)==0x7ff0000000000000UL&&(bits&0x000fffffffffffffUL)!=0&&(bits&0x0008000000000000UL)==0;}
     static bool Nan(int kind,ulong bits){return kind==7?((uint)bits&0x7fffffff)>0x7f800000:kind==8&&(bits&0x7fffffffffffffffUL)>0x7ff0000000000000UL;}
@@ -40,6 +40,7 @@ public static class BoomNormalUnsafeMemoryProbe {
         try{
             dll=NativeLibrary.Load(image);heap=Fn<Create>(lib,"boom_heap_create")(128UL*1024*1024);Need(heap!=IntPtr.Zero&&Fn<Bind>(dll,"boom_java_string_literals_bind_heap")(heap)==1,"Typed source heap bind failed");
             IntPtr ctx=Memory(memory,32),args=Memory(memory,40),pool=NativeLibrary.GetExport(dll,"boom_java_unsafe_field_pool");
+            var cookieOf=Cookies(pool);ulong tag=unchecked((ulong)Marshal.ReadInt64(pool,112));
             var ensure=Fn<Ensure>(lib,"boom_class_ensure32");var create=Fn<NewObject>(lib,"boom_object_new");var alloc=Fn<Alloc>(lib,"boom_heap_alloc");var kernel=Fn<Kernel>(lib,"boom_java_unsafe_memory");
             var contains=Fn<Contains>(lib,"boom_heap_contains");var collect=Fn<Collect>(lib,"boom_heap_collect_spans");var layouts=Layouts(pool);
             IntPtr unsafeClass=NativeLibrary.GetExport(dll,"boom_class"+unsafeId);Need(Marshal.ReadInt32(unsafeClass,8)==0,"Unsafe was preinitialized");
@@ -48,7 +49,7 @@ public static class BoomNormalUnsafeMemoryProbe {
             IntPtr receiver=Marshal.ReadIntPtr(NativeLibrary.GetExport(dll,"boom_s"+unsafeId+"_"+singleton));Need(receiver!=IntPtr.Zero,"Missing original Unsafe receiver");
             var roots=new List<IntPtr>{receiver};var fields=new Dictionary<int,Field>();
             Func<int,IntPtr> objectOf=id=>{Reset(ctx);IntPtr value=create(heap,layouts[id],ctx);Need(value!=IntPtr.Zero&&Marshal.ReadInt32(ctx)==0,"Typed fixture object allocation failed");roots.Add(value);return value;};
-            foreach(string line in File.ReadLines(fieldFile)){string[] p=line.Split('\t');int kind=int.Parse(p[0]);var f=new Field{Id=int.Parse(p[1]),Class=int.Parse(p[2]),Width=int.Parse(p[3]),Offset=int.Parse(p[4])};f.Object=objectOf(f.Class);fields.Add(kind,f);}
+            foreach(string line in File.ReadLines(fieldFile)){string[] p=line.Split('\t');int kind=int.Parse(p[0]);var f=new Field{Id=int.Parse(p[1]),Class=int.Parse(p[2]),Width=int.Parse(p[3]),Offset=int.Parse(p[4])};f.Cookie=cookieOf(f.Id);f.Object=objectOf(f.Class);fields.Add(kind,f);}
             var entries=new Dictionary<int,Entry>();foreach(string line in File.ReadLines(methodFile)){string[] p=line.Split('\t');entries.Add(int.Parse(p[0]),Fn<Entry>(dll,p[1]));}Need(entries.Count==42,"Typed entry coverage differs");
             var arrays=new Dictionary<int,IntPtr>();int[] tags={0,260,264,261,265,266,267,262,263};
             for(int kind=1;kind<=8;kind++){IntPtr value=alloc(heap,64,0,(ulong)tags[kind]);Need(value!=IntPtr.Zero,"Primitive array fixture allocation failed");arrays.Add(kind,value);roots.Add(value);}
@@ -130,7 +131,7 @@ public static class BoomNormalUnsafeMemoryProbe {
                 });}Task.WaitAll(tasks);
             }
             Reset(ctx);Need(ensure(NativeLibrary.GetExport(dll,"boom_class"+atomicId),ctx)==0&&Marshal.ReadInt32(ctx)==0,"Original AtomicInteger initializer failed");
-            var ctor=Fn<Entry>(dll,javaEntries[0]);var get=Fn<Entry>(dll,javaEntries[1]);var cas=Fn<Entry>(dll,javaEntries[2]);var increment=Fn<Entry>(dll,javaEntries[3]);IntPtr atomicObject=objectOf(atomicId);ulong atomicCookie=Tag|(uint)(atomicField+1);
+            var ctor=Fn<Entry>(dll,javaEntries[0]);var get=Fn<Entry>(dll,javaEntries[1]);var cas=Fn<Entry>(dll,javaEntries[2]);var increment=Fn<Entry>(dll,javaEntries[3]);IntPtr atomicObject=objectOf(atomicId);ulong atomicCookie=cookieOf(atomicField);
             Arguments(args,atomicObject,IntPtr.Zero,0);Marshal.WriteInt64(args,8,41);Reset(ctx);ctor(ctx,args);Need(Marshal.ReadInt32(ctx)==0,"Original atomic constructor failed");
             Marshal.WriteIntPtr(args,atomicObject);Marshal.WriteInt64(args,8,41);Marshal.WriteInt64(args,16,42);Reset(ctx);Need(cas(ctx,args)==1&&Marshal.ReadInt32(ctx)==0,"Original compareAndSet source failed");
             Marshal.WriteIntPtr(args,atomicObject);Reset(ctx);Need(increment(ctx,args)==42&&Marshal.ReadInt32(ctx)==0,"Original getAndIncrement source failed");
@@ -152,7 +153,7 @@ public static class BoomNormalUnsafeMemoryProbe {
             Arguments(args,receiver,arrays[9],0);fail(20,()=>entries[5](ctx,args));Arguments(args,receiver,arrays[5],0);fail(7,()=>entries[9](ctx,args));
             Arguments(args,receiver,arrays[2],1);fail(20,()=>entries[37](ctx,args));fail(20,()=>entries[69](ctx,args));
             foreach(ulong offset in new[]{ulong.MaxValue,64UL,63UL}){Arguments(args,receiver,arrays[2],offset);fail(7,()=>entries[6](ctx,args));}
-            foreach(ulong token in new[]{Tag,Tag|(uint)(Marshal.ReadInt32(pool,12)+1)}){Arguments(args,receiver,fields[5].Object,token);fail(7,()=>entries[5](ctx,args));}
+            foreach(ulong token in new[]{tag,cookieOf(Marshal.ReadInt32(pool,12))}){Arguments(args,receiver,fields[5].Object,token);fail(7,()=>entries[5](ctx,args));}
             Arguments(args,receiver,fields[5].Object,0);fail(20,()=>entries[5](ctx,args));
             other=Fn<Create>(lib,"boom_heap_create")(1024*1024);Need(other!=IntPtr.Zero,"Foreign memory heap fixture failed");Reset(ctx);IntPtr foreign=create(other,layouts[objectId],ctx);Need(foreign!=IntPtr.Zero,"Foreign memory object failed");
             Arguments(args,receiver,fields[9].Object,fields[9].Cookie,unchecked((ulong)foreign.ToInt64()));fail(7,()=>entries[25](ctx,args));
@@ -188,7 +189,7 @@ public static class BoomNormalUnsafeMemoryProbe {
             var layouts=Layouts(pool);Reset(ctx);IntPtr obj=Fn<NewObject>(lib,"boom_object_new")(heap,layouts[atomicId],ctx);Need(obj!=IntPtr.Zero,"Memory kernel normal storage allocation failed");
             var kernel=Fn<Kernel>(lib,"boom_java_unsafe_memory");int calls=0;
             Func<int,ulong> call=op=>{Reset(ctx);ulong r=kernel(ctx,args,pool,op);Need(Marshal.ReadInt32(ctx)==0,"Kernel smoke failed op="+op+", kind="+Marshal.ReadInt32(ctx));calls++;return r;};
-            ulong cookie=Tag|(uint)(valueField+1);Arguments(args,receiver,obj,cookie);Need(call(5)==0,"Initial kernel field value differs");
+            ulong cookie=Cookies(pool)(valueField);Arguments(args,receiver,obj,cookie);Need(call(5)==0,"Initial kernel field value differs");
             Arguments(args,receiver,obj,cookie,7);call(21);Arguments(args,receiver,obj,cookie,7,9);Need(call(69)==1,"Kernel CAS failed");
             Need(call(37)==9,"Kernel volatile load differs");Arguments(args,receiver,obj,cookie,5,1);Need(call(85)==9,"Kernel exchange failure witness differs");
             Need(call(5)==9,"Failed exchange changed memory");Need(call(69)==0,"CAS false result differs");

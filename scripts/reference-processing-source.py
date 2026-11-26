@@ -4,11 +4,11 @@ POOL = 'boom_provider_reference_pool'
 SERVICE = 'boom_provider_reference_service'
 SPECS = [('getAndClearReferencePendingList', '()Ljava/lang/ref/Reference;'),
          ('hasReferencePendingList', '()Z'), ('waitForReferencePendingList', '()V')]
-CONTROL = {'boom_provider_reference_' + name for name in ('open', 'stop', 'close', 'boundary')}
+CONTROL = {'boom_provider_reference_' + name for name in ('open', 'stop', 'close', 'boundary', 'issue_stop')}
 FOREIGN = {'TlsAlloc', 'TlsFree', 'TlsGetValue', 'TlsSetValue', 'GetLastError'}
 PROCEDURES = FOREIGN | {'boom_reference_pending_' + name for name in ('create', 'get', 'has', 'wait',
-                                                                      'stop', 'stopping', 'destroy')} | {'boom_monitor_abort_owned'}
-KERNELS = ['reference_pending.asm', 'monitor_abort.asm', 'monitors.asm', 'heap.asm', 'classes32.asm', 'frames.asm']
+                                                                      'stop', 'stopping', 'destroy')} | {'boom_monitor_abort_owned','boom_monitor_wait_stopping'}
+KERNELS = ['reference_pending.asm', 'monitor_abort.asm', 'monitors.asm', 'object_wait.asm','heap.asm', 'classes32.asm', 'frames.asm']
 POLICY = dict(original_ReferenceHandler_loop=True, real_pending_list_wait=True, wait_consumes_pending_head=False,
               cancellation_bound_to_OS_thread_and_Context=True, Java_run_success_on_VM_stop=False,
               owner_must_join_before_close=True, automatic_reference_discovery=False)
@@ -32,13 +32,13 @@ def index(summary, classes, S):
                 'Reference queue service is not the original private static native')
         methods.append(dict(method=found[0][0], class_id=owner['id'], class_sha256=origin['sha256'], loader='bootstrap',
                             source_id='jdk:java.base', owner=OWNER, name=name, descriptor=descriptor, access=0x10a, operation=op))
-    return dict(schema=1, owner=owner['id'], methods=methods, required_classes=[owner['id']], pool_bytes=80, pool_abi=1,
+    return dict(schema=1, owner=owner['id'], methods=methods, required_classes=[owner['id']], pool_bytes=88, pool_abi=2,
                 source_transform_chain='original_locked_no_transforms')
 
 
 def data(meta=None):
-    return (f'.data\nALIGN 8\nPUBLIC {POOL}\n{POOL} DWORD 043525052h,1,0,-1\n'
-            ' QWORD OFFSET boom_heap_ptr,0,0,0,0,0,0\n DWORD 0,0\n')
+    return (f'.data\nALIGN 8\nPUBLIC {POOL}\n{POOL} DWORD 043525052h,2,0,-1\n'
+            ' QWORD OFFSET boom_heap_ptr,0,0,0,0,0,0\n DWORD 0,0\n QWORD 0\n')
 
 
 def native_imports(meta):

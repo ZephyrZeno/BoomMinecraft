@@ -299,6 +299,19 @@
         }
       ]
     },
+    "normal-object-wait-v1": {
+      "owner": "java/lang/Object",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/object_wait.asm.inc",
+      "pool": "boom_provider_object_wait_pool",
+      "service": "boom_provider_object_wait_service",
+      "methods": [
+        { "name": "wait0", "descriptor": "(J)V", "access": 274, "operation": 0 },
+        { "owner": "java/lang/Thread", "name": "interrupt0", "descriptor": "()V", "access": 258, "operation": 1 },
+        { "owner": "java/lang/Thread", "name": "clearInterruptEvent", "descriptor": "()V", "access": 266, "operation": 2 }
+      ]
+    },
     "normal-reference-processing-v1": {
       "owner": "java/lang/ref/Reference",
       "loader": "bootstrap",

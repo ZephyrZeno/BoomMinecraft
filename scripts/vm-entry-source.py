@@ -183,6 +183,12 @@ def binding_model(closure, include_system, construct_child=False, start_child=Fa
                     'Reference processing requires the native worker shutdown boundary')
             ref,p = pending[0]
             model['reference_processing'] = dict(manifest=ref['manifest'],metadata=p['reference_processing_metadata'])
+        waiting=[(ref,p) for ref,p in selected if p['family']=='normal-object-wait-v1']
+        if waiting:
+            S.check(len(waiting)==1 and len(pending)==1 and 'boom_provider_reference_issue_stop' in pending[0][1]['exports'],
+                    'Object.wait0 needs the shared platform-worker cancellation boundary')
+            ref,p=waiting[0]
+            model['object_wait']=dict(manifest=ref['manifest'],metadata=p['object_wait_metadata'])
         windows = [(ref,p) for ref,p in selected if p['family']=='normal-winnt-filesystem-v1']
         if windows:
             S.check(len(windows)==1,'Ambiguous Windows filesystem provider')
@@ -192,6 +198,7 @@ def binding_model(closure, include_system, construct_child=False, start_child=Fa
 
 
 def report_layout(model):
+    if model.get('object_wait'):return 448,11
     if model.get('winnt_filesystem'):return 400,10
     if model.get('reference_processing'):return 384,9
     if model.get('phase2_context_rows'):return 320,8
@@ -222,6 +229,9 @@ def assembly(model):
     if model.get('reference_processing'):
         data.update(('boom_provider_reference_pool','boom_provider_threads_control_binding'))
         proc.update('boom_provider_reference_'+n for n in ('open','stop','close','boundary'))
+    if model.get('object_wait'):
+        data.add('boom_provider_object_wait_pool')
+        proc.update('boom_provider_object_wait_'+s for s in ('open','stop','close'))
     if model.get('winnt_filesystem'):data.add('boom_provider_winnt_file_pool')
     if model.get('signal_reference'):
         data.add('boom_provider_signal_pool')
@@ -247,6 +257,7 @@ def assembly(model):
                             f"ORIGINAL_SYSTEM_PHASE2 TEXTEQU <{model['system_phase2']['symbol']}>\n")
         if model.get('phase2_context_rows'):phase2_definitions+='VM_ENTRY_MAIN_SOURCE_ROW EQU 1\n'
     if model.get('reference_processing'):phase2_definitions+='VM_ENTRY_REFERENCE_PROCESSING EQU 1\n'
+    if model.get('object_wait'):phase2_definitions+='VM_ENTRY_OBJECT_WAIT EQU 1\n'
     if model.get('winnt_filesystem'):phase2_definitions+='VM_ENTRY_WINNT_FILESYSTEM EQU 1\n'
     out = (f"option casemap:none\nVM_ENTRY_CHILD_REQUESTED EQU {int(model['child_constructor'] is not None)}\n"
         f"VM_ENTRY_START_REQUESTED EQU {int(model['child_start'] is not None)}\n"
@@ -267,6 +278,10 @@ def assembly(model):
     for i in model['prerequisite_classes']:
         out += f' lea rcx,boom_class{i}\n mov rdx,rbx\n call boom_class_ensure32\n cmp DWORD PTR [rbx],0\n jne vbm_zero\n'
     out += ' mov rcx,rbx\n lea rdx,boom_vm_thread_bootstrap_pool\n call boom_vm_thread_bootstrap\n cmp DWORD PTR [rbx],0\n jne vbm_zero\n'
+    if model.get('object_wait'):
+        out += (' lea rcx,boom_provider_object_wait_pool\n call boom_provider_object_wait_open\n test eax,eax\n jz vbm_wait_ready\n'
+                ' mov DWORD PTR [boom_vm_entry_report+412],eax\n mov DWORD PTR [rbx],7\n jmp vbm_zero\n'
+                'vbm_wait_ready:\n mov DWORD PTR [boom_vm_entry_report+400],1\n')
     if model['child_constructor']:
         out += (f" mov rcx,QWORD PTR [boom_heap_ptr]\n lea rdx,boom_layout{c['java/lang/Thread']}\n mov r8,rbx\n call boom_object_new\n"
             ' test rax,rax\n jz vbm_zero\n mov QWORD PTR [boom_vm_thread_root_cells+40],rax\n mov QWORD PTR [rsp+32],rax\n'

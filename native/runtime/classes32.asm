@@ -83,13 +83,14 @@ class32_wait:
 class32_publish_failure:
     mov rcx,rsi
     call boom_exception_init_failure
+    ; The helper returns the retained cause even when a diagnostic image
+    ; cannot materialize a catchable exception without an initialized EXVM.
+    mov r10,QWORD PTR [rbx+56]
+    mov QWORD PTR [r10],rax
     mov rax,QWORD PTR [rsi]
     mov QWORD PTR [rbx+32],rax
     mov rax,QWORD PTR [rsi+8]
     mov QWORD PTR [rbx+40],rax
-    mov rax,QWORD PTR [rsi+16]
-    mov r10,QWORD PTR [rbx+56]
-    mov QWORD PTR [r10],rax
     mov DWORD PTR [rbx+12],0
     mov DWORD PTR [rbx+8],3
     lea rcx,[rbx+8]

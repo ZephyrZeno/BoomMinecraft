@@ -97,7 +97,7 @@ mod wrapper_tests {
     }
 }
 
-/// Only empty Object.wait sets are executable until wait/interruption is linked.
+/// Notification uses the same wait set as the native Object.wait0 source provider.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Notification {
     pub caller: crate::bytecode::ClassOrigin,
@@ -107,6 +107,8 @@ pub struct Notification {
     pub method: String,
     pub wait_sets_supported: bool,
     pub source_sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wait_source_sha256: Option<String>,
 }
 impl Notification {
     pub(super) fn bind(
@@ -165,11 +167,15 @@ impl Notification {
             origin: origin.as_ref().clone(),
             receiver_type,
             method: name,
-            wait_sets_supported: false,
+            wait_sets_supported: true,
             source_sha256: crate::files::digest_bytes(include_bytes!(
                 "../../native/runtime/monitors.asm"
             ))
             .sha256,
+            wait_source_sha256: Some(
+                crate::files::digest_bytes(include_bytes!("../../native/runtime/object_wait.asm"))
+                    .sha256,
+            ),
         })
     }
 }

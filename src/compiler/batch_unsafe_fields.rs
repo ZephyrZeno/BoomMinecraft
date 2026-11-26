@@ -22,7 +22,8 @@ use std::{
 };
 use zip::{ZipArchive, ZipWriter, write::SimpleFileOptions};
 
-pub const COOKIE_TAG: u64 = 0x55464c4400000000;
+pub const FIELD_ABI: u32 = 2;
+pub const COOKIE_TAG: u64 = 0x55464c3200000000;
 pub const PAGE_FIELDS: usize = 1024;
 const OWNER: &str = "jdk/internal/misc/Unsafe";
 
@@ -61,6 +62,9 @@ pub struct Summary {
     pub class_id: usize,
     pub class_sha256: String,
     pub cookie_tag: u64,
+    pub cookie_slot_shift: u8,
+    pub cookie_slot_center: u8,
+    pub cookie_max_displacement: u8,
     pub kernel_sha256: BTreeMap<String, String>,
     pub index: Artifact,
     pub units: Vec<AssemblyUnit>,
@@ -204,7 +208,7 @@ pub(super) fn generate(
         }
     }
     ensure!(
-        fields.len() == metadata.field_capacity && fields.len() <= 0xffffff,
+        !fields.is_empty() && fields.len() == metadata.field_capacity && fields.len() <= 0xffffff,
         "Source field capacity differs"
     );
     let pages = fields.len().div_ceil(PAGE_FIELDS);
@@ -262,7 +266,7 @@ pub(super) fn generate(
         bodies.push(&text);
     }
     let pool = format!(
-        ".const\nALIGN 8\nPUBLIC boom_java_unsafe_field_pool\nboom_java_unsafe_field_pool DWORD 055464D50h,1,{},{}\n QWORD OFFSET boom_heap_ptr,OFFSET boom_java_class_pool,OFFSET boom_runtime_type_map,OFFSET boom_layout{class_id}\n QWORD OFFSET boom_java_unsafe_pool,OFFSET boom_layout{}\n QWORD OFFSET boom_java_unsafe_field_names,OFFSET boom_java_unsafe_field_ranges,OFFSET boom_java_unsafe_field_pages\n DWORD {},{pages},{},{},{class_id},64\n QWORD 055464C4400000000h,0\n",
+        ".const\nALIGN 8\nPUBLIC boom_java_unsafe_field_pool\nboom_java_unsafe_field_pool DWORD 055464D50h,{FIELD_ABI},{},{}\n QWORD OFFSET boom_heap_ptr,OFFSET boom_java_class_pool,OFFSET boom_runtime_type_map,OFFSET boom_layout{class_id}\n QWORD OFFSET boom_java_unsafe_pool,OFFSET boom_layout{}\n QWORD OFFSET boom_java_unsafe_field_names,OFFSET boom_java_unsafe_field_ranges,OFFSET boom_java_unsafe_field_pages\n DWORD {},{pages},{},{},{class_id},64\n QWORD 0{COOKIE_TAG:016X}h,0\n",
         metadata.type_capacity,
         fields.len(),
         string.class_id,
@@ -334,7 +338,7 @@ pub(super) fn generate(
     .collect::<Result<_>>()?;
     let instance_fields = fields.iter().filter(|f| f.access & 8 == 0).count();
     let summary = Summary {
-        abi: 1,
+        abi: FIELD_ABI,
         context_bytes: 32,
         pool_bytes: 128,
         record_bytes: 64,
@@ -354,6 +358,9 @@ pub(super) fn generate(
         class_id,
         class_sha256: catalog.nodes[class_id].origin.sha256.clone(),
         cookie_tag: COOKIE_TAG,
+        cookie_slot_shift: 8,
+        cookie_slot_center: 0x80,
+        cookie_max_displacement: 7,
         kernel_sha256,
         index: Artifact {
             path: path.display().to_string(),

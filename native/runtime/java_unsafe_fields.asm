@@ -5,7 +5,10 @@
 ; UnsafeId104,recordBytes108,cookieTag112,reserved120. Pages hold 1024 rows.
 ; Field64: class0,index4,access8,kind12,nameOffset16,nameLen20,width24,
 ; flags28(ref1/static2),addressFunction32,reserved40,id48,reserved52/56.
-; A field cookie is opaque UFLD:globalID+1, never a physical byte offset.
+; ABI1 cookies are UFLD:globalID+1. ABI2 uses UFL2:((globalID+1)<<8)|80h.
+; Each ABI2 field has its own virtual byte slot, independent of its position
+; in a receiver. Original JDK byte/short CAS may align that slot to a DWORD;
+; its virtual carrier has zero high bits and touches only the actual field.
 option casemap:none
 EXTERN boom_heap_contains:PROC
 EXTERN boom_object_check:PROC
@@ -25,8 +28,10 @@ uf_pool_valid PROC
  jz uf_pool_done
  cmp DWORD PTR [r13],055464D50h
  jne uf_pool_done
- cmp DWORD PTR [r13+4],1
- jne uf_pool_done
+ mov ecx,DWORD PTR [r13+4]
+ dec ecx
+ cmp ecx,1
+ ja uf_pool_done
  mov ecx,DWORD PTR [r13+8]
  dec ecx
  cmp ecx,0FFFFFh
@@ -46,6 +51,10 @@ uf_pool_valid PROC
  cmp DWORD PTR [r13+108],64
  jne uf_pool_done
  mov r10,055464C4400000000h
+ cmp DWORD PTR [r13+4],1
+ je uf_pool_tag_ready
+ mov r10,055464C3200000000h
+uf_pool_tag_ready:
  cmp QWORD PTR [r13+112],r10
  jne uf_pool_done
  cmp QWORD PTR [r13+120],0
@@ -333,6 +342,11 @@ uf_next:
  jmp uf_find
 uf_found:
  lea eax,[rsi+1]
+ cmp DWORD PTR [r13+4],1
+ je uf_found_tag
+ shl eax,8
+ or eax,80h
+uf_found_tag:
  or rax,QWORD PTR [r13+112]
  jmp uf_done
 uf_missing:
@@ -396,6 +410,14 @@ boom_java_unsafe_field_address PROC FRAME
  test rax,rax
  jnz ufa_bad
  mov ecx,edi
+ cmp DWORD PTR [r13+4],1
+ je ufa_decode_id
+ mov eax,ecx
+ and eax,255
+ cmp eax,80h                    ; this helper resolves the exact field anchor
+ jne ufa_bad
+ shr ecx,8
+ufa_decode_id:
  sub ecx,1
  jc ufa_bad
  call uf_record
@@ -468,6 +490,8 @@ boom_java_unsafe_memory PROC FRAME
  and r14d,15
  mov r15d,r9d
  shr r15d,4
+ mov DWORD PTR [rsp+32],0        ; ABI2 displacement within a declared field
+ mov DWORD PTR [rsp+48],0        ; narrow field projected into a DWORD carrier
  test rbx,rbx
  jz um_zero
  cmp DWORD PTR [rbx],0
@@ -530,6 +554,16 @@ um_width:
  test rax,rax
  jnz um_array
  mov ecx,DWORD PTR [r12+16]
+ cmp DWORD PTR [r13+4],1
+ je um_decode_id
+ mov eax,ecx
+ and eax,255
+ sub eax,80h
+ cmp eax,7                      ; unsigned rejects negative displacement too
+ ja um_bad
+ mov DWORD PTR [rsp+32],eax
+ shr ecx,8
+um_decode_id:
  sub ecx,1
  jc um_bad
  call uf_record
@@ -537,6 +571,8 @@ um_width:
  jz um_bad
  test DWORD PTR [rax+28],2
  jnz um_unbound
+ cmp DWORD PTR [r13+4],2
+ je um_virtual_field
  cmp ebp,DWORD PTR [rax+24]
  jne um_bad
  cmp r14d,9
@@ -547,15 +583,56 @@ um_width:
 um_field_reference:
  test DWORD PTR [rax+28],1
  jz um_bad
+ jmp um_field_address
+um_virtual_field:
+ cmp r14d,9
+ je um_virtual_reference
+ test DWORD PTR [rax+28],1       ; primitive views never read GC reference slots
+ jnz um_bad
+ mov ecx,DWORD PTR [rsp+32]
+ mov edx,ecx
+ add edx,ebp
+ cmp edx,DWORD PTR [rax+24]
+ jbe um_field_address
+ ; A source byte/short field is a complete virtual DWORD for the JDK's
+ ; original compareAndExchangeByte/Short Java loop. Physical padding and
+ ; adjacent fields are not part of this carrier, even at an object tail.
+ test ecx,ecx
+ jnz um_bad
+ cmp r14d,5
+ jne um_bad
+ mov ecx,DWORD PTR [rax+24]
+ cmp ecx,1
+ je um_narrow_carrier
+ cmp ecx,2
+ jne um_bad
+um_narrow_carrier:
+ mov ebp,ecx
+ mov DWORD PTR [rsp+48],1
+ jmp um_field_address
+um_virtual_reference:
+ cmp DWORD PTR [rsp+32],0
+ jne um_bad
+ cmp DWORD PTR [rax+24],8
+ jne um_bad
+ test DWORD PTR [rax+28],1
+ jz um_bad
 um_field_address:
  mov rcx,rbx
  mov rdx,r13
  mov r8,rsi
  mov r9,QWORD PTR [r12+16]
+ cmp DWORD PTR [r13+4],1
+ je um_anchor_ready
+ and r9,-256
+ or r9,80h
+um_anchor_ready:
  call boom_java_unsafe_field_address
  test rax,rax
  jz um_zero
  mov rdi,rax
+ mov eax,DWORD PTR [rsp+32]
+ add rdi,rax
  jmp um_address_ready
 um_array:
  mov rcx,QWORD PTR [r13+16]
@@ -708,6 +785,16 @@ um_result_reference:
  jmp um_done
 um_store:
  mov rdx,QWORD PTR [r12+24]
+ cmp DWORD PTR [rsp+48],0
+ je um_store_input_ready
+ mov edx,edx                    ; a Java int slot has only 32 significant bits
+ mov ecx,ebp
+ shl ecx,3
+ mov rax,rdx
+ shr rax,cl
+ test rax,rax
+ jnz um_unbound                 ; the virtual carrier's padding stays zero
+um_store_input_ready:
  cmp r14d,1
  jne um_store_width
  and edx,1
@@ -752,12 +839,56 @@ um_xchg8:
 um_compare_exchange:
  mov rax,QWORD PTR [r12+24]
  mov rdx,QWORD PTR [r12+32]
+ cmp DWORD PTR [rsp+48],0
+ je um_compare_width
+ mov eax,eax
+ mov edx,edx
+ mov ecx,ebp
+ shl ecx,3
+ mov r9,rax
+ shr r9,cl
+ test r9,r9
+ jnz um_virtual_compare_mismatch
+ mov r9,rdx
+ shr r9,cl
+ test r9,r9
+ jnz um_unbound
+um_compare_width:
+ cmp ebp,1
+ je um_cmpxchg1
+ cmp ebp,2
+ je um_cmpxchg2
  cmp ebp,4
  jne um_cmpxchg8
  lock cmpxchg DWORD PTR [rdi],edx
  jmp um_exchanged
 um_cmpxchg8:
  lock cmpxchg QWORD PTR [rdi],rdx
+ jmp um_exchanged
+um_cmpxchg1:
+ lock cmpxchg BYTE PTR [rdi],dl
+ movzx eax,al                   ; MOVZX preserves the CMPXCHG ZF
+ jmp um_exchanged
+um_cmpxchg2:
+ lock cmpxchg WORD PTR [rdi],dx
+ movzx eax,ax
+ jmp um_exchanged
+um_virtual_compare_mismatch:
+ ; Nonzero expected padding cannot match the virtual zero bits. A locked
+ ; same-value CAS reads the actual field without changing any byte, while
+ ; retaining the ordering of the normal compare/exchange path.
+ cmp ebp,1
+ jne um_virtual_compare_mismatch2
+ lock cmpxchg BYTE PTR [rdi],al
+ movzx eax,al
+ jmp um_virtual_mismatch_observed
+um_virtual_compare_mismatch2:
+ lock cmpxchg WORD PTR [rdi],ax
+ movzx eax,ax
+um_virtual_mismatch_observed:
+ cmp r15d,4
+ je um_zero
+ jmp um_done
 um_exchanged:
  ; Preserve the instruction's ZF until the boolean result is captured.
  setz dl

@@ -255,6 +255,14 @@ pub(crate) fn assemble_module_with_mirrors(
                 include_bytes!("../../native/runtime/monitors.asm").as_slice(),
             ),
             (
+                "object_wait",
+                include_bytes!("../../native/runtime/object_wait.asm").as_slice(),
+            ),
+            (
+                "thread_registry",
+                include_bytes!("../../native/runtime/thread_registry.asm").as_slice(),
+            ),
+            (
                 "arrays",
                 include_bytes!("../../native/runtime/arrays.asm").as_slice(),
             ),
@@ -522,22 +530,12 @@ pub(crate) fn assemble_module_with_mirrors(
                 "thread_natives",
                 include_bytes!("../../native/runtime/thread_natives.asm").as_slice(),
             ));
-            modules.push((
-                "thread_registry",
-                include_bytes!("../../native/runtime/thread_registry.asm").as_slice(),
-            ));
         }
         if fs::read_to_string(assembly)?.contains("EXTERN boom_unsafe_native:PROC\n") {
             modules.push((
                 "unsafe_bootstrap",
                 include_bytes!("../../native/runtime/unsafe_bootstrap.asm").as_slice(),
             ));
-            if !modules.iter().any(|m| m.0 == "thread_registry") {
-                modules.push((
-                    "thread_registry",
-                    include_bytes!("../../native/runtime/thread_registry.asm").as_slice(),
-                ));
-            }
         }
         if fs::read_to_string(assembly)?.contains("EXTERN boom_signal_native_query:PROC\n") {
             modules.push((

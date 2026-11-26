@@ -14,6 +14,8 @@ v107 在正常字段表之上增加一个共享汇编服务，由同一声明规
 
 实现位于 `native/runtime/java_unsafe_fields.asm`，复用 [UFMP128 字段池](NORMAL_UNSAFE_FIELDS.md)。字段 cookie 是不透明声明标识；运行时按实际接收者类型解析地址，支持子类引用前缀重排。相同宽度的标量别名允许 Java 的 float／double 原子包装使用 int／long CAS；引用区与标量区不能混用。
 
+UFMP ABI2 为原始 Java byte/short CAS 的对齐算术提供独立虚拟字段槽，实际访问仍按接收者映射，只原子更新目标 byte/word。具体标记、边界和验证方法见[窄字段原子操作](NARROW_FIELD_ATOMICS.md)。
+
 原始基本类型数组支持有界字节视图，普通标量读写可以不对齐。引用数组使用实际源数组类型，要求引用槽对齐且引用前缀与负载一致。volatile 和原子操作目前要求自然对齐；不支持的对齐、静态基址和堆外地址保留明确失败，不能当作接口全部域均已实现。
 
 普通读写使用 MOV；volatile 读取采用保守 MFENCE，volatile 写入采用 XCHG；Int／Long／Reference CAS 和 exchange 使用 LOCK CMPXCHG。Boolean 写入取最低位，读取按非零归一化；Byte／Short／Int 返回符号扩展，Char 无符号扩展，Float／Double 保留原始位模式。该实现先保证语义，没有宣称屏障已做性能优化。

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 // Development FFI/allocation fixtures. No managed code executes guest methods.
 public static class BoomNormalUnsafeFieldsProbe {
-    const ulong Tag=0x55464c4400000000UL;
+    static Func<int,ulong> Cookies(IntPtr pool){int abi=Marshal.ReadInt32(pool,4);ulong tag=unchecked((ulong)Marshal.ReadInt64(pool,112));Need((abi==1&&tag==0x55464c4400000000UL)||(abi==2&&tag==0x55464c3200000000UL),"Unknown source field cookie ABI");return id=>tag|(abi==1?(uint)(id+1):((ulong)(uint)(id+1)<<8)|0x80UL);}
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr Create(ulong n);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate int Destroy(IntPtr h);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate int Bind(IntPtr h);
@@ -24,7 +24,7 @@ public static class BoomNormalUnsafeFieldsProbe {
     static IntPtr Memory(List<IntPtr> memory,int n){IntPtr p=Marshal.AllocHGlobal(n);for(int i=0;i<n;i++)Marshal.WriteByte(p,i,0);memory.Add(p);return p;}
     static IntPtr Copy(List<IntPtr> memory,IntPtr source,int n){IntPtr p=Memory(memory,n);byte[] b=new byte[n];Marshal.Copy(source,b,0,n);Marshal.Copy(b,0,p,n);return p;}
     static string Text(string hex){byte[] bytes=Convert.FromHexString(hex);char[] chars=new char[bytes.Length/2];Buffer.BlockCopy(bytes,0,chars,0,bytes.Length);return new string(chars);}
-    sealed class Case { public int Id,Class,Access,Kind,Width;public string Name; public IntPtr ClassObject,NameObject;public ulong Cookie {get{return Tag|(uint)(Id+1);}} }
+    sealed class Case { public int Id,Class,Access,Kind,Width;public string Name; public IntPtr ClassObject,NameObject;public ulong Cookie; }
 
     public static long[] Run(string runtime,string image,string casesPath,string samplesPath,string nativeName,
         int unsafeId,int singleton,int[] atomics,int[] valueFields,int[] valueCells,string[] entries,int[] inherited) {
@@ -34,6 +34,7 @@ public static class BoomNormalUnsafeFieldsProbe {
             dll=NativeLibrary.Load(image);heap=Fn<Create>(lib,"boom_heap_create")(128UL*1024*1024);Need(heap!=IntPtr.Zero,"Field fixture heap creation failed");
             Need(Fn<Bind>(dll,"boom_java_string_literals_bind_heap")(heap)==1,"Field source heap binding failed");
             IntPtr pool=NativeLibrary.GetExport(dll,"boom_java_unsafe_field_pool"),classPool=Marshal.ReadIntPtr(pool,24),stringLayout=Marshal.ReadIntPtr(pool,56);
+            var cookieOf=Cookies(pool);ulong tag=unchecked((ulong)Marshal.ReadInt64(pool,112));
             IntPtr unsafeClass=NativeLibrary.GetExport(dll,"boom_class"+unsafeId),single=NativeLibrary.GetExport(dll,"boom_s"+unsafeId+"_"+singleton);
             IntPtr ctx=Memory(memory,32),args=Memory(memory,32);var ensure=Fn<Ensure>(lib,"boom_class_ensure32");
             var query=Fn<Entry>(dll,nativeName);var kernel=Fn<Kernel>(lib,"boom_java_unsafe_field");var address=Fn<Address>(lib,"boom_java_unsafe_field_address");
@@ -64,6 +65,7 @@ public static class BoomNormalUnsafeFieldsProbe {
             var cases=new List<Case>();var byId=new Dictionary<int,Case>();
             foreach(string line in File.ReadLines(casesPath)) {
                 string[] p=line.Split('\t');var c=new Case{Id=int.Parse(p[0]),Class=int.Parse(p[1]),Access=int.Parse(p[2]),Kind=int.Parse(p[3]),Width=int.Parse(p[4]),Name=Text(p[6])};
+                c.Cookie=cookieOf(c.Id);
                 c.ClassObject=classOf(c.Class);c.NameObject=stringOf(c.Name,(c.Id&1)!=0);cases.Add(c);byId.Add(c.Id,c);
             }
             Need(cases.Count>1000,"Source field coverage unexpectedly small");
@@ -148,7 +150,7 @@ public static class BoomNormalUnsafeFieldsProbe {
             }
             int[] sample=samples[0];IntPtr sampleObject=objects[0];Case sampleCase=byId[sample[0]];
             failure(4,()=>unchecked((ulong)address(ctx,pool,IntPtr.Zero,sampleCase.Cookie).ToInt64()));
-            foreach(ulong token in new[]{0UL,Tag,Tag|(uint)(Marshal.ReadInt32(pool,12)+1),0x1234000000000001UL})
+            foreach(ulong token in new[]{0UL,tag,cookieOf(Marshal.ReadInt32(pool,12)),0x1234000000000001UL})
                 failure(7,()=>unchecked((ulong)address(ctx,pool,sampleObject,token).ToInt64()));
             failure(7,()=>unchecked((ulong)address(ctx,pool,wrong,sampleCase.Cookie).ToInt64()));
             Case staticCase=cases.Find(c=>(c.Access&8)!=0);failure(20,()=>unchecked((ulong)address(ctx,pool,sampleObject,staticCase.Cookie).ToInt64()));

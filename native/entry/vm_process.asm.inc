@@ -125,6 +125,19 @@ IFDEF VM_ENTRY_REFERENCE_PROCESSING
  jmp vpe_reference_stop_done
 vpe_reference_stopped:
  mov DWORD PTR [boom_vm_entry_report+324],1
+IFDEF VM_ENTRY_OBJECT_WAIT
+ cmp DWORD PTR [boom_vm_entry_report+400],1
+ jne vpe_reference_stop_done
+ lea rcx,boom_provider_object_wait_pool
+ call boom_provider_object_wait_stop
+ test eax,eax
+ jz vpe_wait_stopped
+ mov DWORD PTR [boom_vm_entry_report+412],eax
+ mov DWORD PTR [rsp+72],eax
+ jmp vpe_reference_stop_done
+vpe_wait_stopped:
+ mov DWORD PTR [boom_vm_entry_report+404],1
+ENDIF
 vpe_reference_stop_done:
 ENDIF
 IF VM_ENTRY_SIGNAL_REQUESTED
@@ -207,6 +220,20 @@ IFDEF VM_ENTRY_REFERENCE_PROCESSING
  jne vpe_reference_capture
  cmp DWORD PTR [boom_vm_entry_report+324],1
  jne vpe_reference_capture
+IFDEF VM_ENTRY_OBJECT_WAIT
+ cmp DWORD PTR [boom_vm_entry_report+404],1
+ jne vpe_after_wait_close
+ lea rcx,boom_provider_object_wait_pool
+ call boom_provider_object_wait_close
+ test eax,eax
+ jz vpe_wait_closed
+ mov DWORD PTR [boom_vm_entry_report+412],eax
+ mov DWORD PTR [rsp+72],eax
+ jmp vpe_reference_capture
+vpe_wait_closed:
+ mov DWORD PTR [boom_vm_entry_report+408],1
+vpe_after_wait_close:
+ENDIF
  lea rcx,boom_provider_reference_pool
  call boom_provider_reference_close
  test eax,eax
@@ -219,6 +246,16 @@ vpe_reference_closed:
  mov QWORD PTR [boom_provider_threads_control_binding+8],0
  mov DWORD PTR [boom_vm_entry_report+328],1
 vpe_reference_capture:
+IFDEF VM_ENTRY_OBJECT_WAIT
+ mov rax,QWORD PTR [boom_provider_object_wait_pool+96]
+ mov QWORD PTR [boom_vm_entry_report+416],rax
+ mov rax,QWORD PTR [boom_provider_object_wait_pool+104]
+ mov QWORD PTR [boom_vm_entry_report+424],rax
+ mov rax,QWORD PTR [boom_provider_object_wait_pool+112]
+ mov QWORD PTR [boom_vm_entry_report+432],rax
+ mov rax,QWORD PTR [boom_provider_object_wait_pool+120]
+ mov QWORD PTR [boom_vm_entry_report+440],rax
+ENDIF
  mov eax,DWORD PTR [boom_provider_reference_pool+72]
  mov DWORD PTR [boom_vm_entry_report+332],eax
  test eax,eax

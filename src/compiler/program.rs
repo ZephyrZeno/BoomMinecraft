@@ -9434,7 +9434,7 @@ pub fn compile_with_metadata(
         } else if runtime_resources.is_some() {
             "boom-runtime-resources-program-v67-masm-x64"
         } else if !monitor_notifications.is_empty() {
-            "boom-empty-wait-set-notifications-v66-masm-x64"
+            "boom-monitor-wait-set-notifications-v2-masm-x64"
         } else if class_for_name.is_some() {
             "boom-class-name-lookup-program-v65-masm-x64"
         } else if reflect_new.is_some() {

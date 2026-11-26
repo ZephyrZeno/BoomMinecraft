@@ -374,10 +374,27 @@ boom_exception_init_failure PROC FRAME
     .allocstack 56
     .endprolog
     mov rbx,rcx
+    test rbx,rbx
+    jz exception_init_failure_no_context
     call boom_exception_materialize
     cmp DWORD PTR [rbx],16
     jne exception_init_failure_done
     mov rsi,QWORD PTR [rbx+24]
+    ; A genuine Java exception can reach a diagnostic image before EXVM is
+    ; bound. Keep the original oop as the failed class's cause, not as a
+    ; catchable substitute for a wrapper whose type has not been determined.
+    test rsi,rsi
+    jz exception_init_failure_unbound
+    cmp DWORD PTR [rsi],04558564Dh
+    jne exception_init_failure_invalid
+    cmp DWORD PTR [rsi+4],1
+    jne exception_init_failure_invalid
+    cmp DWORD PTR [rsi+8],2
+    jne exception_init_failure_unbound
+    cmp QWORD PTR [rsi+32],0
+    je exception_init_failure_invalid
+    cmp QWORD PTR [rsi+48],0
+    je exception_init_failure_invalid
     mov QWORD PTR [rsp+32],0
     mov QWORD PTR [rsp+40],0
     mov rcx,QWORD PTR [rbx+16]
@@ -408,6 +425,21 @@ exception_init_failure_oom:
     mov rcx,rbx
     call boom_exception_materialize
 exception_init_failure_done:
+    mov rax,QWORD PTR [rbx+16]
+    jmp exception_init_failure_return
+exception_init_failure_unbound:
+    mov edx,20
+    jmp exception_init_failure_raw
+exception_init_failure_invalid:
+    mov edx,7
+exception_init_failure_raw:
+    mov rax,QWORD PTR [rbx+16]
+    mov QWORD PTR [rbx+16],0
+    mov DWORD PTR [rbx],edx
+    jmp exception_init_failure_return
+exception_init_failure_no_context:
+    xor eax,eax
+exception_init_failure_return:
     add rsp,56
     pop rsi
     pop rbx

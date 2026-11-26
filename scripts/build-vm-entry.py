@@ -39,6 +39,8 @@ def build(directory, accepted_sha, output, assembler, linker, synchronization, k
         inputs += [model['signal_reference']['manifest'],model['signal_reference']['metadata']]
     if model.get('reference_processing'):
         inputs += [model['reference_processing']['manifest'],model['reference_processing']['metadata']]
+    if model.get('object_wait'):
+        inputs += [model['object_wait']['manifest'],model['object_wait']['metadata']]
     if model.get('winnt_filesystem'):
         inputs += [model['winnt_filesystem']['manifest'],model['winnt_filesystem']['metadata']]
     if system_phase2:

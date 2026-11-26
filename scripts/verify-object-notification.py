@@ -38,7 +38,7 @@ def verify(path,batch,plan,m,S,wrapper):
         with zipfile.ZipFile(summary[key]['index']['path']) as z:
             existing={json.loads(line)['method'] for line in z.open('natives.jsonl' if key=='frames' else 'methods.jsonl')}
         S.check(not wanted&existing,'Object notification replaces an existing base native')
-    return dict(schema=1,verified=True,scope='original_Object_notify_notifyAll_empty_wait_set_ASM_COFF_only',
+    return dict(schema=1,verified=True,scope='original_Object_notify_notifyAll_shared_wait_set_ASM_COFF_only',
         provider_manifest=str(path),provider_manifest_sha256=S.digest(path)['sha256'],verifier_sha256=S.digest(Path(__file__))['sha256'],
         base_batch_summary_sha256=identity['batch_summary']['digest']['sha256'],source_native_methods=2,
         Object_wait_implemented=False,linked=False,executed=False,game_started=False,world_created=False)

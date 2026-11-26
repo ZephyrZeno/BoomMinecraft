@@ -104,6 +104,7 @@ TOOL_FILES=('scripts/build-runtime-provider-pack.py','scripts/runtime-provider-s
             'scripts/object-notification-source.py','scripts/verify-object-notification.py','native/providers/object_notification.asm.inc',
             'scripts/unsafe-class-init-source.py','scripts/verify-unsafe-class-init.py','native/providers/unsafe_class_initialization.asm.inc',
             'scripts/framed-runtime-service.py','scripts/reference-processing-source.py','native/providers/reference_processing.asm.inc',
+            'scripts/object-wait-source.py','native/providers/object_wait.asm.inc',
             'scripts/winnt-filesystem-source.py','native/providers/winnt_filesystem.asm.inc',
             'scripts/revalidate-runtime-provider-cache.py',
             'scripts/native-frame-overlay.py')
