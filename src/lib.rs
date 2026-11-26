@@ -1,0 +1,20 @@
+pub mod assembly_cache;
+pub mod boot_modules;
+pub mod bytecode;
+pub mod compatibility;
+pub mod compiler;
+pub mod files;
+pub mod jdk;
+pub mod jdk_classes;
+pub mod launch;
+pub mod lock;
+pub mod metadata;
+pub mod parallel;
+pub mod prepare;
+pub mod startup;
+pub mod tools;
+
+pub const GAME_VERSION: &str = "1.21.1";
+pub const JAVA_MAJOR: u32 = 21;
+pub const METADATA_SHA1: &str = "9aa86ea608c3ec777dcdc09e6c5a06c85b53599e";
+pub const METADATA_URL: &str = "https://piston-meta.mojang.com/v1/packages/9aa86ea608c3ec777dcdc09e6c5a06c85b53599e/1.21.1.json";

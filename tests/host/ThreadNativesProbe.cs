@@ -1,0 +1,65 @@
+// Source Thread initialization/current call sites execute AOT assembly. Storage
+// objects represent VM pre-constructor bootstrap state, not constructed Threads.
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Threading;
+public static class BoomThreadNativesProbe {
+    [StructLayout(LayoutKind.Sequential)] struct Context {public uint Kind,PC,Method,Depth;}
+    [DllImport("kernel32.dll",CharSet=CharSet.Unicode)] static extern IntPtr LoadLibraryExW(string p,IntPtr z,uint f);
+    [DllImport("kernel32.dll",CharSet=CharSet.Ansi)] static extern IntPtr GetProcAddress(IntPtr m,string n);
+    [DllImport("kernel32.dll")] static extern bool FreeLibrary(IntPtr m);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr Create(ulong n);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate int BindHeap(IntPtr heap);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate int HeapDestroy(IntPtr heap);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate ulong Entry(ref Context c,[In] ulong[] args);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr Get();
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr Indexed(uint id);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr Field(uint id,uint n);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate ulong Dispatch(ref Context c,[In] ulong[] args,IntPtr pool,uint index);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate ulong Register(ref Context c,IntPtr pool);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr RegCreate(IntPtr heap,uint max);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate uint End(IntPtr reg);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate ulong Next(IntPtr reg);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr Attach(IntPtr reg,IntPtr obj,ulong id);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr NewObject(IntPtr heap,IntPtr layout,ref Context c);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr Alloc(IntPtr heap,ulong bytes,uint refs,uint tag);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr Roots(out uint n);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate ulong Collect(IntPtr heap,IntPtr roots,uint n);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr PoolCreate(uint n);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate uint PoolRun(IntPtr p,IntPtr fn,IntPtr input,IntPtr output,uint n);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate uint PoolDestroy(IntPtr p);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate uint TraceRelease();
+    static void Check(bool ok,string message){if(!ok)throw new Exception(message);}
+    static IntPtr Open(string path){IntPtr m=LoadLibraryExW(path,IntPtr.Zero,0x1100);Check(m!=IntPtr.Zero,"Native Thread image failed to load");return m;}
+    static T Fn<T>(IntPtr m,string n){IntPtr p=GetProcAddress(m,n);Check(p!=IntPtr.Zero,"Missing "+n);return Marshal.GetDelegateForFunctionPointer<T>(p);}
+    static IntPtr Object(IntPtr m,IntPtr heap,IntPtr layout){var c=new Context();IntPtr p=Fn<NewObject>(m,"boom_object_new")(heap,layout,ref c);Check(p!=IntPtr.Zero&&c.Kind==0,"Thread VM storage allocation failed");return p;}
+    static void GC(IntPtr m,IntPtr heap){IntPtr roots=Fn<Roots>(m,"boom_get_static_roots")(out uint n);var seen=new HashSet<IntPtr>();var todo=new Stack<IntPtr>();for(int i=0;i<n;i++)todo.Push(Marshal.ReadIntPtr(roots,i*8));while(todo.Count>0){IntPtr p=todo.Pop();if(p==IntPtr.Zero||!seen.Add(p))continue;uint flags=unchecked((uint)Marshal.ReadInt32(p,-24)),refs=unchecked((uint)Marshal.ReadInt32(p,-20));Check((flags&0xfffffffd)==0xb00b0001&&refs<=(ulong)Marshal.ReadInt64(p,-16)/8,"Thread static root graph invalid");for(int i=0;i<refs;i++)todo.Push(Marshal.ReadIntPtr(p,i*8));}Check(Fn<Collect>(m,"boom_heap_collect")(heap,roots,n)!=ulong.MaxValue&&Marshal.ReadInt64(heap,56)==seen.Count,"Thread bootstrap static roots lost");}
+    static void Metadata(IntPtr m,IntPtr pool,uint owner,uint type,uint markerField,uint emptyField,IntPtr marker,IntPtr empty){Check(Marshal.ReadInt32(pool,8)==2,"Thread native table was not registered");IntPtr mark=Marshal.ReadIntPtr(Fn<Field>(m,"boom_get_static_field")(owner,markerField)),array=Marshal.ReadIntPtr(Fn<Field>(m,"boom_get_static_field")(owner,emptyField));Check(mark!=IntPtr.Zero&&unchecked((ulong)Marshal.ReadInt64(mark))==type&&array!=IntPtr.Zero&&Marshal.ReadInt64(array,-16)==0&&Marshal.ReadInt32(array,-20)==0,"Original Thread initializer values differ from JVM");if(marker!=IntPtr.Zero)Check(mark==marker&&array==empty,"Thread initializer references changed");}
+    public static void Initialize(string image,string runtime,uint owner,uint type,uint markerField,uint emptyField){IntPtr m=Open(image),r=Open(runtime),heap=IntPtr.Zero,pool=IntPtr.Zero,input=IntPtr.Zero,output=IntPtr.Zero;try{
+        heap=Fn<Create>(m,"boom_heap_create")(1024*1024);Check(heap!=IntPtr.Zero&&Fn<BindHeap>(m,"boom_bind_heap")(heap)==1,"Thread initializer heap failed");IntPtr native=Fn<Get>(m,"boom_get_thread_native_pool")(),cls=Fn<Indexed>(m,"boom_get_class_descriptor")(owner);Check(Marshal.ReadInt32(cls,8)==0&&Marshal.ReadInt32(native,8)==0,"Thread class/table not cold");
+        const uint n=2049;pool=Fn<PoolCreate>(r,"boom_pool_create")(8);Check(pool!=IntPtr.Zero,"Thread initialization worker pool failed");input=Marshal.AllocHGlobal((int)n*128);output=Marshal.AllocHGlobal((int)n*32);for(int i=0;i<n*128;i+=8)Marshal.WriteInt64(input,i,0);
+        for(int batch=0;batch<3;batch++){Check(Fn<PoolRun>(r,"boom_pool_run")(pool,GetProcAddress(m,"boom_entry"),input,output,n)==0,"Thread cold initialization batch failed");for(int i=0;i<n;i++)Check(Marshal.ReadInt64(output,i*32)==0&&Marshal.ReadInt64(output,i*32+8)==0&&Marshal.ReadInt64(output,i*32+16)==0&&Marshal.ReadInt64(output,i*32+24)==0,"Original Thread initializer failed on assembly workers");}
+        Check(Fn<PoolDestroy>(r,"boom_pool_destroy")(pool)==0&&Marshal.ReadInt32(cls,8)==2,"Original Thread initialization did not finish");pool=IntPtr.Zero;Metadata(m,native,owner,type,markerField,emptyField,IntPtr.Zero,IntPtr.Zero);
+        IntPtr marker=Marshal.ReadIntPtr(Fn<Field>(m,"boom_get_static_field")(owner,markerField)),empty=Marshal.ReadIntPtr(Fn<Field>(m,"boom_get_static_field")(owner,emptyField));GC(m,heap);Metadata(m,native,owner,type,markerField,emptyField,marker,empty);
+        var entry=Fn<Entry>(m,"boom_entry");long baseline=Marshal.ReadInt64(heap,56);for(int i=0;i<128;i++){var c=new Context();Check(entry(ref c,Array.Empty<ulong>())==0&&c.Kind==0&&c.Depth==0&&Marshal.ReadInt64(heap,56)==baseline,"Warm Thread initialization allocated/reinitialized");}
+    }finally{if(pool!=IntPtr.Zero)Fn<PoolDestroy>(r,"boom_pool_destroy")(pool);if(input!=IntPtr.Zero)Marshal.FreeHGlobal(input);if(output!=IntPtr.Zero)Marshal.FreeHGlobal(output);Cleanup(m,heap);FreeLibrary(r);}}
+    public static void CurrentQueries(string image){IntPtr m=Open(image),heap=IntPtr.Zero,reg=IntPtr.Zero;try{
+        heap=Fn<Create>(m,"boom_heap_create")(1024*1024);Check(heap!=IntPtr.Zero&&Fn<BindHeap>(m,"boom_bind_heap")(heap)==1,"Current Thread heap failed");IntPtr pool=Fn<Get>(m,"boom_get_thread_native_pool")(),layout=Marshal.ReadIntPtr(pool,24);var entry=Fn<Entry>(m,"boom_entry");var dispatch=Fn<Dispatch>(m,"boom_thread_native_dispatch");
+        var missing=new Context();Check(entry(ref missing,Array.Empty<ulong>())==0&&missing.Kind==7&&missing.Depth==0,"Unattached currentThread was fabricated");Check(Marshal.ReadInt32(pool,8)==2,"Current call did not run original Thread initialization");
+        var register=Fn<Register>(m,"boom_thread_native_register");IntPtr copy=Marshal.AllocHGlobal(80),table=Marshal.AllocHGlobal(592);try{var bytes=new byte[80];Marshal.Copy(pool,bytes,0,80);foreach(int offset in new[]{0,4,12,24,32,40,48,56,64,72}){Marshal.Copy(bytes,0,copy,80);if(offset<24)Marshal.WriteInt32(copy,offset,7);else Marshal.WriteInt64(copy,offset,offset==72?1:0);var c=new Context{PC=17,Method=23};Check(register(ref c,copy)==0&&c.Kind==7&&c.PC==17&&c.Method==23,"Malformed Thread pool accepted: "+offset);}Marshal.Copy(bytes,0,copy,80);var rows=new byte[592];Marshal.Copy(Marshal.ReadIntPtr(pool,16),rows,0,592);Marshal.Copy(rows,0,table,592);Marshal.WriteIntPtr(table,16+5*32+16,IntPtr.Zero);Marshal.WriteIntPtr(copy,16,table);var bad=new Context();Check(register(ref bad,copy)==0&&bad.Kind==7,"Thread registration accepted a missing function");}finally{Marshal.FreeHGlobal(table);Marshal.FreeHGlobal(copy);}
+        for(uint i=0;i<18;i++)if(i!=2&&i!=4&&i!=5&&i!=15&&i!=17){var c=new Context{PC=17,Method=23};Check(dispatch(ref c,Array.Empty<ulong>(),pool,i)==0&&c.Kind==20&&c.PC==17&&c.Method==23,"Unsupported Thread service returned success");}
+        var pending=new Context{Kind=9,PC=17,Method=23};Check(dispatch(ref pending,Array.Empty<ulong>(),pool,5)==0&&pending.Kind==9&&pending.PC==17&&pending.Method==23,"Thread native overwrote pending context");
+        IntPtr wrong=Fn<Create>(m,"boom_heap_create")(65536);try{IntPtr other=Fn<RegCreate>(m,"boom_threads_create")(wrong,64);Check(other!=IntPtr.Zero&&Fn<End>(m,"boom_bind_thread_registry")(other)==87,"Thread registry from another heap accepted");Check(Fn<End>(m,"boom_threads_destroy")(other)==0,"Wrong-heap registry cleanup failed");}finally{Check(Fn<HeapDestroy>(m,"boom_heap_destroy")(wrong)!=0,"Wrong heap cleanup failed");}
+        reg=Fn<RegCreate>(m,"boom_threads_create")(heap,64);Check(reg!=IntPtr.Zero&&Fn<End>(m,"boom_bind_thread_registry")(reg)==0,"Thread registry bind failed");IntPtr obj=Object(m,heap,layout);Check(Fn<Attach>(m,"boom_threads_attach")(reg,obj,1)!=IntPtr.Zero,"VM pre-constructor Thread storage attach failed");
+        long before=Marshal.ReadInt64(heap,56);for(int i=0;i<512;i++){var c=new Context();Check(entry(ref c,Array.Empty<ulong>())==unchecked((ulong)obj.ToInt64())&&c.Kind==0&&c.Depth==0&&Marshal.ReadInt64(heap,56)==before,"AOT currentThread did not return VM storage identity");}
+        foreach(uint op in new uint[]{4,15,2}){var c=new Context();ulong value=dispatch(ref c,Array.Empty<ulong>(),pool,op);Check(c.Kind==0&&(op==4?value==unchecked((ulong)obj.ToInt64()):op==15?value==unchecked((ulong)Fn<GetAddress>(m,"boom_threads_id_address")(reg).ToInt64()):value==0),"Platform Thread native operation differs");}
+        Check(Fn<End>(m,"boom_bind_thread_registry")(IntPtr.Zero)==170,"Active Thread registry unbound");Check(Fn<End>(m,"boom_threads_detach")(reg)==0,"Thread storage detach failed");
+        var failure=new Context();Check(entry(ref failure,Array.Empty<ulong>())==0&&failure.Kind==7,"Detached currentThread still resolved");
+        IntPtr invalid=Fn<Alloc>(m,"boom_heap_alloc")(heap,0,0,267);Check(Fn<Attach>(m,"boom_threads_attach")(reg,invalid,Fn<Next>(m,"boom_threads_next_id")(reg))!=IntPtr.Zero,"Wrong-type marker setup failed");var wrongType=new Context();Check(entry(ref wrongType,Array.Empty<ulong>())==0&&wrongType.Kind==7,"Native currentThread accepted a non-Thread object");Check(Fn<End>(m,"boom_threads_detach")(reg)==0,"Wrong-type marker detach failed");
+        var errors=new Exception[8];var threads=new Thread[8];for(int i=0;i<8;i++){int k=i;threads[k]=new Thread(()=>{try{IntPtr own=Object(m,heap,layout);ulong id=Fn<Next>(m,"boom_threads_next_id")(reg);Check(Fn<Attach>(m,"boom_threads_attach")(reg,own,id)!=IntPtr.Zero,"Concurrent Thread storage attach failed");for(int j=0;j<128;j++){var c=new Context();Check(entry(ref c,Array.Empty<ulong>())==unchecked((ulong)own.ToInt64())&&c.Kind==0,"AOT currentThread leaked across OS threads");}Check(Fn<End>(m,"boom_threads_detach")(reg)==0,"Concurrent Thread storage detach failed");}catch(Exception e){errors[k]=e;}});threads[k].Start();}foreach(Thread thread in threads)Check(thread.Join(15000),"Current Thread check did not join");foreach(Exception error in errors)if(error!=null)throw error;
+        Check(Fn<End>(m,"boom_bind_thread_registry")(IntPtr.Zero)==0&&Fn<End>(m,"boom_threads_destroy")(reg)==0,"Native Thread registry cleanup failed");reg=IntPtr.Zero;GC(m,heap);
+    }finally{if(reg!=IntPtr.Zero){Fn<End>(m,"boom_threads_detach")(reg);Fn<End>(m,"boom_bind_thread_registry")(IntPtr.Zero);Fn<End>(m,"boom_threads_destroy")(reg);}Cleanup(m,heap);}}
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr GetAddress(IntPtr reg);
+    static void Cleanup(IntPtr m,IntPtr heap){IntPtr p=GetProcAddress(m,"boom_release_trace_pool");if(p!=IntPtr.Zero)Check(Marshal.GetDelegateForFunctionPointer<TraceRelease>(p)()==0,"Thread Java frames still active");if(heap!=IntPtr.Zero)Check(Fn<HeapDestroy>(m,"boom_heap_destroy")(heap)!=0,"Thread heap cleanup failed");FreeLibrary(m);}
+}

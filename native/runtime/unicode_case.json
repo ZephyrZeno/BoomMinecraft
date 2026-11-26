@@ -1,0 +1,21 @@
+{
+  "abi": 1,
+  "unicode_version": "15.0.0",
+  "source_url": "https://www.unicode.org/Public/15.0.0/ucd/UnicodeData.txt",
+  "source_sha256": "806e9aed65037197f1ec85e12be6e8cd870fc5608b4de0fffd990f689f376a73",
+  "mapping_rows": 2879,
+  "mapping_bytes_sha256": "847a8892f426c470cc883d61f145ef75928c562ec2a583d7ffb62f1d093790d7",
+  "exhaustive_code_points": 1114112,
+  "jdk_character_sources": {
+    "java.lang.Character": "44b7845a852451e9edef2db5c6e4d307ee0c28881546156568459bd65998943a",
+    "java.lang.CharacterData": "d09b7f747f94b6d6c32166339325c3a8f71906bdc46ee9e7f3fee99d51095adb",
+    "java.lang.CharacterDataLatin1": "7dda74e9e327b00952481b4216fc3d54a812f8623d04e1bbbc85d8af8072c387",
+    "java.lang.CharacterData00": "1f73e57e6feba0254ba331f509a42a31bdd6bee9469cf61fb27df34bf4d32a85",
+    "java.lang.CharacterData01": "116dbacd6b430ce91acf5900fde34fe40e3b3b11faee5950693fa4dc90688813",
+    "java.lang.CharacterData02": "cb3c4dfa45af4520bd7464e8f2fc386876f12c2ba91845e0b4859fbc24b8b51a",
+    "java.lang.CharacterData03": "bc3c17eb40d8cd1d8d39d50f3c2607a335c3fab5d19a602260dd1f52a5830b8f",
+    "java.lang.CharacterData0E": "c25931b703ae7fd7d105de676d076621787b2d4f6bfd22c098cd2be90ca1d45b",
+    "java.lang.CharacterDataUndefined": "408adbde6d373c9ace4b5101395ce5bec1c0c0f9eae8355587581ffaaf65d0e0",
+    "java.lang.CharacterDataPrivateUse": "c0ef994679c5964e0eb18eca2ac8c415465146c1a8b0e19adddbfbdd96b5cbb8"
+  }
+}

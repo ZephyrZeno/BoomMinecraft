@@ -1,0 +1,16 @@
+{
+  "abi": 1,
+  "unicode_version": "15.0.0",
+  "source_sha256": "806e9aed65037197f1ec85e12be6e8cd870fc5608b4de0fffd990f689f376a73",
+  "sigma_cased_profile": "Java21-ConditionalSpecialCasing-type-and-compatibility-ranges",
+  "rows": 535,
+  "codewords_sha256": "9d8d261d36b42bac58b27beba9dcc14c0bb65f95193ae09d80daf9d0dee6c489",
+  "row_bytes_sha256": "4aa58568c616ceb97eb6fddbd39ffa06ecf4d2a0997819cee2a4d159db33fe3b",
+  "jdk_sources": {
+    "java.lang.ConditionalSpecialCasing": "83e5b73d6f77e978bf9b184b9cc8b877ff57bed7ba7a117e868a7aece0cd0b67",
+    "java.lang.StringUTF16": "e03e9a012b6c29de2130ef49badab77d421f5272e1c72224838545e1091488b5",
+    "sun.text.RuleBasedBreakIterator": "0202600c4059bda3ddbc599d29cdb7726e911030000bae9c46c8735c83f37772",
+    "sun.text.CompactByteArray": "7d28467b742734113db2feddd723085b743740d9c25df0c2b49b863f9353e8ba",
+    "sun.text.SupplementaryCharacterData": "899174c8b1913e3bf6720395625216e87752dc26e348af700f471d81514dec9a"
+  }
+}

@@ -1,0 +1,412 @@
+{
+  "schema": 1,
+  "families": {
+    "normal-scoped-memory-registration-v1": {
+      "owner": "jdk/internal/misc/ScopedMemoryAccess",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/scoped_memory.asm.inc",
+      "pool": "boom_provider_scoped_memory_pool",
+      "service": "boom_provider_scoped_memory_service",
+      "methods": [
+        {
+          "name": "registerNatives",
+          "descriptor": "()V",
+          "access": 266,
+          "operation": 0
+        }
+      ]
+    },
+    "normal-throwable-v1": {
+      "owner": "java/lang/Throwable",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/normal_throwable.asm.inc",
+      "pool": "boom_normal_throwable_pool",
+      "service": "boom_normal_throwable_fill",
+      "methods": [
+        {
+          "name": "fillInStackTrace",
+          "descriptor": "(I)Ljava/lang/Throwable;",
+          "access": 258,
+          "operation": 0
+        }
+      ]
+    },
+    "normal-file-bootstrap-v1": {
+      "owner": "java/io/FileInputStream",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/file_bootstrap.asm.inc",
+      "pool": "boom_provider_file_bootstrap_pool",
+      "service": "boom_provider_file_bootstrap_service",
+      "methods": [
+        {
+          "name": "initIDs",
+          "descriptor": "()V",
+          "access": 266,
+          "operation": 0
+        },
+        {
+          "owner": "java/io/FileOutputStream",
+          "name": "initIDs",
+          "descriptor": "()V",
+          "access": 266,
+          "operation": 1
+        },
+        {
+          "owner": "java/io/FileDescriptor",
+          "name": "initIDs",
+          "descriptor": "()V",
+          "access": 266,
+          "operation": 2
+        },
+        {
+          "owner": "java/io/FileDescriptor",
+          "name": "getHandle",
+          "descriptor": "(I)J",
+          "access": 266,
+          "operation": 3
+        },
+        {
+          "owner": "java/io/FileDescriptor",
+          "name": "getAppend",
+          "descriptor": "(I)Z",
+          "access": 266,
+          "operation": 4
+        },
+        {
+          "owner": "java/lang/StringUTF16",
+          "name": "isBigEndian",
+          "descriptor": "()Z",
+          "access": 266,
+          "operation": 5
+        }
+      ]
+    },
+    "normal-constructor-invocation-v1": {
+      "owner": "jdk/internal/reflect/DirectConstructorHandleAccessor$NativeAccessor",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/constructor_invoke.asm.inc",
+      "pool": "boom_provider_constructor_invoke_pool",
+      "service": "boom_provider_constructor_invoke_service",
+      "methods": [
+        {
+          "name": "newInstance0",
+          "descriptor": "(Ljava/lang/reflect/Constructor;[Ljava/lang/Object;)Ljava/lang/Object;",
+          "access": 266,
+          "operation": 0
+        },
+        {
+          "owner": "jdk/internal/reflect/NativeConstructorAccessorImpl",
+          "name": "newInstance0",
+          "descriptor": "(Ljava/lang/reflect/Constructor;[Ljava/lang/Object;)Ljava/lang/Object;",
+          "access": 266,
+          "operation": 0
+        }
+      ]
+    },
+    "class-flags-v1": {
+      "owner": "jdk/internal/reflect/Reflection",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/class_flags.asm.inc",
+      "pool": "boom_provider_class_flags_pool",
+      "service": "boom_provider_class_flags_service",
+      "methods": [
+        {
+          "name": "getClassAccessFlags",
+          "descriptor": "(Ljava/lang/Class;)I",
+          "access": 265,
+          "operation": 0
+        },
+        {
+          "owner": "java/lang/Class",
+          "name": "getModifiers",
+          "descriptor": "()I",
+          "access": 257,
+          "operation": 1
+        }
+      ]
+    },
+    "cds-no-archive-v1": {
+      "owner": "jdk/internal/misc/CDS",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/cds.asm.inc",
+      "pool": "boom_provider_cds_pool",
+      "service": "boom_provider_cds_service",
+      "methods": [
+        {
+          "name": "initializeFromArchive",
+          "descriptor": "(Ljava/lang/Class;)V",
+          "access": 265,
+          "operation": 0
+        },
+        {
+          "name": "isDumpingClassList0",
+          "descriptor": "()Z",
+          "access": 266,
+          "operation": 1
+        },
+        {
+          "name": "isDumpingArchive0",
+          "descriptor": "()Z",
+          "access": 266,
+          "operation": 2
+        },
+        {
+          "name": "isSharingEnabled0",
+          "descriptor": "()Z",
+          "access": 266,
+          "operation": 3
+        },
+        {
+          "name": "getRandomSeedForDumping",
+          "descriptor": "()J",
+          "access": 265,
+          "operation": 4
+        }
+      ]
+    },
+    "normal-constructors-v1": {
+      "owner": "java/lang/Class",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/constructors.asm.inc",
+      "pool": "boom_provider_constructor_pool",
+      "service": "boom_provider_constructor_service",
+      "methods": [
+        {
+          "name": "getDeclaredConstructors0",
+          "descriptor": "(Z)[Ljava/lang/reflect/Constructor;",
+          "access": 258,
+          "operation": 0
+        }
+      ]
+    },
+    "object-identity-v1": {
+      "owner": "java/lang/Object",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/identity.asm.inc",
+      "pool": "boom_provider_identity_pool",
+      "service": "boom_provider_identity_service",
+      "methods": [
+        {
+          "name": "hashCode",
+          "descriptor": "()I",
+          "access": 257,
+          "operation": 0
+        },
+        {
+          "owner": "java/lang/System",
+          "name": "identityHashCode",
+          "descriptor": "(Ljava/lang/Object;)I",
+          "access": 265,
+          "operation": 1
+        }
+      ]
+    },
+    "normal-signal-lookup-v1": {
+      "owner": "jdk/internal/misc/Signal",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/signal_lookup.asm.inc",
+      "pool": "boom_provider_signal_lookup_pool",
+      "service": "boom_provider_signal_lookup_service",
+      "methods": [
+        {
+          "name": "findSignal0",
+          "descriptor": "(Ljava/lang/String;)I",
+          "access": 266,
+          "operation": 0
+        }
+      ]
+    },
+    "normal-thread-primitives-v1": {
+      "owner": "java/lang/Thread",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/normal_thread.asm.inc",
+      "pool": "boom_provider_thread_pool",
+      "service": "boom_provider_thread_service",
+      "methods": [
+        {
+          "name": "registerNatives",
+          "descriptor": "()V",
+          "access": 266,
+          "operation": 0
+        },
+        {
+          "name": "currentCarrierThread",
+          "descriptor": "()Ljava/lang/Thread;",
+          "access": 264,
+          "operation": 1
+        },
+        {
+          "name": "currentThread",
+          "descriptor": "()Ljava/lang/Thread;",
+          "access": 265,
+          "operation": 2
+        },
+        {
+          "name": "ensureMaterializedForStackWalk",
+          "descriptor": "(Ljava/lang/Object;)V",
+          "access": 264,
+          "operation": 3
+        },
+        {
+          "name": "yield0",
+          "descriptor": "()V",
+          "access": 266,
+          "operation": 4
+        },
+        {
+          "name": "getNextThreadIdOffset",
+          "descriptor": "()J",
+          "access": 266,
+          "operation": 5
+        }
+      ]
+    },
+    "normal-access-context-v1": {
+      "owner": "java/security/AccessController",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/normal_access.asm.inc",
+      "pool": "boom_provider_access_pool",
+      "service": "boom_provider_access_service",
+      "methods": [
+        {
+          "name": "getStackAccessControlContext",
+          "descriptor": "()Ljava/security/AccessControlContext;",
+          "access": 266,
+          "operation": 0
+        },
+        {
+          "name": "getInheritedAccessControlContext",
+          "descriptor": "()Ljava/security/AccessControlContext;",
+          "access": 264,
+          "operation": 1
+        },
+        {
+          "name": "ensureMaterializedForStackWalk",
+          "descriptor": "(Ljava/lang/Object;)V",
+          "access": 266,
+          "operation": 2
+        }
+      ]
+    },
+    "normal-reference-processing-v1": {
+      "owner": "java/lang/ref/Reference",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/reference_processing.asm.inc",
+      "pool": "boom_provider_reference_pool",
+      "service": "boom_provider_reference_service",
+      "methods": [
+        { "name": "getAndClearReferencePendingList", "descriptor": "()Ljava/lang/ref/Reference;", "access": 266, "operation": 0 },
+        { "name": "hasReferencePendingList", "descriptor": "()Z", "access": 266, "operation": 1 },
+        { "name": "waitForReferencePendingList", "descriptor": "()V", "access": 266, "operation": 2 }
+      ]
+    },
+    "normal-winnt-filesystem-v1": {
+      "owner": "java/io/WinNTFileSystem",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/winnt_filesystem.asm.inc",
+      "pool": "boom_provider_winnt_file_pool",
+      "service": "boom_provider_winnt_file_service",
+      "methods": [
+        { "name": "initIDs", "descriptor": "()V", "access": 266, "operation": 0 }
+      ]
+    },
+    "normal-unsafe-class-initialization-v1": {
+      "owner": "jdk/internal/misc/Unsafe",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/unsafe_class_initialization.asm.inc",
+      "pool": "boom_provider_unsafe_class_init_pool",
+      "service": "boom_provider_unsafe_class_init",
+      "methods": [
+        { "name": "ensureClassInitialized0", "descriptor": "(Ljava/lang/Class;)V", "access": 258, "operation": 0 },
+        { "name": "shouldBeInitialized0", "descriptor": "(Ljava/lang/Class;)Z", "access": 258, "operation": 1 }
+      ]
+    },
+    "normal-object-notification-v1": {
+      "owner": "java/lang/Object",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/object_notification.asm.inc",
+      "pool": "boom_provider_object_notification_pool",
+      "service": "boom_provider_object_notification_service",
+      "methods": [
+        { "name": "notify", "descriptor": "()V", "access": 273, "operation": 0 },
+        { "name": "notifyAll", "descriptor": "()V", "access": 273, "operation": 1 }
+      ]
+    },
+    "normal-finalization-policy-v1": {
+      "owner": "java/lang/ref/Finalizer",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/finalization_policy.asm.inc",
+      "pool": "boom_provider_finalization_policy_pool",
+      "service": "boom_provider_finalization_policy_service",
+      "methods": [
+        { "name": "isFinalizationEnabled", "descriptor": "()Z", "access": 266, "operation": 0 }
+      ]
+    },
+    "normal-windows-startup-v1": {
+      "owner": "sun/io/Win32ErrorMode",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/windows_startup.asm.inc",
+      "pool": "boom_provider_windows_startup_pool",
+      "service": "boom_provider_windows_startup_service",
+      "methods": [
+        { "name": "setErrorMode", "descriptor": "(J)J", "access": 266, "operation": 0 }
+      ]
+    },
+    "normal-signal-control-v1": {
+      "owner": "jdk/internal/misc/Signal",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/normal_signal_control.asm.inc",
+      "pool": "boom_provider_signal_pool",
+      "service": "boom_provider_signal_service",
+      "methods": [
+        { "name": "handle0", "descriptor": "(IJ)J", "access": 266, "operation": 0 },
+        { "name": "raise0", "descriptor": "(I)V", "access": 266, "operation": 1 }
+      ]
+    },
+    "normal-thread-priority-v1": {
+      "owner": "java/lang/Thread",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/normal_thread_priority.asm.inc",
+      "pool": "boom_provider_thread_priority_pool",
+      "service": "boom_provider_thread_priority_service",
+      "methods": [
+        { "name": "setPriority0", "descriptor": "(I)V", "access": 258, "operation": 0 }
+      ]
+    },
+    "normal-thread-start-v1": {
+      "owner": "java/lang/Thread",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/normal_thread_start.asm.inc",
+      "pool": "boom_provider_threads_pool",
+      "service": "boom_provider_threads_service",
+      "methods": [
+        {
+          "name": "start0",
+          "descriptor": "()V",
+          "access": 258,
+          "operation": 0
+        }
+      ]
+    }
+  }
+}

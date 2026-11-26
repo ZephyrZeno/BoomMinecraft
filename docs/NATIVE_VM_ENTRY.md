@@ -1,0 +1,50 @@
+# 汇编进程启动入口
+
+`Build-VmEntry.ps1` 把已独立校验的原始 Java 汇编、运行时提供者对象和新生成的 VM 绑定表链接为原生 `boom-vm-entry.exe`。游戏执行路径不加载 C#／CLR、JVM 或 CRT。Python 只在构建时读取锁定输入，PowerShell 只构建、启动隔离进程和读取验证记录。
+
+## 已完成的实际执行
+
+- v123 原生进程实际完成原版 `Thread.start`、`run`、`exit` 和 OS 记录回收，退出码 0，三项清理全部通过。验证对象是无 Runnable 任务的正常 Thread；详见[线程生命周期证据](NORMAL_THREAD_BOOTSTRAP.md)。
+- 构造器入口自行建立 128 MiB 汇编堆，执行四个原始构造器入口及嵌套 FieldHolder，建立主线程和 system／main 线程组；原生进程退出码 0，实际对象数 95，堆／线程注册表／Java 帧全部清理成功。
+- System 入口保留真实主线程，继续执行原始 `System.initPhase1`；实际到达尚未实现的 `Signal.handle0`，诊断退出码 86。停止时有 2,472 个管理对象，无监视器遗留，三项清理全部成功。
+- PE 导入表只有自研汇编运行时和 Windows API，绑定表、类初始化调用、对象分配与构造调用都由汇编执行。此前开发宿主生成运行绑定的方式已从这条原生路径移除。
+
+这些结果证明 VM 启动前缀的原生执行，不代表完整 System 或 Minecraft 已启动。当前 EXE 仍链接明确的失败诊断入口，没有把未实现功能变成空实现。
+
+## 来源与复用
+
+构造器 ID、原始 Code 散列、字段宽度和偏移、类初始化描述符、主线程名字常量及 VM 启动级别字段均从原始来源和已验证批次重新取得。绑定数据为 MASM 数据段，五个 VM 根单元也由汇编声明。
+
+原始 Java 汇编保持不变；构建只重新汇编选定的原始代码并链接。新独立校验记录封存选择清单及诊断清单的 SHA-256，因此新的原生入口可以直接使用已核验的源选择，不依赖一次 C# 宿主运行。较早的证据仍使用已保存的执行记录和对应源码快照。
+
+提供者缓存可以跨源字节相同、公开 ABI 相同的编译批次复用。编译器身份可以变化，原始类／方法／计划散列、IR 身份及布局／帧／上下文 ABI 必须保持一致；每次仍完整重建当前来源模型并校验实际 ASM／COFF，旧成功标志不能代替当前校验。
+
+## 线程 ID 地址域
+
+新版汇编运行时增加了独立的 VM 线程 ID 计数器域。经过正常 Unsafe 接收者校验后，NULL 基址的 Long 读取、volatile 读取、CAS 和 compare-exchange 只能访问当前注册表的准确计数器地址，且必须匹配拥有该注册表的堆。
+
+共享注册表锁覆盖地址验证、整个访问及结果捕获；销毁使用独占锁。任意其他地址、不同堆、未对齐地址和不支持的操作返回明确错误，不提供一般堆外内存访问。该地址属于一个 VM 注册表生命周期，不能作为跨 VM 重建的持久引用。
+
+内核验证通过 8 个工作者的 32,768 次无重复并发增量、15 项错误检查、销毁竞争和 4,096 次销毁后访问拒绝。
+
+v120 服务端源选择与原生进程实际执行到普通 Thread 构造器。原始 `ThreadIdentifiers.next`／Unsafe 原子调用链返回并写入子线程 ID 2，停止时 VM 计数器为 3，主线程 ID 保持 1；这些值由汇编进程直接观察，没有测试宿主设置线程字段或预留 ID。该轮完整子线程构造停在 `AccessController.getStackAccessControlContext` 的真实 native 缺口。堆、注册表和帧清理全部成功。
+
+原生记录升级为 112 字节 ABI2，分别记录构造完成标志和实际观察到的 ID，避免把已经分配 ID 误记为整个构造器完成。普通线程启动／退出和完整权限上下文尚未接入。
+
+`-NativeProcess -ConstructChild` 是开发验证选项，用原始公开 Thread 构造器创建未启动的子线程，核对 ID 2、未启动状态以及主线程身份。它不创建工作线程任务，也不代替 Java `Thread.start`／`Thread.exit` 的实现。
+
+## 正常权限上下文提供者
+
+`normal-access-context-v1` 为锁定输入的原始 `AccessController` 提供三个 native：`getStackAccessControlContext`、`getInheritedAccessControlContext` 和 `ensureMaterializedForStackWalk`。执行部分为汇编；构建工具从原始声明、正常 ACC／Thread 字段布局及源帧元数据生成 ACCP192/2 绑定池。内部辅助过程为私有 COFF 符号，独立校验拒绝额外导出及未声明的导入。
+
+栈查询检查当前 Context 的实际影子帧、PC 和方法身份，按声明类收集保护域；在原始 `executePrivileged` 帧读取局部变量中的 ACC 和调用者 Class，并按该边界停止。返回对象使用正常 ACC／ProtectionDomain[] 布局。继承查询读取实际当前线程的正常字段。协议语义参照 [OpenJDK 21 的 VM 入口](https://github.com/openjdk/jdk21u/blob/master/src/hotspot/share/prims/jvm.cpp)，原始类和方法的实际身份以本项目锁定输入为准。
+
+只有原始 JDK bootstrap 类预绑定系统域。应用类、变换后类及后续模组类的保护域需要 VM 显式绑定；未知帧或未绑定域返回错误。域表使用汇编读写锁，写入要求帧池处于静止状态；已绑定的域身份不能替换。域根表被单独导出，但这不表示活动栈根、通用类加载或自动内存回收已经完成。
+
+新提供者已通过三个原始 native 声明、501,044 条源帧视图、109,945 个类型槽、精确 ASM 和实际 COFF 的独立校验。另有十项来源边界检查，覆盖变换后来源、native 的 Code／访问位、域数组组件、字段宽度和特权帧伪造；全部 255 项 Python 测试通过。
+
+v121 的独立原生进程一轮完成原始主线程／线程组／ACC 构造及公开子线程构造，原生退出码为 0，没有语义停止。记录直接观察主线程 ID 1、子线程 ID 2、下一 ID 3，子线程仍为 NEW，当前 OS 线程身份仍指向主线程。停止前有 116 个管理对象，监视器持有数和注册表锁均为零，堆／线程注册表／Java 帧三项清理全部通过。证据为 `.boom/diagnostic-startup/v121b-native-child-08636deb674a4ac79860f87ded3464b5/result.json`，独立 EXE 位于 `.boom/vm-entry-images/63ae5a726b194ab0b004628619c9c650`。
+
+该轮未调用 `Thread.start`、`Thread.exit` 或 `System.initPhase1`，仍不代表完整 VM／游戏启动或完整权限上下文验收。应用域绑定、全部活动栈根和变换失效处理仍需继续实现。
+
+启动器继续只有启动流程入口。完整原版、世界创建以及游戏侧多核／GPU／内存优化仍待完成。

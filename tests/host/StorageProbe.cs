@@ -1,0 +1,62 @@
+// VM-prepared inputs exercise the StringBuilder storage boundary only.
+// They do not claim that the original StringBuilder constructor has executed.
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+public static class BoomStorageProbe {
+    [StructLayout(LayoutKind.Sequential)] struct Context {public uint Kind,PC,Method,Depth;}
+    [DllImport("kernel32.dll",CharSet=CharSet.Unicode)] static extern IntPtr LoadLibraryExW(string p,IntPtr z,uint f);
+    [DllImport("kernel32.dll",CharSet=CharSet.Ansi)] static extern IntPtr GetProcAddress(IntPtr m,string n);
+    [DllImport("kernel32.dll")] static extern bool FreeLibrary(IntPtr m);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr Create(ulong n);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate int Bind(IntPtr h);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate int Destroy(IntPtr h);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr Roots(out uint n);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate ulong Collect(IntPtr h,IntPtr roots,uint n);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr ObjectNew(IntPtr h,IntPtr layout,ref Context c);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr ArrayNew(IntPtr h,int n,uint kind,ref Context c);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr Get();
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate ulong Entry(ref Context c,[In] ulong[] args);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr Copy(ref Context c,[In] ulong[] args,IntPtr pool);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate uint Release();
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr Alloc(IntPtr h,ulong bytes,uint refs,uint type);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr Field(uint owner,uint field);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate IntPtr PoolCreate(uint workers);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate uint PoolRun(IntPtr p,IntPtr fn,IntPtr input,IntPtr output,uint count);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate uint PoolDestroy(IntPtr p);
+    static void Check(bool b,string s){if(!b)throw new Exception(s);}
+    static T Fn<T>(IntPtr m,string name){IntPtr p=GetProcAddress(m,name);Check(p!=IntPtr.Zero,"Missing "+name);return Marshal.GetDelegateForFunctionPointer<T>(p);}
+    static IntPtr Open(string p){IntPtr m=LoadLibraryExW(p,IntPtr.Zero,0x1100);Check(m!=IntPtr.Zero,"Storage DLL failed to load");return m;}
+    static void Close(IntPtr m,IntPtr heap){IntPtr p=GetProcAddress(m,"boom_release_trace_pool");if(p!=IntPtr.Zero)Check(Marshal.GetDelegateForFunctionPointer<Release>(p)()==0,"Storage frames still active");if(heap!=IntPtr.Zero)Check(Fn<Destroy>(m,"boom_heap_destroy")(heap)!=0,"Storage heap shutdown failed");FreeLibrary(m);}
+    static ulong Call(Entry entry,IntPtr arg){var c=new Context();ulong v=entry(ref c,new ulong[]{unchecked((ulong)arg.ToInt64())});Check(c.Kind==0&&c.Depth==0,"Storage guest call failed: kind="+c.Kind+", pc="+c.PC+", method="+c.Method+", depth="+c.Depth);return v;}
+    static string Text(IntPtr p){Check(p!=IntPtr.Zero&&Marshal.ReadInt64(p,-16)==16&&Marshal.ReadInt32(p,-20)==1,"Malformed copied String");IntPtr a=Marshal.ReadIntPtr(p);long n=Marshal.ReadInt64(a,-16);Check(Marshal.ReadInt64(a,-8)==261&&n>=0&&(n&1)==0,"Malformed copied UTF16");return Marshal.PtrToStringUni(a,checked((int)(n/2)));}
+    static int Reachable(IntPtr roots,uint n){var seen=new HashSet<IntPtr>();var todo=new Stack<IntPtr>();for(int i=0;i<n;i++)todo.Push(Marshal.ReadIntPtr(roots,8*i));while(todo.Count!=0){IntPtr p=todo.Pop();if(p==IntPtr.Zero||!seen.Add(p))continue;uint f=unchecked((uint)Marshal.ReadInt32(p,-24)),r=unchecked((uint)Marshal.ReadInt32(p,-20));long b=Marshal.ReadInt64(p,-16);Check((f&0xfffffffd)==0xb00b0001&&b>=0&&r<=(ulong)b/8&&seen.Count<1048576,"Malformed storage graph");for(int i=0;i<r;i++)todo.Push(Marshal.ReadIntPtr(p,8*i));}return seen.Count;}
+    static void GC(IntPtr m,IntPtr heap,params IntPtr[] extra){IntPtr statics=Fn<Roots>(m,"boom_get_static_roots")(out uint n),all=Marshal.AllocHGlobal(checked(((int)n+extra.Length)*8));try{for(int i=0;i<n;i++)Marshal.WriteIntPtr(all,8*i,Marshal.ReadIntPtr(statics,8*i));for(int i=0;i<extra.Length;i++)Marshal.WriteIntPtr(all,8*((int)n+i),extra[i]);uint count=n+(uint)extra.Length;int expected=Reachable(all,count);Check(Fn<Collect>(m,"boom_heap_collect")(heap,all,count)!=ulong.MaxValue&&Marshal.ReadInt64(heap,56)==expected,"Storage roots lost or temporary data leaked");}finally{Marshal.FreeHGlobal(all);}}
+    public static void Snapshot(string dll,string runtime){
+        IntPtr m=Open(dll),r=Open(runtime),heap=IntPtr.Zero,copy=IntPtr.Zero;
+        try{heap=Fn<Create>(m,"boom_heap_create")(1024*1024);Check(heap!=IntPtr.Zero&&Fn<Bind>(m,"boom_bind_heap")(heap)==1,"Storage heap bind failed");var entry=Fn<Entry>(m,"boom_entry");IntPtr pool=Fn<Get>(m,"boom_get_builder_snapshot_pool")(),layout=Marshal.ReadIntPtr(pool,16);int valueOff=Marshal.ReadInt32(pool,24),coderOff=Marshal.ReadInt32(pool,28),countOff=Marshal.ReadInt32(pool,32);var obj=Fn<ObjectNew>(r,"boom_object_new");var array=Fn<ArrayNew>(r,"boom_array_new");
+            string[] tests={"","ASCII","\0","a\0b","\u00ff\u0080","中Σ","\ud800","\udc00","🧱","x\ud800\0\udc00y"};
+            foreach(string text in tests)foreach(int coder in new int[]{0,1}){bool latin=true;foreach(char ch in text)if(ch>255)latin=false;if(coder==0&&!latin)continue;var c=new Context();IntPtr b=obj(heap,layout,ref c),a=array(heap,checked((text.Length+17)<<coder),8,ref c);Check(c.Kind==0&&a!=IntPtr.Zero&&b!=IntPtr.Zero,"VM fixture allocation failed");Marshal.WriteIntPtr(b,valueOff,a);Marshal.WriteByte(b,coderOff,(byte)coder);Marshal.WriteInt32(b,countOff,text.Length);for(int i=0;i<text.Length;i++){if(coder==0)Marshal.WriteByte(a,i,(byte)text[i]);else Marshal.WriteInt16(a,2*i,unchecked((short)text[i]));}
+                long before=Marshal.ReadInt64(heap,56);IntPtr first=new IntPtr(unchecked((long)Call(entry,b))),second=new IntPtr(unchecked((long)Call(entry,b)));Check(Text(first)==text&&Text(second)==text&&first!=second&&Marshal.ReadIntPtr(first)!=Marshal.ReadIntPtr(second)&&Marshal.ReadInt64(heap,56)==before+4,"Snapshot value, identity or two-allocation budget changed");if(text.Length>0){Marshal.WriteByte(a,0,0x58);Check(Text(first)==text,"Copied String aliases mutable builder bytes");}GC(m,heap,first);Check(Text(first)==text,"Snapshot lost backing after builder collection");GC(m,heap);
+            }
+            var service=Fn<Copy>(m,"boom_builder_snapshot");var bad=new Context();Check(service(ref bad,new ulong[]{0},pool)==IntPtr.Zero&&bad.Kind==4,"Null builder did not produce NPE");bad=new Context{Kind=9,PC=123,Method=456,Depth=7};Check(service(ref bad,new ulong[]{0},pool)==IntPtr.Zero&&bad.Kind==9&&bad.PC==123&&bad.Method==456&&bad.Depth==7,"Pending snapshot error overwritten");
+            var cc=new Context();IntPtr fixture=obj(heap,layout,ref cc),buffer=array(heap,16,8,ref cc);Marshal.WriteIntPtr(fixture,valueOff,buffer);Marshal.WriteByte(fixture,coderOff,1);Marshal.WriteInt32(fixture,countOff,4);copy=Marshal.AllocHGlobal(48);byte[] data=new byte[48];Marshal.Copy(pool,data,0,48);foreach(int field in new int[]{0,4,24,28,32,36}){Marshal.Copy(data,0,copy,48);Marshal.WriteInt32(copy,field,field<8?0:int.MaxValue);bad=new Context();Check(service(ref bad,new ulong[]{unchecked((ulong)fixture.ToInt64())},copy)==IntPtr.Zero&&bad.Kind==7,"Malformed snapshot pool accepted");}GC(m,heap);
+        }finally{if(copy!=IntPtr.Zero)Marshal.FreeHGlobal(copy);Close(m,heap);FreeLibrary(r);}
+    }
+    public static void Length(string dll,string runtime){IntPtr m=Open(dll),r=Open(runtime),heap=IntPtr.Zero;try{heap=Fn<Create>(m,"boom_heap_create")(1024*1024);Check(heap!=IntPtr.Zero&&Fn<Bind>(m,"boom_bind_heap")(heap)==1,"UTF16 length heap failed");var array=Fn<ArrayNew>(r,"boom_array_new");var entry=Fn<Entry>(m,"boom_entry");for(int n=0;n<129;n++){var c=new Context();IntPtr a=array(heap,n,8,ref c);Check(a!=IntPtr.Zero&&c.Kind==0&&Call(entry,a)==(ulong)(n>>1),"Original UTF16.length mismatch");GC(m,heap);}var bad=new Context();entry(ref bad,new ulong[]{0});Check(bad.Kind==4,"Original UTF16 length null check changed");}finally{Close(m,heap);FreeLibrary(r);}}
+    public static void EndianFields(string dll,string runtime,uint owner,uint hi,uint lo){
+        IntPtr m=Open(dll),r=Open(runtime),heap=IntPtr.Zero;
+        try{heap=Fn<Create>(m,"boom_heap_create")(1024*1024);Check(heap!=IntPtr.Zero&&Fn<Bind>(m,"boom_bind_heap")(heap)==1,"Endian heap bind failed");var c=new Context();IntPtr a=Fn<ArrayNew>(r,"boom_array_new")(heap,4,8,ref c);Check(Call(Fn<Entry>(m,"boom_entry"),a)==2,"Endian initializer call failed");var field=Fn<Field>(m,"boom_get_static_field");Check(Marshal.ReadInt32(field(owner,hi))==0&&Marshal.ReadInt32(field(owner,lo))==8,"Original StringUTF16 initializer did not publish little-endian shifts");GC(m,heap);
+        }finally{Close(m,heap);FreeLibrary(r);}
+    }
+    public static void SnapshotOOM(string dll,string runtime){
+        IntPtr m=Open(dll),r=Open(runtime),heap=IntPtr.Zero;
+        try{heap=Fn<Create>(m,"boom_heap_create")(65536);Check(heap!=IntPtr.Zero&&Fn<Bind>(m,"boom_bind_heap")(heap)==1,"Snapshot OOM heap failed");IntPtr pool=Fn<Get>(m,"boom_get_builder_snapshot_pool")(),layout=Marshal.ReadIntPtr(pool,16);var c=new Context();IntPtr b=Fn<ObjectNew>(r,"boom_object_new")(heap,layout,ref c),a=Fn<ArrayNew>(r,"boom_array_new")(heap,8,8,ref c);Check(a!=IntPtr.Zero&&b!=IntPtr.Zero&&c.Kind==0,"Snapshot OOM input allocation failed");Marshal.WriteIntPtr(b,Marshal.ReadInt32(pool,24),a);Marshal.WriteByte(b,Marshal.ReadInt32(pool,28),1);Marshal.WriteInt32(b,Marshal.ReadInt32(pool,32),4);for(int i=0;i<4;i++)Marshal.WriteInt16(a,2*i,(short)('a'+i));var entry=Fn<Entry>(m,"boom_entry");Check(Text(new IntPtr(unchecked((long)Call(entry,b))))=="abcd","Snapshot OOM warmup failed");GC(m,heap,b);var alloc=Fn<Alloc>(r,"boom_heap_alloc");var fill=new List<IntPtr>();IntPtr p;while((p=alloc(heap,16,0,267))!=IntPtr.Zero){fill.Add(p);Check(fill.Count<4096,"Snapshot filler overflow");}while((p=alloc(heap,0,0,267))!=IntPtr.Zero){fill.Add(p);Check(fill.Count<4096,"Snapshot filler overflow");}Check(fill.Count>4,"Snapshot OOM setup too small");fill.RemoveAt(1);fill.Add(b);GC(m,heap,fill.ToArray());long before=Marshal.ReadInt64(heap,56);var copy=Fn<Copy>(m,"boom_builder_snapshot");c=new Context();Check(copy(ref c,new ulong[]{unchecked((ulong)b.ToInt64())},pool)==IntPtr.Zero&&c.Kind==3&&Marshal.ReadInt64(heap,56)==before+1,"Snapshot second allocation OOM was not exercised");GC(m,heap,fill.ToArray());Check(Marshal.ReadInt64(heap,56)==before,"Snapshot failed copy leaked char[]");GC(m,heap,b);Check(Text(new IntPtr(unchecked((long)Call(entry,b))))=="abcd","Snapshot did not recover after collection");GC(m,heap);
+        }finally{Close(m,heap);FreeLibrary(r);}
+    }
+    public static void ClassParallel(string dll,string runtime,int[] expected){
+        const int count=2049;IntPtr m=Open(dll),r=Open(runtime),heap=IntPtr.Zero,pool=IntPtr.Zero,input=IntPtr.Zero,output=IntPtr.Zero;
+        try{Check(expected.Length==count,"Class oracle size mismatch");heap=Fn<Create>(m,"boom_heap_create")(16*1024*1024);Check(heap!=IntPtr.Zero&&Fn<Bind>(m,"boom_bind_heap")(heap)==1,"Class parallel heap failed");input=Marshal.AllocHGlobal(count*128);output=Marshal.AllocHGlobal(count*32);for(int i=0;i<count;i++)Marshal.WriteInt64(input,128*i,i);pool=Fn<PoolCreate>(r,"boom_pool_create")(8);Check(pool!=IntPtr.Zero,"Class worker creation failed");var run=Fn<PoolRun>(r,"boom_pool_run");for(int k=0;k<3;k++){Check(run(pool,GetProcAddress(m,"boom_entry"),input,output,count)==0,"Class worker run failed");for(int i=0;i<count;i++)Check(unchecked((uint)Marshal.ReadInt64(output,32*i))==unchecked((uint)expected[i])&&Marshal.ReadInt64(output,32*i+8)==0&&Marshal.ReadInt64(output,32*i+16)==0&&Marshal.ReadInt64(output,32*i+24)==0,"Class worker result mismatch");GC(m,heap);}
+        }finally{if(pool!=IntPtr.Zero)Check(Fn<PoolDestroy>(r,"boom_pool_destroy")(pool)==0,"Class worker shutdown failed");if(input!=IntPtr.Zero)Marshal.FreeHGlobal(input);if(output!=IntPtr.Zero)Marshal.FreeHGlobal(output);Close(m,heap);FreeLibrary(r);}
+    }
+}

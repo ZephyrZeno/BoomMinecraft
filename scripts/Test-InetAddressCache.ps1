@@ -1,0 +1,19 @@
+param([string]$Boom='target/release/boom.exe',[string]$Runtime='.boom/assembly-runtime-v71/boom-runtime.dll',[ValidateSet('java/net/InetAddress','java/net/Inet4Address','java/net/Inet6Address')][string]$Owner='java/net/InetAddress')
+$ErrorActionPreference='Stop';$sha=(Get-FileHash $Boom).Hash.ToLowerInvariant()
+$root=Join-Path (Get-Location) ('.boom/inet-cache-tests/'+[guid]::NewGuid().ToString('N'));[IO.Directory]::CreateDirectory($root)|Out-Null;[IO.File]::WriteAllText('.boom/current-inet-cache-test.txt',$root)
+$base=Join-Path ((Get-Content .boom/latest-server-jdk-base.txt -Raw).Trim()) jdk-base.json
+& $Boom plan-inet-address --lock .boom/locks/server.json --jdk-base $base --output $root --owner $Owner > "$root/plan.stdout.json" 2> "$root/plan.err"
+if($LASTEXITCODE -ne 0){Get-Content "$root/plan.err" -Tail 10;throw 'InetAddress locked metadata preparation failed'}
+& D:/Dev/Python312/python.exe scripts/verify-inet-cache.py "$root/cache.json" $base > "$root/source-contract.json"
+if($LASTEXITCODE -ne 0){throw 'InetAddress field source proof failed'}
+$vswhere=Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe';$installation=(& $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath|Select-Object -First 1);$version=(Get-Content (Join-Path $installation 'VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt') -Raw).Trim();$bin=Join-Path $installation "VC/Tools/MSVC/$version/bin/Hostx64/x64"
+$fixtureSource=(Get-Content "$root/cache.asm" -Raw).Replace("EXTERN boom_inet_address_init:PROC`n",'').Replace("EXTERN boom_inet_address_init:PROC`r`n",'')
+[IO.File]::WriteAllText("$root/cache-fixture.asm",$fixtureSource,[Text.UTF8Encoding]::new($false))
+& (Join-Path $bin ml64.exe) /nologo /c "/Fo$root/cache.obj" "$root/cache-fixture.asm" > "$root/assemble.log" 2>&1;if($LASTEXITCODE -ne 0){Get-Content "$root/assemble.log" -Tail 12;throw 'Inet metadata fixture assembly failed'}
+$plan=Get-Content "$root/cache.json" -Raw|ConvertFrom-Json;$family=[int]$plan.cache_family;$getter=if($family -eq 0){'boom_get_inet_cache'}else{"boom_get_inet$($family)_cache"}
+& (Join-Path $bin link.exe) /NOLOGO /DLL /NOENTRY /MACHINE:X64 /DYNAMICBASE /NXCOMPAT "/EXPORT:$getter" "/OUT:$root/cache.dll" "$root/cache.obj" > "$root/link.log" 2>&1;if($LASTEXITCODE -ne 0){Get-Content "$root/link.log" -Tail 10;throw 'Inet metadata fixture link failed'}
+if(-not ('BoomInetCacheProbe' -as [type])){Add-Type -Path tests/host/InetCacheProbe.cs}
+if($family -eq 0){[BoomInetCacheProbe]::Run("$root/cache.dll",[IO.Path]::GetFullPath($Runtime))}else{[BoomInetCacheProbe]::RunFamily("$root/cache.dll",[IO.Path]::GetFullPath($Runtime),$getter,$family)}
+if((Get-FileHash $Boom).Hash.ToLowerInvariant() -ne $sha){throw 'Inet cache compiler changed'}
+$r=[ordered]@{compiler_sha256=$sha;full_runtime_sha256=(Get-FileHash $Runtime).Hash.ToLowerInvariant();runtime_language='assembly';cache_family=$family;cache_classes=@($plan.type_ids|Sort-Object -Unique).Count;cache_fields=$plan.fields.Count;constructor_method_identity_cached=($family -ne 0);constructor_invoked_by_native_cache_init=$false;metadata_from_locked_JDK=$true;VM_class_descriptor_fixture_used=$true;original_InetAddress_Java_initializer_executed=$false;runtime_JNI_lookup_used=$false;class_initializing_owner_and_ready_state_checked=$true;parallel_workers=8;cold_cache_publications=1024;pending_and_malformed_metadata_checked=$true;network_backend_complete=$false;game_started=$false;world_created=$false;full_game_ready=$false;passed=$true;run_directory=$root};$json=$r|ConvertTo-Json;[IO.File]::WriteAllText("$root/result.json",$json,[Text.UTF8Encoding]::new($false));[IO.File]::WriteAllText('.boom/latest-inet-cache-test.txt',$root);if($family -ne 0){[IO.File]::WriteAllText(".boom/latest-inet$family-cache-test.txt",$root)};Write-Output $json
+exit 0

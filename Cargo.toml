@@ -1,0 +1,31 @@
+[package]
+name = "boom-minecraft"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+description = "Java bytecode to x86-64 assembly compiler and Minecraft 1.21.1 input tools"
+publish = false
+
+[lib]
+name = "boom_minecraft"
+path = "src/lib.rs"
+
+[[bin]]
+name = "boom"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+regex = "1"
+reqwest = { version = "0.13", default-features = false, features = ["blocking", "json", "native-tls", "system-proxy"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha1 = "0.10"
+sha2 = "0.10"
+tempfile = "3"
+zip = { version = "9", default-features = false, features = ["deflate"] }
+
+[profile.release]
+lto = "thin"
+strip = "debuginfo"

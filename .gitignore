@@ -1,0 +1,15 @@
+/target/
+/dist/
+/.boom/
+*.iprof
+hs_err_pid*
+replay_pid*
+__pycache__/
+*.py[cod]
+/launcher/bin/
+/launcher/obj/
+/.env
+/.env.*
+/session.json
+/auth.json
+/credentials.json
