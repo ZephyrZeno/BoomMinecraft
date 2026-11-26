@@ -29,7 +29,44 @@ S = module('runtime-provider-source')
 R = module('revalidate-runtime-provider-cache')
 
 
-def extend(state_file, families, assembler, output, workers=2, *, batch_override=None, regenerate=()):
+def equivalent_named_batch(previous_batch, batch, plan, full_sha):
+    """Reuse original payload only after a fresh, current full named-batch proof."""
+    N=module('refresh-named-module-batch');Q=module('rebase-runtime-provider-inputs')
+    before,after=(S.read(p/'summary.json') for p in (previous_batch,batch))
+    old_full,new_full=(S.read(p/'verification.json') for p in (previous_batch,batch))
+    S.check(isinstance(full_sha,str) and len(full_sha)==64 and
+            S.digest(batch/'verification.json')['sha256']==full_sha,'Explicit fresh full-batch checksum differs')
+    _,lineage=N.verified_resolver(batch,after,plan)
+    Q.same_summary(before,after);Q.same_full_coverage(old_full,new_full)
+    old_derived,new_derived=(S.read(p/N.PROOF) for p in (previous_batch,batch))
+    old_scope=old_full['named_module_derivation']
+    S.check(old_scope['summary']==N.artifact(previous_batch/'summary.json') and
+            old_scope['derivation']==N.artifact(previous_batch/N.PROOF) and
+            old_scope['parent']==old_derived['parent_inputs'] and
+            old_scope['source_graph']==old_derived['source_graph']['inputs'],
+            'Accepted named-batch full proof no longer binds its original derivation')
+    for key in ('parent_inputs','parent_derivation','requested_modules','source_graph','appended',
+                'declaration_changes','binary_equivalence'):
+        S.check(old_derived[key]==new_derived[key], 'Equivalent batch changes its original source graph or append: '+key)
+    [old_unit]=before['class_literals']['units'];[new_unit]=after['class_literals']['units']
+    old_asm,old_obj=(N.checked(old_unit[k]) for k in ('assembly','object'))
+    new_asm,new_obj=(N.checked(new_unit[k]) for k in ('assembly','object'))
+    S.check(S.digest(old_asm)==S.digest(new_asm),'Equivalent named-batch assembly bytes changed')
+    binary=N.binary_equivalence(old_obj,new_obj,before['class_literals'],after['class_literals'])
+    S.check(binary['BSS_added_bytes']==0 and
+            binary['indexed_symbol_contract']['rdata_symbol_shift']==0 and
+            binary['indexed_symbol_contract']['BSS_symbol_shift']==0,
+            'Equivalent named-batch COFF data or symbol layout changed')
+    return dict(scope='same_original_named_batch_freshly_fully_verified_current_tools',
+        previous_summary=N.artifact(previous_batch/'summary.json'),
+        previous_full_verification=N.artifact(previous_batch/'verification.json'),
+        previous_derivation=N.artifact(previous_batch/N.PROOF),current=lineage,
+        binary_equivalence=binary,original_Java_and_metadata_unchanged=True,
+        current_provider_models_must_reverify=True,runtime_acceptance_proven=False)
+
+
+def extend(state_file, families, assembler, output, workers=2, *, batch_override=None, regenerate=(),
+           equivalent_batch_verification_sha256=None):
     state_file, assembler, output = map(lambda p: Path(p).resolve(), (state_file, assembler, output))
     S.check(state_file.is_relative_to(S.ART), 'Use an accepted project state')
     S.check(output.is_relative_to(S.ART / 'formal-native-transitions') and not output.exists(),
@@ -77,6 +114,8 @@ def extend(state_file, families, assembler, output, workers=2, *, batch_override
     source_inputs.append(S.artifact(runtime / 'runtime.json'))
     previous_batch = batch
     batch_lineage = None
+    S.check(batch_override is not None or equivalent_batch_verification_sha256 is None,
+            'Equivalent full verification requires an explicit replacement batch')
     if batch_override is not None:
         batch = Path(batch_override).resolve()
         S.check(batch.is_relative_to(S.ART) and batch != previous_batch,
@@ -84,13 +123,20 @@ def extend(state_file, families, assembler, output, workers=2, *, batch_override
         old_identity = S.base(previous_batch, plan)[0]
         new_identity = S.base(batch, plan)[0]
         R.compatible_base(old_identity, new_identity)
-        resolver = module('closure-batch-artifacts')
-        assembly_model = module('verify-batch-assembly')
-        batch_lineage = resolver.configure(assembly_model, batch, S.read(batch / 'summary.json'), plan)
-        S.check(batch_lineage and batch_lineage.get('scope') == 'parent_verified_batch_plus_source_reconstructed_named_JCLS_unit' and
-                Path(batch_lineage['parent']['summary']['path']).resolve() == previous_batch / 'summary.json' and
-                batch_lineage['parent']['summary']['digest']['sha256'] == previous['batch_summary_sha256'],
-                'Batch override requires certified named-module lineage from the accepted source batch')
+        if equivalent_batch_verification_sha256 is not None:
+            batch_lineage=equivalent_named_batch(previous_batch,batch,plan,equivalent_batch_verification_sha256)
+            source_inputs.append(S.artifact(previous_batch/'named-module-derivation.json'))
+            for summary in (S.read(previous_batch/'summary.json'),S.read(batch/'summary.json')):
+                [unit]=summary['class_literals']['units']
+                source_inputs.extend(S.artifact(unit[k]['path']) for k in ('assembly','object'))
+        else:
+            resolver = module('closure-batch-artifacts')
+            assembly_model = module('verify-batch-assembly')
+            batch_lineage = resolver.configure(assembly_model, batch, S.read(batch / 'summary.json'), plan)
+            S.check(batch_lineage and batch_lineage.get('scope') == 'parent_verified_batch_plus_source_reconstructed_named_JCLS_unit' and
+                    Path(batch_lineage['parent']['summary']['path']).resolve() == previous_batch / 'summary.json' and
+                    batch_lineage['parent']['summary']['digest']['sha256'] == previous['batch_summary_sha256'],
+                    'Batch override requires certified named-module lineage from the accepted source batch')
         source_inputs.extend((S.artifact(batch / 'summary.json'), S.artifact(batch / 'verification.json')))
         source_inputs.append(S.artifact(batch / 'named-module-derivation.json'))
     build_families = [*regenerate, *families]
@@ -224,10 +270,13 @@ if __name__ == '__main__':
     parser.add_argument('--family', action='append', default=[])
     parser.add_argument('--regenerate-family', action='append', default=[])
     parser.add_argument('--batch', type=Path, help='A separately verified compatible derived batch')
+    parser.add_argument('--equivalent-batch-verification-sha256',
+                        help='Require a freshly fully verified replacement with identical original named-batch payload')
     parser.add_argument('--assembler', type=Path, required=True)
     parser.add_argument('--workers', type=int, default=2)
     parser.add_argument('--output', type=Path,
                         default=S.ART / 'formal-native-transitions' / ('native-' + uuid4().hex))
     args = parser.parse_args()
     print(extend(args.state, args.family, args.assembler, args.output, args.workers,
-                 batch_override=args.batch, regenerate=args.regenerate_family))
+                 batch_override=args.batch, regenerate=args.regenerate_family,
+                 equivalent_batch_verification_sha256=args.equivalent_batch_verification_sha256))
