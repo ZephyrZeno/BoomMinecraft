@@ -12,6 +12,8 @@ import json
 from pathlib import Path, PurePosixPath
 import re
 import sys
+import threading
+from types import ModuleType
 
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -22,7 +24,8 @@ LEGACY_COUNT=105
 LEGACY_PATH_SHA256='e9a87cfad93b62c64784041f3eb4a3451da1bea658d0f5ba880e6c718bab5780'
 SOURCE_PATTERN=re.compile(r'(?:scripts|native/(?:providers|kernels|runtime))/[A-Za-z0-9_./-]+\.(?:py|ps1|asm|inc|tpl)',re.I)
 _LOADED_IMPLEMENTATION_SHA256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
-_AUDIT_CACHE=OrderedDict()
+_PROCESS_CACHE_NAME='_boom_provider_tool_graph_data_v1'
+_PROCESS_CACHE_LIMIT=8
 
 
 def check(value,message):
@@ -362,10 +365,22 @@ def load(root=ROOT):
         producer_modified_by_this_tool=False,named_module_receipts_accepted=False)
 
 
-def tool_files(root=ROOT):return load(root)['tool_files']
+def tool_files(root=ROOT):return _audited_identity(root)[0]['tool_files']
 
 
 def _identity_bytes(root,order):return {name:sha256(file_path(root,name).read_bytes()) for name in order}
+
+
+def _process_graph_cache():
+    """Only immutable serialized dependency-graph data crosses fresh imports."""
+    holder=sys.modules.get(_PROCESS_CACHE_NAME)
+    if holder is None:
+        candidate=ModuleType(_PROCESS_CACHE_NAME)
+        candidate.schema=1;candidate.entries=OrderedDict();candidate.lock=threading.RLock()
+        holder=sys.modules.setdefault(_PROCESS_CACHE_NAME,candidate)
+    check(isinstance(holder,ModuleType) and holder.schema==1 and isinstance(holder.entries,OrderedDict),
+        'Unexpected process-local tool graph cache')
+    return holder
 
 
 def _audited_identity(root):
@@ -373,22 +388,31 @@ def _audited_identity(root):
     root=Path(root).resolve()
     check(sha256(source_path(root,HELPER).read_bytes())==_LOADED_IMPLEMENTATION_SHA256,
         'Loaded helper full source identity changed; restart in a fresh process')
-    entry=_AUDIT_CACHE.get(root)
-    if entry is not None:
-        current=_identity_bytes(root,entry['contract']['tool_files'])
-        check(current[HELPER]==_LOADED_IMPLEMENTATION_SHA256,'Loaded helper full source identity changed')
-        if current==entry['identity']:
-            for name in entry['contract']['runtime_contract_sources']:source_path(root,name)
-            _AUDIT_CACHE.move_to_end(root)
-            return deepcopy(entry['contract']),current
     initial=read(file_path(root,MANIFEST));order=names(initial.get('tool_order'),'ordered identity tools')
     check({HELPER,MANIFEST,REGISTRY}<=set(order),'Helper, manifest, and registry must all be identity inputs')
     before=_identity_bytes(root,order)
     check(before[HELPER]==_LOADED_IMPLEMENTATION_SHA256,'Loaded helper full source identity changed')
+    key=(str(root),_LOADED_IMPLEMENTATION_SHA256,tuple(before.items()))
+    holder=_process_graph_cache()
+    with holder.lock:
+        serialized=holder.entries.get(key)
+        if serialized is not None:holder.entries.move_to_end(key)
+    if serialized is not None:
+        # JSON decoding gives each caller fresh nested containers. The one
+        # tuple in load()'s public contract must retain its original type.
+        contract=json.loads(serialized,object_pairs_hook=unique_object)
+        contract['tool_files']=tuple(contract['tool_files'])
+        check(contract['tool_files']==tuple(order) and contract['helper_sha256']==before[HELPER] and
+            contract['manifest_sha256']==before[MANIFEST] and contract['registry_sha256']==before[REGISTRY],
+            'Cached tool graph identity differs from the fully hashed inputs')
+        for name in contract['runtime_contract_sources']:source_path(root,name)
+        return contract,dict(before)
     contract=load(root);after=_identity_bytes(root,contract['tool_files'])
     check(before==after,'Tool source changed during independent graph audit')
-    _AUDIT_CACHE[root]=dict(contract=deepcopy(contract),identity=dict(after));_AUDIT_CACHE.move_to_end(root)
-    while len(_AUDIT_CACHE)>4:_AUDIT_CACHE.popitem(last=False)
+    serialized=json.dumps(contract,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode('utf-8')
+    with holder.lock:
+        holder.entries[key]=serialized;holder.entries.move_to_end(key)
+        while len(holder.entries)>_PROCESS_CACHE_LIMIT:holder.entries.popitem(last=False)
     return deepcopy(contract),after
 
 

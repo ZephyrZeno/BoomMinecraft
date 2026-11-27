@@ -26,7 +26,8 @@ class ProviderHandoffTests(unittest.TestCase):
         base=dict(batch=str(self.batch),plan=str(self.plan))
         for key in ('batch_summary','base_verification','source_plan','source_classes','source_methods'):
             p=self.root/(key+'.json');p.write_text(key);base[key]=S.artifact(p)
-        self.manifest=dict(base=base,tool_sources=S.tools_identity());self.path=self.root/'provider.json'
+        obj=self.root/'provider.obj';obj.write_bytes(b'verified source object fixture')
+        self.manifest=dict(base=base,tool_sources=S.tools_identity(),object=S.artifact(obj));self.path=self.root/'provider.json'
         self.path.write_text(json.dumps(self.manifest));proof=self.root/'verification.json';proof.write_text('{"verified":true}')
         self.packs=[dict(manifest=self.manifest,reference=S.artifact(self.path),verification=S.artifact(proof))]
         self.verifier=SimpleNamespace(S=S)
@@ -55,6 +56,20 @@ class ProviderHandoffTests(unittest.TestCase):
     def test_changed_provider_tool_identity_is_rejected(self):
         with patch.object(S,'tools_identity',return_value={'changed':'f'*64}):
             with self.assertRaisesRegex(ValueError,'tool identity'):self.use()
+
+    def test_changed_readonly_payload_or_lost_ROM_alias_is_rejected(self):
+        data=self.root/'ROM.obj';data.write_bytes(b'verified readonly source fixture')
+        artifact=S.artifact(data)
+        self.manifest.update(family='normal-constant-pool-v1',ROM_object=artifact,
+            additional_objects=[dict(role='source_constant_pool_ROM',object=artifact,exports=['boom_constant_pool_bytes'],
+                source_payload_sha256='a'*64,read_only_source_metadata=True)])
+        def reseal():
+            self.path.write_text(json.dumps(self.manifest));self.packs[0]['reference']=S.artifact(self.path)
+        reseal();self.assertIs(self.use(),self.packs)
+        data.write_bytes(data.read_bytes()+b'changed')
+        with self.assertRaisesRegex(ValueError,'artifact changed'):self.use()
+        data.write_bytes(b'verified readonly source fixture');self.manifest.pop('ROM_object');reseal()
+        with self.assertRaisesRegex(ValueError,'omitted ROM_object'):self.use()
 
 
 if __name__=='__main__':unittest.main()

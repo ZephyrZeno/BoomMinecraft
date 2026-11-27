@@ -83,6 +83,11 @@ def verify_stops(directory,manifest,summary,coff,verified_provider_packs=None):
     if site_proof:
         check(site_data in (directory/'initialization-closure.asm').read_text(encoding='utf-8'),'Diagnostic constructor callsite data changed')
         lazy_targets.update(f'boom_m{i}' for i in pending_methods)
+    native_data,pending_methods,_,native_proof=model.native_selection(packs,set(manifest.get('selected_runtime_provider_packs',[])),selected_class_ids,manifest['selected_methods'])
+    check(manifest.get('provider_selection_sites',[])==native_proof,'Diagnostic native selection differs')
+    if native_proof:
+        check(native_data in (directory/'initialization-closure.asm').read_text(encoding='utf-8'),'Native selection data changed')
+        lazy_targets.update(f'boom_m{i}' for i in pending_methods)
     for r in rows:
         cls=sources.get(r['class_id']);source_sha=(r['initialization']['source_sha256'] if r.get('initialization') is not None else cls['source_sha256'])
         check(source_sha==r['source_sha256']==class_hashes[r['class_id']],'Diagnostic source class hash differs')

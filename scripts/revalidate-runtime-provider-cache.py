@@ -70,8 +70,15 @@ def refresh_packs(paths,batch,plan,frame_path,output):
             if current_base is None:current_base=S.base(batch,plan)[0]
             m['base']=compatible_base(old['base'],current_base);m['reused_producer_base']=old['base']
             m['runtime_kernel_sha256']={p:S.digest(S.ROOT/p)['sha256'] for p in old['runtime_kernel_sha256']}
-        for name in ('assembly','object','constructor_metadata','class_flags_metadata','constructor_invocation_metadata','file_bootstrap_metadata','scoped_memory_metadata','normal_throwable_metadata','signal_lookup_metadata','normal_thread_metadata','normal_access_metadata','normal_thread_start_metadata','normal_thread_priority_metadata','normal_signal_control_metadata','windows_startup_metadata','finalization_policy_metadata','object_notification_metadata','unsafe_class_init_metadata','reference_processing_metadata','winnt_filesystem_metadata','object_wait_metadata','boot_unnamed_metadata','class_loader_assertions_metadata','reference_referent_metadata','native_library_metadata','library_name_metadata','windows_canonical_metadata','windows_file_queries_metadata','module_definitions_metadata','file_input_metadata','unsafe_park_metadata'):
-            if name in old:m[name]=copy_record(old[name],directory)
+        artifact_keys=['assembly','object']+[k for k,v in old.items() if k.endswith('_metadata') and isinstance(v,dict) and 'digest' in v]
+        for name in artifact_keys:m[name]=copy_record(old[name],directory)
+        extra=[]
+        for row in old.get('additional_objects',[]):
+            changed=copy.deepcopy(row);changed['object']=copy_record(row['object'],directory);extra.append(changed)
+        if extra:
+            m['additional_objects']=extra
+            S.check(len(extra)==1 and old.get('ROM_object')==old['additional_objects'][0]['object'],'Readonly cache ROM alias differs')
+            m['ROM_object']=extra[0]['object']
         m['tool_sources']=S.tools_identity();m['reused_producer_manifest']=S.artifact(original);m['reused_producer_verification']=S.artifact(receipt)
         m['reused_producer_tool_sources']=old['tool_sources'];m['native_ASM_codegen_rerun']=False;m['COFF_reassembled_this_build']=False
         m['reused_producer_elapsed_ms']=old.get('elapsed_ms');m['elapsed_ms']=round((time.monotonic()-started)*1000)

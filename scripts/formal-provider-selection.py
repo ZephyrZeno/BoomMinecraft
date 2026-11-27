@@ -14,7 +14,8 @@ DEFAULT_ASSEMBLER=Path('D:/Dev/BuildTools/VC/Tools/MSVC/14.44.35207/bin/Hostx64/
 COMMON_SOURCES=('formal-provider-selection.py','prepare-class-init-probe.py','diagnostic-closure.py',
     'diagnostic-objects.py','parallel-diagnostic-assembly.py','canonical-link-response.py',
     'verify-diagnostic-closure.py','verify-initialization-closure.py','closure-batch-artifacts.py',
-    'refresh-boot-unnamed-batch.py','batch-source.py','select-batch-dispatch.py','provider-verification-reuse.py')
+    'refresh-boot-unnamed-batch.py','batch-source.py','select-batch-dispatch.py','provider-verification-reuse.py',
+    'provider-native-artifacts.py','provider-selection-sites.py')
 
 
 def module(name,file):
@@ -107,6 +108,8 @@ def prepare(state_file,output,*,method_roots,class_roots=(),admitted_methods=(),
         seal(identity[key]['path'])
     for pack in packs:
         for record in (pack['reference'],pack['verification'],pack['manifest']['assembly'],pack['manifest']['object']):seal(record['path'])
+        artifacts=S.module('focused_all_provider_objects','provider-native-artifacts.py')
+        for record in artifacts.object_records(pack['manifest']):seal(record['path'])
         for key,record in pack['manifest'].items():
             if key.endswith('_metadata') and isinstance(record,dict) and 'digest' in record:seal(record['path'])
     methods=set(admitted_methods);classes=set(admitted_classes);profile_record=None

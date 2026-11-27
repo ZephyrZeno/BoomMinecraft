@@ -10,6 +10,7 @@ S=importlib.util.module_from_spec(spec);spec.loader.exec_module(S)
 
 
 def prepare(batch,plan,output,family,frame_overlay=None):
+    A=S.module('native_source_artifacts','provider-native-artifacts.py')
     started=time.monotonic();output=Path(output).resolve()
     S.check(output.is_relative_to(S.ART/'runtime-providers') and not output.exists(),'Use a fresh project runtime-providers directory')
     identity,summary,classes=S.base(batch,plan);registry=S.read(S.ROOT/'native-config/runtime-providers.json')
@@ -37,10 +38,11 @@ def prepare(batch,plan,output,family,frame_overlay=None):
     if family in framed_services.FAMILIES:
         module,metadata_kind,_=framed_services.FAMILIES[family]
         C=S.module('source_'+metadata_kind,module)
-        metadata=C.index(summary,classes,S);S.check(members==metadata['methods'],'Native registry differs from original declarations')
+        metadata=C.index(summary,classes,S);S.check(members==A.methods(metadata),'Native registry differs from original declarations')
         frame_reference=framed_services.source_frame(batch,plan,frame_overlay,metadata,S)
-        procs,data=C.native_imports(metadata);extra=sorted(procs|data);imports+=extra
-        source+=''.join(f"EXTERN {n}:{'PROC' if n in procs else 'BYTE'}\n" for n in extra)+C.data(metadata)
+        if not rule.get('canonical_machine',False):
+            procs,data=C.native_imports(metadata);extra=sorted(procs|data);imports+=extra
+            source+=''.join(f"EXTERN {n}:{'PROC' if n in procs else 'BYTE'}\n" for n in extra)+C.data(metadata)
         policy=C.POLICY;dependencies=metadata['required_classes'];modules=metadata.get('required_base_modules',[]);pool_abi=metadata['pool_abi']
         pool_bytes=metadata['pool_bytes'];framed=True;runtime_kernels=C.KERNELS;additional_exports=sorted(C.CONTROL)
     elif family=='normal-unsafe-class-initialization-v1':
@@ -206,13 +208,18 @@ def prepare(batch,plan,output,family,frame_overlay=None):
         runtime_kernels=['classes32.asm','heap.asm','runtime_types.asm','runtime_type_index.asm','identity_hash.asm']
         source+='EXTERN boom_heap_contains:PROC\nEXTERN boom_runtime_type:PROC\nEXTERN boom_identity_hash:PROC\nEXTERN boom_heap_ptr:BYTE\nEXTERN boom_runtime_type_map:BYTE\n.const\nALIGN 8\nPUBLIC boom_provider_identity_pool\nboom_provider_identity_pool DWORD 04A494448h,1,1,0\n QWORD OFFSET boom_heap_ptr,OFFSET boom_runtime_type_map\n'
     else:raise ValueError('Provider family generator is not implemented')
+    strong=family in framed_services.FAMILIES and rule.get('canonical_machine',False)
     template=(S.ROOT/'native/providers/native-wrapper.asm.tpl').read_text(encoding='utf-8')
-    for m in members:
+    for m in ([] if strong else members):
         if framed:
             R=S.module('invocation_traced_source_adapter','verify-batch-frames.py')
             source+=f".code\nPUBLIC boom_m{m['method']}\nPUBLIC boom_m{m['method']}_native\n"+R.native_adapter(m['method'],m['class_id'],rule['pool'],rule['service'],m['operation'])[len('.code\n'):]
         else:source+=template.format(**m,pool=rule['pool'],service=rule['service'])
-    source+=(kernel_override if kernel_override is not None else (S.ROOT/rule['kernel']).read_text(encoding='utf-8'))+'\nEND\n'
+    if strong:
+        R=S.module('strict_source_native_adapter','verify-batch-frames.py')
+        source,code_exports,code_imports=A.service_assembly(C,metadata,R,S.ROOT/rule['kernel'])
+        imports=sorted(code_imports)
+    else:source+=(kernel_override if kernel_override is not None else (S.ROOT/rule['kernel']).read_text(encoding='utf-8'))+'\nEND\n'
     output.mkdir(parents=True);path=output/'provider.asm';path.write_text(source,encoding='utf-8',newline='\n')
     result=dict(schema=1,kind='assembly_runtime_provider_pack',family=family,base=identity,methods=members,
         native_methods=len(members),owner_source=owner,owner_sources=sorted(owners.values(),key=lambda c:c['id']),context_bytes=32,policy=policy,
@@ -228,10 +235,15 @@ def prepare(batch,plan,output,family,frame_overlay=None):
             roots=S.module('source_native_root_projection','provider-native-roots.py')
             result['native_root_spans']=roots.declarations(metadata['native_root_spans'])
         record=output/(metadata_kind+'.json');S.write(record,metadata);result[metadata_kind+'_metadata']=S.artifact(record)
-        result.update(native_entries_traced=True,native_java_upcalls=metadata_kind in ('winnt_filesystem','object_wait','native_library','library_name','windows_canonical','windows_file_queries','module_definitions','file_input','unsafe_park'),leaf_guest_services=False,
+        result.update(A.dependencies(metadata,rule))
+        result.update(native_entries_traced=True,leaf_guest_services=False,
                       all_native_frames=False,frame_overlay=frame_reference,allowed_foreign_imports=sorted(C.FOREIGN))
-        if metadata_kind in ('object_wait','boot_unnamed','reference_referent','native_library','library_name','windows_canonical','windows_file_queries','module_definitions','file_input','unsafe_park'):
-            result.update(required_java_methods=metadata.get('required_java_methods',[]),required_provider_families=metadata.get('required_provider_families',[]))
+        if strong:
+            extra,_=A.prepare_additional(C,metadata,summary,classes,output,S);result['additional_objects']=extra
+            if extra:result['ROM_object']=extra[0]['object']
+            total=set(code_exports)
+            for item in extra:total.update(item['exports'])
+            result.update(code_exports=sorted(code_exports),code_imports=sorted(code_imports),exports=sorted(total),imports=sorted(set(code_imports)-total))
     elif metadata_kind=='unsafe_class_init':
         S.write(output/'unsafe-class-init.json',metadata);result['unsafe_class_init_metadata']=S.artifact(output/'unsafe-class-init.json')
         result.update(native_entries_traced=True,native_java_upcalls=True,all_native_frames=False,frame_overlay=frame_reference)
@@ -309,7 +321,9 @@ def seal(output,assembler):
     if 'finalization_policy_metadata' in m:S.checked(m['finalization_policy_metadata'])
     if 'object_notification_metadata' in m:S.checked(m['object_notification_metadata'])
     if 'unsafe_class_init_metadata' in m:S.checked(m['unsafe_class_init_metadata'])
-    m['object']=S.artifact(output/'provider.obj');m['assembler']=dict(path=str(Path(assembler).resolve()),digest=S.digest(assembler))
+    A=S.module('sealed_provider_artifact_set','provider-native-artifacts.py')
+    for row in m.get('additional_objects',[]):S.checked(row['object'])
+    m['object']=S.artifact(output/'provider.obj');A.object_records(m);m['assembler']=dict(path=str(Path(assembler).resolve()),digest=S.digest(assembler))
     m['assembled']=True;S.write(output/'provider.json',m);return m
 
 

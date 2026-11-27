@@ -243,7 +243,10 @@ def verify(directory,allow_diagnostics=False):
     native_exports.update(frame_exports)
     selected_class_sites=manifest.get('selected_Class_literals',{});selected_class_natives=manifest.get('selected_Class_core_natives',{})
     selected_intern_natives=manifest.get('selected_String_intern_natives',{})
-    if selected_class_sites or selected_class_natives or selected_intern_natives:
+    class_objects=[u['object']['path'] for u in summary.get('class_literals',{}).get('units',[])]
+    class_pool_linked=any(p in manifest['objects'] for p in class_objects)
+    if selected_class_sites or selected_class_natives or selected_intern_natives or class_pool_linked:
+        check(class_objects and all(manifest['objects'].count(p)==1 for p in class_objects),'Class module omitted/duplicated its original COFF')
         c=summary['class_literals']
         with zipfile.ZipFile(coff.artifact(batch,c['index'],'class-literals')) as bundle:
             sites_={r['label']:r for r in map(json.loads,bundle.read('sites.jsonl').splitlines())}
@@ -256,7 +259,10 @@ def verify(directory,allow_diagnostics=False):
         for unit in c['units']:
             coff.artifact(batch,unit['assembly'],'class-literals');defs,_=coff.coff_symbols(coff.artifact(batch,unit['object'],'class-literals'));actual.update(defs)
         check(actual==expected,'Source Class module COFF definitions differ');native_exports.update(actual)
-    if selected_intern_natives:
+    intern_objects=[u['object']['path'] for u in summary.get('string_intern',{}).get('units',[])]
+    intern_linked=any(p in manifest['objects'] for p in intern_objects)
+    if selected_intern_natives or intern_linked:
+        check(intern_objects and all(manifest['objects'].count(p)==1 for p in intern_objects),'String interner omitted/duplicated original COFF/root bank')
         module=summary['string_intern']
         with zipfile.ZipFile(coff.artifact(batch,module['index'],'string-intern')) as bundle:
             methods_={str(r['method']):r for r in map(json.loads,bundle.read('methods.jsonl').splitlines())}
@@ -405,6 +411,7 @@ def verify(directory,allow_diagnostics=False):
     if contracts:required.add('boom_batch_array_clone_pool')
     required.update('boom_batch_vtable'+id_ for id_ in tables)
     if manifest.get('constructor_invocation_sites'):required.add('boom_provider_constructor_selected_sites')
+    required.update(row['symbol'] for row in manifest.get('provider_selection_sites',[]))
     check(defined==required,'Selected COFF definitions differ from verified source bodies/data')
     provider_module=None;packs=[]
     if manifest.get('runtime_provider_packs'):
@@ -423,6 +430,8 @@ def verify(directory,allow_diagnostics=False):
               overlay['replaced_data_object']['path'] not in manifest['objects'],'Closure did not replace exactly the base frame data object')
     site_data,_,_,site_proof=provider_projection.constructor_selection(packs,set(manifest.get('selected_runtime_provider_packs',[])),selected,manifest['selected_methods'])
     check(manifest.get('constructor_invocation_sites')==site_proof and (not site_data or site_data in assembly),'Closure constructor callsite source/data differs')
+    native_data,_,_,native_proof=provider_projection.native_selection(packs,set(manifest.get('selected_runtime_provider_packs',[])),selected,manifest['selected_methods'])
+    check(manifest.get('provider_selection_sites',[])==native_proof and (not native_data or native_data in assembly),'Native selection pointer/data source differs')
     if diagnostic:
         spec=importlib.util.spec_from_file_location('verified_diagnostic_stops',Path(__file__).with_name('verify-diagnostic-closure.py'))
         diagnostic_module=importlib.util.module_from_spec(spec);spec.loader.exec_module(diagnostic_module)
@@ -451,9 +460,13 @@ def verify(directory,allow_diagnostics=False):
                   'Provider omitted required original dispatch contracts')
             families={packs[j]['manifest']['family'] for j in indices}
             check(set(p.get('required_provider_families',[]))<=families,'Provider omitted required separate native family')
-            check(p['object']['path'] in manifest['objects'],'Provider COFF omitted from closure link')
-            definitions,imports=coff.coff_symbols(Path(p['object']['path']),set(p.get('allowed_foreign_imports',[])))
-            check(not native_exports&definitions,'Provider conflicts with selected base definitions');native_exports.update(definitions)
+            if 'class_literals' in p['required_base_modules']:check(class_pool_linked,'Provider omitted original Class module/root bank')
+            if 'string_intern' in p['required_base_modules']:check(intern_linked,'Provider omitted original String interner/root bank')
+            for record in provider_projection.provider_objects(p):
+                check(manifest['objects'].count(record['path'])==1,'Provider code/readonly COFF omitted or duplicated')
+                provider_projection.checked_provider_record(record)
+                definitions,imports=coff.coff_symbols(Path(record['path']),set(p.get('allowed_foreign_imports',[])))
+                check(not native_exports&definitions,'Provider conflicts with selected base definitions');native_exports.update(definitions)
         provider_native_count=len(selected_pack_native)
     root_spec=importlib.util.spec_from_file_location('independent_native_root_projection',Path(__file__).with_name('provider-native-roots.py'))
     root_projection=importlib.util.module_from_spec(root_spec);root_spec.loader.exec_module(root_projection)

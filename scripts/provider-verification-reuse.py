@@ -16,6 +16,8 @@ def reuse(verifier,batch,plan,paths,packs):
     for pack in packs:
         path=S.checked(pack['reference']);S.checked(pack['verification']);m=pack['manifest']
         S.check(S.read(path)==m,'Reused provider manifest bytes differ')
+        artifacts=S.module('handoff_source_native_artifacts','provider-native-artifacts.py')
+        for record in artifacts.object_records(m):S.checked(record)
         base=m['base']
         S.check(Path(base['batch']).resolve()==batch and Path(base['plan']).resolve()==plan,
                 'Reused provider batch/plan differs')

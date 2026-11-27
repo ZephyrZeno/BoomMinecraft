@@ -58,7 +58,8 @@
           "operation": 7,
           "owner": "java/io/FileDescriptor"
         }
-      ]
+      ],
+      "native_java_upcalls": true
     },
     "normal-unsafe-park-v1": {
       "owner": "jdk/internal/misc/Unsafe",
@@ -80,7 +81,8 @@
           "access": 257,
           "operation": 1
         }
-      ]
+      ],
+      "native_java_upcalls": true
     },
     "normal-module-definitions-v1": {
       "owner": "java/lang/Module",
@@ -95,7 +97,8 @@
         { "name": "addExports0", "descriptor": "(Ljava/lang/Module;Ljava/lang/String;Ljava/lang/Module;)V", "access": 266, "operation": 2 },
         { "name": "addExportsToAll0", "descriptor": "(Ljava/lang/Module;Ljava/lang/String;)V", "access": 266, "operation": 3 },
         { "name": "addExportsToAllUnnamed0", "descriptor": "(Ljava/lang/Module;Ljava/lang/String;)V", "access": 266, "operation": 4 }
-      ]
+      ],
+      "native_java_upcalls": true
     },
     "normal-windows-canonical-v1": {
       "owner": "java/io/WinNTFileSystem",
@@ -107,7 +110,8 @@
       "methods": [
         { "name": "canonicalize0", "descriptor": "(Ljava/lang/String;)Ljava/lang/String;", "access": 258, "operation": 0 },
         { "name": "getDriveDirectory", "descriptor": "(I)Ljava/lang/String;", "access": 258, "operation": 1 }
-      ]
+      ],
+      "native_java_upcalls": true
     },
     "normal-windows-file-queries-v1": {
       "owner": "java/io/WinNTFileSystem",
@@ -124,7 +128,8 @@
         { "name": "getSpace0", "descriptor": "(Ljava/io/File;I)J", "access": 258, "operation": 4 },
         { "name": "getNameMax0", "descriptor": "(Ljava/lang/String;)I", "access": 258, "operation": 5 },
         { "name": "checkAccess0", "descriptor": "(Ljava/io/File;I)Z", "access": 258, "operation": 6 }
-      ]
+      ],
+      "native_java_upcalls": true
     },
     "normal-class-loader-assertions-v1": {
       "owner": "java/lang/ClassLoader",
@@ -136,7 +141,8 @@
       "methods": [
         { "name": "registerNatives", "descriptor": "()V", "access": 266, "operation": 0 },
         { "name": "retrieveDirectives", "descriptor": "()Ljava/lang/AssertionStatusDirectives;", "access": 266, "operation": 1 }
-      ]
+      ],
+      "native_java_upcalls": false
     },
     "normal-boot-unnamed-module-v1": {
       "owner": "jdk/internal/loader/BootLoader",
@@ -147,7 +153,8 @@
       "service": "boom_boot_unnamed_normal",
       "methods": [
         { "name": "setBootLoaderUnnamedModule0", "descriptor": "(Ljava/lang/Module;)V", "access": 266, "operation": 0 }
-      ]
+      ],
+      "native_java_upcalls": false
     },
     "normal-scoped-memory-registration-v1": {
       "owner": "jdk/internal/misc/ScopedMemoryAccess",
@@ -458,7 +465,8 @@
         { "name": "wait0", "descriptor": "(J)V", "access": 274, "operation": 0 },
         { "owner": "java/lang/Thread", "name": "interrupt0", "descriptor": "()V", "access": 258, "operation": 1 },
         { "owner": "java/lang/Thread", "name": "clearInterruptEvent", "descriptor": "()V", "access": 266, "operation": 2 }
-      ]
+      ],
+      "native_java_upcalls": true
     },
     "normal-reference-processing-v1": {
       "owner": "java/lang/ref/Reference",
@@ -471,7 +479,8 @@
         { "name": "getAndClearReferencePendingList", "descriptor": "()Ljava/lang/ref/Reference;", "access": 266, "operation": 0 },
         { "name": "hasReferencePendingList", "descriptor": "()Z", "access": 266, "operation": 1 },
         { "name": "waitForReferencePendingList", "descriptor": "()V", "access": 266, "operation": 2 }
-      ]
+      ],
+      "native_java_upcalls": false
     },
     "normal-winnt-filesystem-v1": {
       "owner": "java/io/WinNTFileSystem",
@@ -482,7 +491,8 @@
       "service": "boom_provider_winnt_file_service",
       "methods": [
         { "name": "initIDs", "descriptor": "()V", "access": 266, "operation": 0 }
-      ]
+      ],
+      "native_java_upcalls": true
     },
     "normal-unsafe-class-initialization-v1": {
       "owner": "jdk/internal/misc/Unsafe",
@@ -602,7 +612,8 @@
           "operation": 3,
           "owner": "java/lang/ref/PhantomReference"
         }
-      ]
+      ],
+      "native_java_upcalls": false
     },
     "normal-native-libraries-v1": {
       "owner": "jdk/internal/loader/NativeLibraries",
@@ -637,7 +648,8 @@
           "access": 264,
           "operation": 3
         }
-      ]
+      ],
+      "native_java_upcalls": true
     },
     "normal-library-name-v1": {
       "owner": "java/lang/System",
@@ -653,7 +665,187 @@
           "access": 265,
           "operation": 0
         }
+      ],
+      "native_java_upcalls": true
+    },
+    "normal-methods-v1": {
+      "owner": "java/lang/Class",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/normal_methods.asm.inc",
+      "pool": "boom_normal_method_pool",
+      "service": "boom_normal_method_service",
+      "methods": [
+        {
+          "name": "getDeclaredMethods0",
+          "descriptor": "(Z)[Ljava/lang/reflect/Method;",
+          "access": 258,
+          "operation": 0
+        }
+      ],
+      "native_java_upcalls": true,
+      "canonical_machine": true
+    },
+    "normal-constant-pool-v1": {
+      "owner": "java/lang/Class",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/normal_constant_pool.asm.inc",
+      "pool": "boom_normal_constant_pool_pool",
+      "service": "boom_normal_constant_pool_service",
+      "methods": [
+        {
+          "name": "getConstantPool",
+          "descriptor": "()Ljdk/internal/reflect/ConstantPool;",
+          "access": 256,
+          "operation": 0
+        },
+        {
+          "name": "getSize0",
+          "descriptor": "(Ljava/lang/Object;)I",
+          "access": 258,
+          "operation": 1,
+          "owner": "jdk/internal/reflect/ConstantPool"
+        },
+        {
+          "name": "getClassAt0",
+          "descriptor": "(Ljava/lang/Object;I)Ljava/lang/Class;",
+          "access": 258,
+          "operation": 2,
+          "owner": "jdk/internal/reflect/ConstantPool"
+        },
+        {
+          "name": "getClassRefIndexAt0",
+          "descriptor": "(Ljava/lang/Object;I)I",
+          "access": 258,
+          "operation": 4,
+          "owner": "jdk/internal/reflect/ConstantPool"
+        },
+        {
+          "name": "getMemberRefInfoAt0",
+          "descriptor": "(Ljava/lang/Object;I)[Ljava/lang/String;",
+          "access": 258,
+          "operation": 9,
+          "owner": "jdk/internal/reflect/ConstantPool"
+        },
+        {
+          "name": "getNameAndTypeRefIndexAt0",
+          "descriptor": "(Ljava/lang/Object;I)I",
+          "access": 258,
+          "operation": 10,
+          "owner": "jdk/internal/reflect/ConstantPool"
+        },
+        {
+          "name": "getNameAndTypeRefInfoAt0",
+          "descriptor": "(Ljava/lang/Object;I)[Ljava/lang/String;",
+          "access": 258,
+          "operation": 11,
+          "owner": "jdk/internal/reflect/ConstantPool"
+        },
+        {
+          "name": "getIntAt0",
+          "descriptor": "(Ljava/lang/Object;I)I",
+          "access": 258,
+          "operation": 12,
+          "owner": "jdk/internal/reflect/ConstantPool"
+        },
+        {
+          "name": "getLongAt0",
+          "descriptor": "(Ljava/lang/Object;I)J",
+          "access": 258,
+          "operation": 13,
+          "owner": "jdk/internal/reflect/ConstantPool"
+        },
+        {
+          "name": "getFloatAt0",
+          "descriptor": "(Ljava/lang/Object;I)F",
+          "access": 258,
+          "operation": 14,
+          "owner": "jdk/internal/reflect/ConstantPool"
+        },
+        {
+          "name": "getDoubleAt0",
+          "descriptor": "(Ljava/lang/Object;I)D",
+          "access": 258,
+          "operation": 15,
+          "owner": "jdk/internal/reflect/ConstantPool"
+        },
+        {
+          "name": "getStringAt0",
+          "descriptor": "(Ljava/lang/Object;I)Ljava/lang/String;",
+          "access": 258,
+          "operation": 16,
+          "owner": "jdk/internal/reflect/ConstantPool"
+        },
+        {
+          "name": "getUTF8At0",
+          "descriptor": "(Ljava/lang/Object;I)Ljava/lang/String;",
+          "access": 258,
+          "operation": 17,
+          "owner": "jdk/internal/reflect/ConstantPool"
+        },
+        {
+          "name": "getTagAt0",
+          "descriptor": "(Ljava/lang/Object;I)B",
+          "access": 258,
+          "operation": 18,
+          "owner": "jdk/internal/reflect/ConstantPool"
+        }
+      ],
+      "native_java_upcalls": true,
+      "canonical_machine": true
+    },
+    "normal-method-invoke-static-v1": {
+      "owner": "jdk/internal/reflect/DirectMethodHandleAccessor$NativeAccessor",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/method_invoke_static.asm.inc",
+      "pool": "boom_provider_method_invoke_pool",
+      "service": "boom_provider_method_invoke_service",
+      "methods": [
+        {
+          "name": "invoke0",
+          "descriptor": "(Ljava/lang/reflect/Method;Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;",
+          "access": 266,
+          "operation": 0
+        },
+        {
+          "name": "invoke0",
+          "descriptor": "(Ljava/lang/reflect/Method;Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;",
+          "access": 266,
+          "operation": 1,
+          "owner": "jdk/internal/reflect/NativeMethodAccessorImpl"
+        }
+      ],
+      "native_java_upcalls": true,
+      "canonical_machine": true,
+      "required_provider_families": [
+        "normal-methods-v1"
       ]
+    },
+    "normal-file-output-standard-v1": {
+      "owner": "java/io/FileOutputStream",
+      "loader": "bootstrap",
+      "source_id": "jdk:java.base",
+      "kernel": "native/providers/file_output_standard.asm.inc",
+      "pool": "boom_provider_file_output_standard_pool",
+      "service": "boom_provider_file_output_standard_service",
+      "methods": [
+        {
+          "name": "write",
+          "descriptor": "(IZ)V",
+          "access": 258,
+          "operation": 0
+        },
+        {
+          "name": "writeBytes",
+          "descriptor": "([BIIZ)V",
+          "access": 258,
+          "operation": 1
+        }
+      ],
+      "native_java_upcalls": true,
+      "canonical_machine": true
     }
   }
 }

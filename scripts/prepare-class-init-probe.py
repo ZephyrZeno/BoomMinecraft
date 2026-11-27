@@ -26,7 +26,7 @@ def source_identity(batch,plan):
 def prepare(batch,plan,output,class_roots=None,method_roots=None,scan=False,contract_roots=None,expand_dispatch=True,diagnostic=None,provider_packs=None,verified_provider_packs=None):
     batch,plan,output=Path(batch),Path(plan),Path(output);output.mkdir(parents=True,exist_ok=True)
     summary=json.loads((batch/'summary.json').read_text(encoding='utf-8'));assert summary['schema']>=5
-    provider_module=None;packs=[];pack_natives={};pack_for={};selected_pack_natives={};selected_packs=set();pack_needs_class_pool=False;pack_needs_properties=False
+    provider_module=None;packs=[];pack_natives={};pack_for={};selected_pack_natives={};selected_packs=set();pack_needs_class_pool=False;pack_needs_properties=False;pack_needs_intern=False
     if provider_packs:
         spec=importlib.util.spec_from_file_location('selected_separate_native_providers',Path(__file__).with_name('verify-runtime-provider-pack.py'))
         provider_module=importlib.util.module_from_spec(spec);spec.loader.exec_module(provider_module)
@@ -300,6 +300,8 @@ def prepare(batch,plan,output,class_roots=None,method_roots=None,scan=False,cont
                 if id_ in selected_pack_natives:continue
                 selected_pack_natives[id_]=pack_natives[id_];pack_index=pack_for[id_];selected_packs.add(pack_index)
                 pack_needs_class_pool|='class_literals' in packs[pack_index]['manifest']['required_base_modules']
+                pack_needs_intern|='string_intern' in packs[pack_index]['manifest']['required_base_modules']
+                if pack_needs_intern and not summary.get('string_intern',{}).get('units'):raise ValueError('Provider requires original String interner module/root')
                 if 'properties' in packs[pack_index]['manifest']['required_base_modules']:
                     if not summary.get('properties',{}).get('units'):raise ValueError('Provider requires the original properties base module')
                     pack_needs_properties=True
@@ -389,6 +391,16 @@ def prepare(batch,plan,output,class_roots=None,method_roots=None,scan=False,cont
             frontiers['unselected_initialization',symbol]=dict(kind='unselected_initialization',symbol=symbol,
                 reason='Reached constructor requires an unselected original class initializer',binding=None,class_id=id_,
                 source_sha256=state['source_sha256'],initialization=state)
+    native_site_data='';native_site_proof=[]
+    if packs:
+        native_site_data,pending_methods,pending_classes,native_site_proof=diagnostic_checks.native_selection(packs,selected_packs,selected_classes,selected_methods)
+        if diagnostic is None and (pending_methods or pending_classes):raise ValueError('Native invocation has unselected original source targets')
+        lazy_targets.update(f'boom_m{i}' for i in pending_methods)
+        for id_ in sorted(pending_classes):
+            state=states[id_];symbol=f'boom_batch_initialize_{id_}'
+            frontiers['unselected_initialization',symbol]=dict(kind='unselected_initialization',symbol=symbol,
+                reason='Reached native invocation needs an unselected original class descriptor',binding=None,class_id=id_,
+                source_sha256=state['source_sha256'],initialization=state)
     if diagnostic is not None:
         for symbol in sorted(lazy_targets-set(functions)):
             id_=int(re.fullmatch(r'boom_m(\d+)(?:_body)?',symbol)[1]);m=method(id_)
@@ -442,6 +454,7 @@ def prepare(batch,plan,output,class_roots=None,method_roots=None,scan=False,cont
         clone_pool=match[0];parts.extend(('.const','ALIGN 8','PUBLIC boom_batch_array_clone_pool',clone_pool))
     if lookup_map:parts.append(lookup_map)
     if invocation_data:parts.append(invocation_data)
+    if native_site_data:parts.append(native_site_data)
     parts.extend(dispatch_data.values());parts.extend(concat_data.values());parts.extend(handler_data.values());parts.append('.code');parts.extend(functions.values());body='\n'.join(parts)+'\n'
     definitions=set(re.findall(r'(?m)^\s*(boom_\w+)(?::|\s+(?:PROC|LABEL|QWORD|DWORD|WORD|BYTE)\b)',body))
     calls=set(re.findall(r'(?m)^\s*(?:call|jmp)\s+(boom_\w+)',body));references=set(re.findall(r'\bboom_\w+\b',body))-definitions
@@ -457,13 +470,13 @@ def prepare(batch,plan,output,class_roots=None,method_roots=None,scan=False,cont
         (f"\t{r['values_method']}" if 'values_method' in r else '')+'\n' for r in roots),encoding='ascii')
     (output/'constants.tsv').write_text(''.join(f"{r['name']}\t{r['class_id']}\t{f['name']}\t{f['index']}\t{f['descriptor']}\n" for r in constant_roots for f in r['fields']),encoding='ascii')
     objects=[u['object']['path'] for key in ('string_literals','runtime_metadata') for u in summary[key]['units']]
-    objects.extend(packs[i]['manifest']['object']['path'] for i in sorted(selected_packs))
+    objects.extend(r['path'] for i in sorted(selected_packs) for r in diagnostic_checks.provider_objects(packs[i]['manifest']))
     if summary['schema']>=23:objects.append((overlay['object'] if overlay else summary['frames']['units'][0]['object'])['path'])
     if selected_frame_natives:objects.append(summary['frames']['units'][1]['object']['path'])
     objects.append(summary['numeric_kernel_object']['path'])
     if selected_natives:objects.extend(u['object']['path'] for u in summary['system_natives']['units'])
     if selected_class_sites or selected_class_natives or selected_intern_natives or selected_unsafe_field_natives or selected_lookup_natives or selected_frame_natives or pack_needs_class_pool:objects.extend(u['object']['path'] for u in summary['class_literals']['units'])
-    if selected_intern_natives:objects.extend(u['object']['path'] for u in summary['string_intern']['units'])
+    if selected_intern_natives or pack_needs_intern:objects.extend(u['object']['path'] for u in summary['string_intern']['units'])
     if selected_property_natives or pack_needs_properties:objects.extend(u['object']['path'] for u in summary['properties']['units'])
     if selected_bootstrap_natives:objects.extend(u['object']['path'] for u in summary['class_bootstrap']['units'])
     if selected_unsafe_natives or selected_unsafe_field_natives:objects.extend(u['object']['path'] for u in summary['unsafe_bootstrap']['units'])
@@ -525,7 +538,7 @@ def prepare(batch,plan,output,class_roots=None,method_roots=None,scan=False,cont
         if summary['schema']>=11:exports.extend(('boom_java_class_name_pool','boom_java_class_name_root_count','boom_java_class_name_roots'))
         exports.extend(f"boom_m{m['method']}{suffix}" for m in class_natives.values() for suffix in ('','_native'))
         exports.extend(selected_class_sites)
-    if selected_intern_natives:
+    if selected_intern_natives or pack_needs_intern:
         exports.extend(('boom_java_string_intern_pool','boom_java_string_intern_root_count','boom_java_string_intern_root'))
         exports.extend(f"boom_m{m['method']}{suffix}" for m in intern_natives.values() for suffix in ('','_native'))
     if selected_property_natives or pack_needs_properties:
@@ -570,6 +583,7 @@ def prepare(batch,plan,output,class_roots=None,method_roots=None,scan=False,cont
     if diagnostic is not None and diagnostic.get('context_rows'):manifest['diagnostic_context_rows']=True
     if all_source_initializer_map:manifest['all_source_initializer_map']=True
     if invocation_proof:manifest['constructor_invocation_sites']=invocation_proof
+    if native_site_proof:manifest['provider_selection_sites']=native_site_proof
     (output/'closure.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
     return manifest
 

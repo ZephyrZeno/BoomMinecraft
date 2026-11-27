@@ -112,7 +112,17 @@
     "scripts/provider-native-roots.py",
     "native/kernels/provider_native_root_snapshot.asm.inc",
     "scripts/provider-tool-manifest.py",
-    "native-config/runtime-provider-tools.json"
+    "native-config/runtime-provider-tools.json",
+    "scripts/provider-native-artifacts.py",
+    "scripts/provider-selection-sites.py",
+    "scripts/normal-methods-source.py",
+    "native/providers/normal_methods.asm.inc",
+    "scripts/normal-constant-pool-source.py",
+    "native/providers/normal_constant_pool.asm.inc",
+    "scripts/method-invoke-source.py",
+    "native/providers/method_invoke_static.asm.inc",
+    "scripts/file-output-standard-source.py",
+    "native/providers/file_output_standard.asm.inc"
   ],
   "shared_files": [
     "scripts/build-runtime-provider-pack.py",
@@ -145,7 +155,9 @@
     "scripts/provider-native-roots.py",
     "native/kernels/provider_native_root_snapshot.asm.inc",
     "scripts/provider-tool-manifest.py",
-    "native-config/runtime-provider-tools.json"
+    "native-config/runtime-provider-tools.json",
+    "scripts/provider-native-artifacts.py",
+    "scripts/provider-selection-sites.py"
   ],
   "families": {
     "normal-file-input-readonly-v1": {
@@ -595,6 +607,62 @@
         "scripts/library-name-source.py",
         "native/providers/library_name_normal.asm.inc"
       ]
+    },
+    "normal-methods-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/lang/Class"
+      },
+      "model": "scripts/normal-methods-source.py",
+      "verifier": "scripts/framed-runtime-service.py",
+      "kernel": "native/providers/normal_methods.asm.inc",
+      "owned_files": [
+        "scripts/normal-methods-source.py",
+        "native/providers/normal_methods.asm.inc"
+      ]
+    },
+    "normal-constant-pool-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/lang/Class"
+      },
+      "model": "scripts/normal-constant-pool-source.py",
+      "verifier": "scripts/framed-runtime-service.py",
+      "kernel": "native/providers/normal_constant_pool.asm.inc",
+      "owned_files": [
+        "scripts/normal-constant-pool-source.py",
+        "native/providers/normal_constant_pool.asm.inc"
+      ]
+    },
+    "normal-method-invoke-static-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "jdk/internal/reflect/DirectMethodHandleAccessor$NativeAccessor"
+      },
+      "model": "scripts/method-invoke-source.py",
+      "verifier": "scripts/framed-runtime-service.py",
+      "kernel": "native/providers/method_invoke_static.asm.inc",
+      "owned_files": [
+        "scripts/method-invoke-source.py",
+        "native/providers/method_invoke_static.asm.inc"
+      ]
+    },
+    "normal-file-output-standard-v1": {
+      "source_scope": {
+        "loader": "bootstrap",
+        "source_id": "jdk:java.base",
+        "owner": "java/io/FileOutputStream"
+      },
+      "model": "scripts/file-output-standard-source.py",
+      "verifier": "scripts/framed-runtime-service.py",
+      "kernel": "native/providers/file_output_standard.asm.inc",
+      "owned_files": [
+        "scripts/file-output-standard-source.py",
+        "native/providers/file_output_standard.asm.inc"
+      ]
     }
   },
   "dependency_audits": {
@@ -615,6 +683,7 @@
         "scripts/normal-thread-start-source.py",
         "scripts/normal-throwable-source.py",
         "scripts/object-notification-source.py",
+        "scripts/provider-native-artifacts.py",
         "scripts/provider-native-roots.py",
         "scripts/runtime-provider-source.py",
         "scripts/scoped-memory-source.py",
@@ -1058,9 +1127,13 @@
         "native/providers/boot_unnamed_normal.asm.inc",
         "native/providers/class_loader_assertions.asm.inc",
         "native/providers/file_input_readonly.asm.inc",
+        "native/providers/file_output_standard.asm.inc",
         "native/providers/library_name_normal.asm.inc",
+        "native/providers/method_invoke_static.asm.inc",
         "native/providers/module_definitions_normal.asm.inc",
         "native/providers/native_library_lifecycle.asm.inc",
+        "native/providers/normal_constant_pool.asm.inc",
+        "native/providers/normal_methods.asm.inc",
         "native/providers/object_wait.asm.inc",
         "native/providers/reference_processing.asm.inc",
         "native/providers/reference_referent_get.asm.inc",
@@ -1069,7 +1142,9 @@
         "native/providers/windows_file_queries.asm.inc",
         "native/providers/winnt_filesystem.asm.inc",
         "scripts/native-frame-overlay.py",
+        "scripts/provider-native-artifacts.py",
         "scripts/provider-native-roots.py",
+        "scripts/provider-selection-sites.py",
         "scripts/verify-batch-assembly.py",
         "scripts/verify-batch-frames.py"
       ],
@@ -1369,6 +1444,97 @@
       "tool_sources": [],
       "runtime_sources": [],
       "dynamic_modules": []
+    },
+    "scripts/provider-native-artifacts.py": {
+      "tool_sources": [],
+      "runtime_sources": [],
+      "dynamic_modules": []
+    },
+    "scripts/provider-selection-sites.py": {
+      "tool_sources": [
+        "scripts/framed-runtime-service.py"
+      ],
+      "runtime_sources": [],
+      "dynamic_modules": [
+        "S.module('selection_' + key, module)"
+      ]
+    },
+    "scripts/normal-methods-source.py": {
+      "tool_sources": [
+        "scripts/constructor-provider-source.py",
+        "scripts/verify-translation-ir.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/java_classes.asm",
+        "native/runtime/java_string_intern.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/normal-constant-pool-source.py": {
+      "tool_sources": [
+        "native/providers/normal_methods.asm.inc",
+        "scripts/constructor-provider-source.py",
+        "scripts/verify-translation-ir.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/exceptions.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/java_classes.asm",
+        "native/runtime/java_string_intern.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/method-invoke-source.py": {
+      "tool_sources": [
+        "scripts/file-bootstrap-source.py",
+        "scripts/normal-methods-source.py",
+        "scripts/verify-translation-ir.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/exceptions.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/java_classes.asm",
+        "native/runtime/java_properties.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
+    },
+    "scripts/file-output-standard-source.py": {
+      "tool_sources": [
+        "scripts/file-bootstrap-source.py",
+        "scripts/verify-translation-ir.py"
+      ],
+      "runtime_sources": [
+        "native/runtime/classes32.asm",
+        "native/runtime/file_descriptors.asm",
+        "native/runtime/file_streams.asm",
+        "native/runtime/frames.asm",
+        "native/runtime/heap.asm",
+        "native/runtime/java_properties.asm",
+        "native/runtime/objects.asm",
+        "native/runtime/runtime_type_index.asm",
+        "native/runtime/runtime_types.asm",
+        "native/runtime/types.asm"
+      ],
+      "dynamic_modules": []
     }
   },
   "api_scopes": {
@@ -1389,6 +1555,13 @@
     {
       "source": "scripts/framed-runtime-service.py",
       "expression": "S.module('verify_' + key, module)",
+      "table": "scripts/framed-runtime-service.py",
+      "assignment": "FAMILIES",
+      "column": 0
+    },
+    {
+      "source": "scripts/provider-selection-sites.py",
+      "expression": "S.module('selection_' + key, module)",
       "table": "scripts/framed-runtime-service.py",
       "assignment": "FAMILIES",
       "column": 0
@@ -1449,6 +1622,10 @@
     "native/runtime/module_objects.asm": [],
     "native/providers/file_input_readonly.asm.inc": [],
     "native/providers/unsafe_park.asm.inc": [],
-    "native/kernels/provider_native_root_snapshot.asm.inc": []
+    "native/kernels/provider_native_root_snapshot.asm.inc": [],
+    "native/providers/normal_methods.asm.inc": [],
+    "native/providers/normal_constant_pool.asm.inc": [],
+    "native/providers/method_invoke_static.asm.inc": [],
+    "native/providers/file_output_standard.asm.inc": []
   }
 }

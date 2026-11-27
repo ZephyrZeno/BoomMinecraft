@@ -60,6 +60,19 @@ def same_provider_record(left,right):
     return Path(left['path']).resolve()==Path(right['path']).resolve() and all(left['digest'][k]==right['digest'][k] for k in ('size','sha256'))
 
 
+def provider_objects(manifest):
+    spec=importlib.util.spec_from_file_location('source_provider_objects',Path(__file__).with_name('provider-native-artifacts.py'))
+    artifact=importlib.util.module_from_spec(spec);spec.loader.exec_module(artifact)
+    return artifact.object_records(manifest)
+
+
+def native_selection(provider_packs,selected_packs,selected_classes,selected_methods):
+    spec=importlib.util.spec_from_file_location('selection_native_source_io',Path(__file__).with_name('runtime-provider-source.py'))
+    S=importlib.util.module_from_spec(spec);spec.loader.exec_module(S)
+    model=S.module('selection_native_source_model','provider-selection-sites.py')
+    return model.project(provider_packs,selected_packs,selected_classes,selected_methods,S)
+
+
 def frame_overlay(provider_packs):
     refs=[p['manifest']['frame_overlay'] for p in provider_packs or [] if p['manifest'].get('frame_overlay')]
     if not refs:return None
@@ -122,11 +135,11 @@ def globals_index(batch,summary,runtime,coff,provider_packs=None,plan=None):
         for pack in provider_packs:
             metadata=json.loads(runtime.with_name('runtime.json').read_text(encoding='utf-8-sig'))
             check(all(metadata['sources'].get(p)==h for p,h in pack['manifest']['runtime_kernel_sha256'].items()),'Runtime provider imported kernel/heap ABI differs')
-            record=pack['manifest']['object'];p=Path(record['path'])
-            check(p.stat().st_size==record['digest']['size'] and hashlib.sha256(p.read_bytes()).hexdigest()==record['digest']['sha256'],'Provider COFF changed during global indexing')
-            definitions,_=coff.coff_symbols(p,set(pack['manifest'].get('allowed_foreign_imports',[])))
-            check(not definitions&known and not definitions&set(providers),'Provider conflicts with runtime/base definitions')
-            known.update(definitions);objects.append(dict(path=str(p),sha256=record['digest']['sha256']))
+            for record in provider_objects(pack['manifest']):
+                p=checked_provider_record(record)
+                definitions,_=coff.coff_symbols(p,set(pack['manifest'].get('allowed_foreign_imports',[])))
+                check(not definitions&known and not definitions&set(providers),'Provider conflicts with runtime/base definitions')
+                known.update(definitions);objects.append(dict(path=str(p),sha256=record['digest']['sha256']))
     identity=dict(runtime_dll=str(runtime.resolve()),runtime_sha256=hashlib.sha256(runtime.read_bytes()).hexdigest(),objects=objects)
     if sparse:identity['sparse_artifact_source']=sparse
     if provider_packs:identity['runtime_provider_packs']=[dict(manifest=p['reference'],verification=p['verification']) for p in provider_packs]
