@@ -4,11 +4,11 @@ An experimental AOT compiler, assembly runtime, and launcher for Minecraft: Java
 
 自研编译器将 JVM 字节码翻译为 x86-64 汇编，目标是通过启动器运行完整原版 Minecraft。游戏逻辑、运行时及游戏执行中的多核、GPU、内存优化均以汇编实现。翻译器使用 Rust，构建工具使用 Python 和 PowerShell，启动器使用 C#。
 
-**项目处于开发阶段，完整 Minecraft 客户端尚未启动。** 2026 年 11 月 27 日，包含 56,665 个选入 Java 方法和 [29 组运行时输入](docs/NATIVE_RUNTIME_29.md)的原生镜像通过独立来源／ASM／COFF 完整校验和实际执行。原始 `System.initPhase1`、`System.initPhase2` 与 [initPhase3](docs/SYSTEM_PHASE3.md) 均正常返回，VM 初始化级别到达 4，进程退出码为 0。两个后台线程正常退出并回收，等待域与监视器清理通过；Minecraft 入口和世界仍未完成。链接数量与实际执行范围分别记录。
+**项目处于开发阶段，完整 Minecraft 客户端和世界尚未启动。** 当前[31 包原生入口](docs/NATIVE_RUNTIME_31.md)在包含71,771个原始 Java 方法的源选择上通过独立来源／ASM／COFF 校验，实际完成 System 三阶段到 VM4、正常 argv、Parker 生命周期、完整根快照及后台线程退出清理。标准入口在原 Main 日志初始化的 `Class.getDeclaredMethods0` 缺口停止，Main 方法体和帮助输出尚未完成。方法数量与实际执行范围分别记录。
 
-当前[31 包原生入口](docs/NATIVE_RUNTIME_31.md)已实际完成 System 三阶段、正常 argv、Parker 生命周期及完整源／native 根快照，随后在原 Main 日志初始化中停于未实现的 `Class.getDeclaredMethods0`。Main 方法体与帮助输出尚未执行完成。Windows 文件元数据内核通过 JDK 对照，窗口调用桥通过无窗口契约测试。图形运行时和创建世界仍在实现。多核线程内核已有并发测试，游戏性能提升需要在完整启动后测量；自动／并发收集未实现。[Lambda 通用展开](docs/NORMAL_LAMBDA_EXPANSION.md)已在独立候选中执行原严格 Builder，正式稀疏类型接线仍待完成。
+[方法枚举](docs/NORMAL_METHODS.md)、[原常量池读取](docs/NORMAL_CONSTANT_POOL.md)和[有界反射调用](docs/METHOD_INVOKE_STATIC.md)的独立汇编候选已通过原 Java API、JDK 对照、OS 线程与显式 GC 验证。派生启动试验已越过这些反射缺口，推进到 JDK jimage 资源读取的原类初始化依赖；候选的正式登记和完整 Main 仍未完成。只读[JIMAGE 映射所有者](docs/JIMAGE_OWNER.md)与[Inflater 数组接口](docs/INFLATER_NORMAL.md)已完成独立验证，资源路径正在接线。原 Inflater 构造／end 的独立三声明前缀也通过了真实 System123 和三后台线程清理。
 
-[正常方法反射候选](docs/NORMAL_METHODS.md)已通过原 Java 查找／复制、JDK 对照、八线程和显式 GC 测试；独立派生 Main 进程越过方法枚举，下一实际缺口为 `Class.getConstantPool`。该候选尚未正式登记，不代表完整 Main 或游戏已启动。
+Windows 文件元数据内核通过 JDK 对照，窗口调用桥通过无窗口契约测试；图形运行时和创建世界仍在实现。多核线程内核已有并发测试，游戏性能提升需要在完整启动后测量；自动／并发收集未实现。[Lambda 通用展开](docs/NORMAL_LAMBDA_EXPANSION.md)已在独立候选中执行原严格 Builder，正式稀疏类型接线仍待完成。
 
 v145 新增[正常 BootLoader 模块发布](docs/NORMAL_BOOTLOADER_MODULE.md)，正式原生初始化链已验收相应前缀。[ClassLoader 汇编实现](docs/CLASS_LOADER_ASSERTIONS.md)已作为第 23 包通过独立源选择、原 Java 冷初始化、八线程、真实堆耗尽及正常根图 GC 检查。动态模块／类加载、后续 VM 初始化和游戏启动仍未完成。
 
