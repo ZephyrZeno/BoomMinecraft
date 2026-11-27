@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "name": "JCFN128/1 with CNFE callback48/1",
+  "architecture": "Windows_x64_pure_MASM",
+  "service": "boom_java_class_lookup_cnfe",
+  "signature": "RCX=Context32*, RDX=raw managed argv*, R8=existing JCFN128*, R9D=operation; RAX=Class oop/null",
+  "operations": {
+    "forName0": 0,
+    "findBootstrapClass": 1
+  },
+  "native_declarations": [
+    "java/lang/Class.forName0(Ljava/lang/String;ZLjava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/Class;",
+    "java/lang/ClassLoader.findBootstrapClass(Ljava/lang/String;)Ljava/lang/Class;"
+  ],
+  "class_pool": "JCLS144/1",
+  "type_map": "RTYP/2",
+  "type_descriptor": "TYPE/1,40 bytes",
+  "loader_instanceof_signature": "RCX=loader oop, RDX=RTYP map*, R8=ClassLoader TypeDesc*, R9=Context32*",
+  "loader_parameter_sources": {
+    "map": "JCLS144+40",
+    "target_TypeDesc": "JCLS144+112"
+  },
+  "callback_table": {
+    "symbol": "boom_class_lookup_cnfe_callbacks",
+    "bytes": 48,
+    "version": 1,
+    "immutable": true,
+    "lifetime": "same source/loader/transform/layout generation as the existing JCFN pool",
+    "fields": {
+      "CNFE_ClassDescriptor_Q": 0,
+      "CNFE_ObjectLayout_Q": 8,
+      "original_CNFE_String_constructor_Q": 16,
+      "RTYP_map_Q": 24,
+      "Throwable_TypeDesc_Q": 32,
+      "original_String_replace_CC_Q": 40
+    },
+    "generated_from_original_Class_and_Code": true,
+    "fixed_Java_IDs_in_published_MASM": false
+  },
+  "construction": {
+    "ordinary_missing_name": "original String.replace(CC) dot-to-slash, original CNFE(String), boom_exception_set32",
+    "original_input_String_mutated": false,
+    "Java_or_Class_fields_written_by_host": false,
+    "publishes_kind16_only_with_real_pending_Throwable": true,
+    "previous_context_error_cleared_or_retried": false,
+    "constructor_or_allocation_failure": "propagate the original Context unchanged",
+    "findBootstrapClass_missing": "normal null; no exception"
+  },
+  "assembly_recipe": [
+    "Insert source-generated extern declarations before the service PUBLIC line in the kernel fragment.",
+    "Append read-only callback48 metadata, the throw fragment, and END.",
+    "Retarget the two original native tails and their service import; preserve original normal Frame32 envelopes and JCFN data."
+  ],
+  "runtime_functions": [
+    "boom_heap_contains",
+    "boom_object_check",
+    "boom_runtime_instanceof",
+    "boom_java_class_typeid",
+    "boom_java_class_load",
+    "boom_class_ensure32",
+    "boom_object_new",
+    "boom_exception_set32"
+  ],
+  "memory": {
+    "persistent_oops": 0,
+    "additional_native_root_spans": 0,
+    "automatic_collection": false,
+    "assumption": "existing nonmoving heap; collection forbidden during Java/native frames and external calls",
+    "arbitrary_forged_pointer_membership_proven": false
+  },
+  "implemented_scope": "existing ordinary bootstrap Class lookup and scalar missing-name CNFE",
+  "remaining_domains": [
+    "custom/system/platform loader resolution still explicitly unsupported after validation",
+    "new or missing array identities",
+    "dynamic class definition, transforms, and mod compatibility"
+  ],
+  "provider_registration_changed": false,
+  "complete_Class_forName_or_game_compatibility": false
+}
