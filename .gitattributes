@@ -1,3 +1,7 @@
 # These native inputs have exact byte pins; preserve them across checkouts.
 native/providers/perf_self.asm.inc -text
 native-config/perf-self-abi.json -text
+native/kernels/inflater_rw_owner64.asm.inc -text
+native/providers/inflater_ids.asm.inc -text
+native/providers/inflater_rw_service.asm.inc -text
+native-config/inflater-rw-abi.json -text

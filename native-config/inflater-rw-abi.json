@@ -1,0 +1,280 @@
+{
+  "architecture": "Windows_x64_pure_MASM",
+  "borrow": {
+    "bytes": 64,
+    "cleanup_contract": "release always drops native locks, regardless Java failure elsewhere. If op9 fails, token stays in stable Record.CoreJob; mark release_pending and caller may discard Borrow64 after output node/state/held bits are cleared.",
+    "offsets": {
+      "Core_status_D": 48,
+      "OS_error_D": 52,
+      "decoder_state_Q": 24,
+      "handle_Q": 32,
+      "held_flags_D": 40,
+      "node_Q": 16,
+      "pool_Q": 0,
+      "record_Q": 8,
+      "reserved_Q56": 56,
+      "status_D": 44
+    },
+    "return_contract": "acquire0 returns with pool lifeSHARED, record SRW EXCLUSIVE and real Core write borrow held; trusted native decoder caller must release on every exit before any Java callback."
+  },
+  "core": {
+    "borrow_flags": 2,
+    "free_job_never_in_freed_RW_node": true,
+    "job_bytes": 128,
+    "operations": {
+      "allocate": 0,
+      "borrow": 8,
+      "free": 2,
+      "release": 9
+    },
+    "owner_bytes": 128,
+    "persistent_job_in_stable_record": true,
+    "premature_common_close": "Active actual node borrows make commonCore.close busy. If an incorrectly ordered common close wins before acquire, return closed/generation error before touching node and retain diagnostic record; correct VM close always drains Inflater first.",
+    "release_flags": 0,
+    "unchanged": true,
+    "unknown_address_access": false
+  },
+  "decoder_reuse": "Exact old raw/zlib source/object bytes unchanged. Owner does not add dictionary/direct-buffer/exact malformed diagnostics capabilities.",
+  "dependencies": {
+    "IDs_registry": "native/providers/inflater_ids.asm.inc",
+    "memory_owner": "native/kernels/native_memory_owner64.asm.inc",
+    "native_array_service": "native/providers/inflater_rw_service.asm.inc",
+    "raw_decoder": "native/kernels/deflate_stream64.asm.inc",
+    "zlib_decoder": "native/kernels/zlib_stream64.asm.inc"
+  },
+  "functions": {
+    "acquire": {
+      "arguments": "RCX pool*, RDX opaqueHandle, R8 Borrow64*",
+      "result": "EAX status; exact stable registry lookup before any raw node dereference; enter lifeSHARED->recordlock->Coreop8, compare generation before exposing state.",
+      "symbol": "boom_inflater_owner_acquire"
+    },
+    "close": {
+      "arguments": "RCX pool*",
+      "result": "EAX status; admission closes, TryAcquire lifeEXCLUSIVE busy2 preserves resources; all callers must already have ended. Drain live/ending/rollback/release_pending; retain exact list/counters on any failure.",
+      "symbol": "boom_inflater_owner_close"
+    },
+    "end": {
+      "arguments": "RCX pool*, RDX opaqueHandle",
+      "result": "EAX status; handle0 no-op. lifeEXCLUSIVE waits existing borrows; mark ENDING; retry retained op9 then actual op2; retire only on free0.",
+      "symbol": "boom_inflater_owner_end"
+    },
+    "init": {
+      "arguments": "RCX pool*, EDX nowrap0or1, R8 outOpaqueHandleQ*",
+      "result": "EAX status; outHandle remains0 on every failure. Reserve before Coreop0; write/reset only after op8; publish after real op9 success.",
+      "symbol": "boom_inflater_owner_init"
+    },
+    "open": {
+      "arguments": "RCX INFL256*, RDX actual ready CoreOwner128*",
+      "result": "EAX status; no Context; bind once, preserve IDs/cache/sequence on repeated same open.",
+      "symbol": "boom_inflater_owner_open"
+    },
+    "records": {
+      "kind": "PUBLIC native-data array256*256,8-aligned, no oop root bank",
+      "symbol": "boom_inflater_owner_records"
+    },
+    "release": {
+      "arguments": "RCX Borrow64*",
+      "result": "EAX status; Coreop9 flags explicitly0, then record unlock/life unlock; failure owns persistent token and no caller Context.",
+      "symbol": "boom_inflater_owner_release"
+    }
+  },
+  "lifecycle": {
+    "ABA": "Monotonic nonwrapping opaque handles protect native-handle reuse while pool lives. No complete stale/raw-address ABA guarantee.",
+    "Java_end": "Original ZStreamRef.run clears Java address before end; native ENDING/ROLLBACK retention and explicit close retry never rely on another Java end.",
+    "callback_scope": "No owner lock or Core lease may cross a Java callback. active136 is owner-operation/borrow count, not independent proof Java callback frames ended.",
+    "close": "After all Java/native callers/workers/libraries stop; before root snapshot/registry/frames/JavaHeap and commonRW.close. No Java callbacks inside owner helper.",
+    "live_bytes": "Increment only after actual Coreop0; decrement live/bytes and increment frees only after successful Coreop2.",
+    "open": "Native only after MainRW ready and before any Java/bootstrap; heapCell8 may be prebound by source producer."
+  },
+  "native_service": {
+    "IDs_operation_0": "normal Frame calls separate boom_inflater_ids_register(Context32*,argvQ[],exact INFL256*)",
+    "allocation_owner_status_4": "Original OutOfMemoryError(String) after all native cleanup/leases released.",
+    "arguments": "RCX Context32*, RDX original managed argvQ[], R8 INFL256*, R9D operation",
+    "automatic_GC": "Requires quiescent explicit collection; temporary callback stack locals are not claimed automatic GC roots.",
+    "byte_array_tag": 264,
+    "byte_array_tag_meaning": "Runtime primitive array type tag 0x100 | JVM T_BYTE(8), not a Java class or fixture ID.",
+    "decoder_reset_owner_status_10": "Original InternalError(String) after cleanup has completed.",
+    "error_fields_access": "Only cached source-bound FMAPPROC addresses; store after actual decoder lease release.",
+    "format_error": "Original DataFormatException(String) with actual source field progress; current fragment uses generic Invalid compressed data text.",
+    "invalid_private_protocol_Context_kind": 7,
+    "ordinary_byte_array_domain_only": true,
+    "overlapping_nonempty_input_output_ranges": "Explicit Context20; no unsupported overlap is passed to decoder.",
+    "owner_statuses_2_7_9_12": "Explicit Context20; retained token/node must remain for quiet drain; no Java callback.",
+    "pending_Context32_preserved": "kind0/PC4/method8/depth12/pending16/VMplan24; existing kind/pending/VMplan is not overwritten.",
+    "source_input_and_output_error_fields": [
+      "inputConsumed:I",
+      "outputConsumed:I"
+    ],
+    "supported_operations": {
+      "1": "init(Z)J",
+      "2": "getAdler(J)I",
+      "3": "reset(J)V",
+      "4": "end(J)V",
+      "5": "inflateBytesBytes(J[BII[BII)J"
+    },
+    "symbol": "boom_provider_inflater_service",
+    "unsupported_Context_kind": 20,
+    "unsupported_operations": {
+      "10": "inflateBufferBuffer(JJIJI)J",
+      "6": "setDictionary(J[BII)V",
+      "7": "setDictionaryBuffer(JJI)V",
+      "8": "inflateBytesBuffer(J[BIIJI)J",
+      "9": "inflateBufferBytes(JJI[BII)J"
+    }
+  },
+  "node": {
+    "authoritative_lifetime": "Record.state; node prefix may only be accessed with actual write borrow. Decoder state remains opaque except old exact reset/step APIs.",
+    "bytes": 34608,
+    "decoder_state_offset": 48,
+    "prefix": {
+      "allocation_generation_Q": 40,
+      "common_owner_Q": 32,
+      "handle_mirror_Q": 8,
+      "legacy_SRW_unused_Q": 16,
+      "lifecycle_mirror_D": 28,
+      "next_unused_Q": 0,
+      "nowrap_D": 24
+    },
+    "raw_state_bytes": 34304,
+    "zlib_state_bytes": 34560
+  },
+  "pool": {
+    "IDs_publication": "Ready64 and both72/80 FMAPPROC cells remain source-registry responsibility; publish all after exact2 validations.",
+    "IDs_ready_value": 2,
+    "abi": 2,
+    "appended_offsets": {
+      "active_borrows_or_native_operations_D": 136,
+      "common_RW_Owner128_Q": 112,
+      "fixed_record_image_bytes_Q": 160,
+      "last_OS_error_D": 152,
+      "last_status_D": 148,
+      "node_bytes_D": 132,
+      "owner_state_D": 140,
+      "record_capacity_D": 128,
+      "record_stride_D": 144,
+      "records_array_Q": 120,
+      "reserved_D": 156,
+      "reserved_Q200": 200,
+      "reserved_Q208": 208,
+      "reserved_Q216": 216,
+      "reserved_Q224": 224,
+      "reserved_Q232": 232,
+      "reserved_Q240": 240,
+      "reserved_Q248": 248,
+      "source_Inflater_Class_Q": 192,
+      "source_UFMP2_Q": 176,
+      "source_expected_field_rows_Q": 168,
+      "source_runtime_map_Q": 184
+    },
+    "bytes": 256,
+    "close_admission_on_failure": true,
+    "configured_capacity": 256,
+    "magic": "INFL=0x4C464E49",
+    "owner_states": {
+      "closed": 3,
+      "cold": 0,
+      "draining": 2,
+      "open": 1
+    },
+    "preserved_offsets": {
+      "IDs_ready_Q": 64,
+      "abi_D": 4,
+      "admission_closed_Q": 96,
+      "allocated_bytes_Q": 104,
+      "allocated_live_Q": 32,
+      "allocations_Q": 40,
+      "frees_Q": 48,
+      "heapCell_Q": 8,
+      "input_FMAPPROC_Q": 72,
+      "life_SRW_Q": 16,
+      "magic_D": 0,
+      "opaque_sequence_Q": 56,
+      "output_FMAPPROC_Q": 80,
+      "record_list_Q": 24,
+      "source_properties112_factory_Q": 88
+    },
+    "reopen_after_closed_supported": false,
+    "repeat_open_same_owner_is_idempotent": true
+  },
+  "publication_scope": {
+    "dictionary_direct_buffers_and_all_zlib_semantics_complete": false,
+    "exact_malformed_message_equivalence": false,
+    "full_game_or_Main_execution_proved": false,
+    "normal_constructor_cases": 14,
+    "original_array_API_component_verified": true,
+    "private_error_observation_calls": 2,
+    "public_inflate_calls": 147
+  },
+  "record": {
+    "bytes": 256,
+    "capacity": 256,
+    "no_Java_oop_or_Context_pointer": true,
+    "offsets": {
+      "allocation_generation_Q": 48,
+      "last_OS_error_D": 204,
+      "last_decoder_status_D": 208,
+      "last_status_D": 200,
+      "next_Q": 0,
+      "node_SRW_Q": 16,
+      "node_address_Q": 32,
+      "node_bytes_Q": 40,
+      "nowrap_D": 28,
+      "opaque_handle_Q": 8,
+      "persistent_CoreJob128": 64,
+      "pool_Q": 192,
+      "reserved_D212": 212,
+      "reserved_Q216": 216,
+      "reserved_Q224": 224,
+      "reserved_Q232": 232,
+      "reserved_Q240": 240,
+      "reserved_Q248": 248,
+      "reserved_Q56": 56,
+      "state_D": 24
+    },
+    "states": {
+      "ending": 4,
+      "free": 0,
+      "initializing": 2,
+      "live": 3,
+      "release_pending": 6,
+      "reserved": 1,
+      "rollback": 5
+    },
+    "storage": "stable zero native-image array; exact public boom_inflater_owner_records"
+  },
+  "registration": "Unregistered native component. Provider registry/source/runtime acceptance are separate contracts.",
+  "schema": "INFL_RW_OWNER_ABI2_v1",
+  "source_binding": {
+    "IDs_macros": [
+      "INID_CLASS",
+      "INID_LAYOUT",
+      "INID_LAYOUT_FIELDS",
+      "INID_PAYLOAD",
+      "INID_REFS",
+      "INID_UFMP_FIELDS",
+      "INID_UFMP_NAME_UNITS",
+      "INID_UFMP_PAGES",
+      "INID_UFMP_TYPES"
+    ],
+    "all_Java_IDs_layout_rows_and_callbacks_derived_from_locked_current_source": true,
+    "fixed_Java_method_or_class_or_field_IDs": false,
+    "service_error_ROM": "Source producer supplies ifr_errors as three class/layout/original(String)constructor pointers: DataFormatException,OutOfMemoryError,InternalError.",
+    "service_macros": [
+      "IFR_THROWABLE_TYPE"
+    ],
+    "source_properties_factory": "Pool88 must reference actual source PORP112/2 platform property String factory, not JSLP80/1."
+  },
+  "status_codes": {
+    "allocation_OS": 4,
+    "arguments": 3,
+    "bad_owner_or_pool": 5,
+    "busy": 2,
+    "capacity_or_sequence": 7,
+    "cleanup_pending": 12,
+    "closed": 9,
+    "decoder_reset": 10,
+    "generation_mismatch": 13,
+    "ok": 0,
+    "unknown_handle": 1
+  }
+}

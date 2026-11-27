@@ -1,5 +1,10 @@
 # Unregistered normal-array Inflater native slice
 
+This page records the earlier standalone slice. The newer
+[RW owner and original-Java API validation](INFLATER_RW_OWNER.md) has separate
+ownership, source bindings, and actual execution evidence; it does not relabel
+the older receipts below.
+
 This development component implements the original `java.util.zip.Inflater`
 native protocol for `initIDs`, `init(boolean)`, `getAdler`, `reset`, `end`, and
 `inflateBytesBytes`. All execution is MASM, using the unchanged, separately
