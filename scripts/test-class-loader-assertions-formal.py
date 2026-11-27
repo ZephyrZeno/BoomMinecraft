@@ -149,8 +149,8 @@ def execute(state_path,output,reuse_source_images=None):
         '41548' in closure['selected_runtime_provider_natives'],
         'Formal source selection did not use the new provider')
     if not reuse_source_images:
-        run(['powershell.exe','-NoProfile','-ExecutionPolicy','Bypass','-File',ROOT/'scripts/Build-DiagnosticClosure.ps1',
-            '-Batch',state['batch'],'-Plan',state['plan'],'-Output',selection,'-Runtime',state['runtime'],'-PreparedSelection'],
+        run([sys.executable,ROOT/'scripts/build-diagnostic-closure.py',
+            '--batch',state['batch'],'--plan',state['plan'],'--output',selection,'--runtime',state['runtime'],'--prepared-selection'],
             output/'build-and-verify-source-selection.log')
     source_proof=S.read(selection/'selection-verification.json')
     S.check(source_proof['verified'],'Independent formal source selection verification failed')

@@ -1,0 +1,720 @@
+{
+  "schema": 1,
+  "kind": "masm-runtime-build-recipe",
+  "units": [
+    {
+      "source": "native/runtime/parallel.asm",
+      "object": "parallel.obj"
+    },
+    {
+      "source": "native/runtime/pool.asm",
+      "object": "pool.obj"
+    },
+    {
+      "source": "native/runtime/heap.asm",
+      "object": "heap.obj"
+    },
+    {
+      "source": "native/runtime/heap_root_spans.asm",
+      "object": "heap_root_spans.obj"
+    },
+    {
+      "source": "native/runtime/reference_pending.asm",
+      "object": "reference_pending.obj"
+    },
+    {
+      "source": "native/runtime/object_wait.asm",
+      "object": "object_wait.obj"
+    },
+    {
+      "source": "native/runtime/monitor_abort.asm",
+      "object": "monitor_abort.obj"
+    },
+    {
+      "source": "native/runtime/java_string_intern.asm",
+      "object": "java_string_intern.obj"
+    },
+    {
+      "source": "native/runtime/java_concat.asm",
+      "object": "java_concat.obj"
+    },
+    {
+      "source": "native/runtime/java_bitcasts.asm",
+      "object": "java_bitcasts.obj"
+    },
+    {
+      "source": "native/runtime/java_class_lookup.asm",
+      "object": "java_class_lookup.obj"
+    },
+    {
+      "source": "native/runtime/java_caller.asm",
+      "object": "java_caller.obj"
+    },
+    {
+      "source": "native/runtime/stack_probe.asm",
+      "object": "stack_probe.obj"
+    },
+    {
+      "source": "native/runtime/java_unsafe_fields.asm",
+      "object": "java_unsafe_fields.obj"
+    },
+    {
+      "source": "native/runtime/java_unsafe.asm",
+      "object": "java_unsafe.obj"
+    },
+    {
+      "source": "native/runtime/java_class_bootstrap.asm",
+      "object": "java_class_bootstrap.obj"
+    },
+    {
+      "source": "native/runtime/java_properties.asm",
+      "object": "java_properties.obj"
+    },
+    {
+      "source": "native/runtime/monitors.asm",
+      "object": "monitors.obj"
+    },
+    {
+      "source": "native/runtime/arrays.asm",
+      "object": "arrays.obj"
+    },
+    {
+      "source": "native/runtime/objects.asm",
+      "object": "objects.obj"
+    },
+    {
+      "source": "native/runtime/scheduler.asm",
+      "object": "scheduler.obj"
+    },
+    {
+      "source": "native/runtime/references.asm",
+      "object": "references.obj"
+    },
+    {
+      "source": "native/runtime/classes.asm",
+      "object": "classes.obj"
+    },
+    {
+      "source": "native/runtime/classes32.asm",
+      "object": "classes32.obj"
+    },
+    {
+      "source": "native/runtime/unwind.asm",
+      "object": "unwind.obj"
+    },
+    {
+      "source": "native/runtime/types.asm",
+      "object": "types.obj"
+    },
+    {
+      "source": "native/runtime/strings.asm",
+      "object": "strings.obj"
+    },
+    {
+      "source": "native/runtime/unicode_case.asm",
+      "object": "unicode_case.obj"
+    },
+    {
+      "source": "native/runtime/mirrors.asm",
+      "object": "mirrors.obj"
+    },
+    {
+      "source": "native/runtime/java_classes.asm",
+      "object": "java_classes.obj"
+    },
+    {
+      "source": "native/runtime/string_dynamic.asm",
+      "object": "string_dynamic.obj"
+    },
+    {
+      "source": "native/runtime/concat.asm",
+      "object": "concat.obj"
+    },
+    {
+      "source": "native/runtime/runtime_types.asm",
+      "object": "runtime_types.obj"
+    },
+    {
+      "source": "native/runtime/runtime_type_index.asm",
+      "object": "runtime_type_index.obj"
+    },
+    {
+      "source": "native/runtime/field_address.asm",
+      "object": "field_address.obj"
+    },
+    {
+      "source": "native/runtime/covariant_arrays.asm",
+      "object": "covariant_arrays.obj"
+    },
+    {
+      "source": "native/runtime/exceptions.asm",
+      "object": "exceptions.obj"
+    },
+    {
+      "source": "native/runtime/frames.asm",
+      "object": "frames.obj"
+    },
+    {
+      "source": "native/runtime/throwables.asm",
+      "object": "throwables.obj"
+    },
+    {
+      "source": "native/runtime/file_streams.asm",
+      "object": "file_streams.obj"
+    },
+    {
+      "source": "native/runtime/file_descriptors.asm",
+      "object": "file_descriptors.obj"
+    },
+    {
+      "source": "native/runtime/cds.asm",
+      "object": "cds.obj"
+    },
+    {
+      "source": "native/runtime/string_join.asm",
+      "object": "string_join.obj"
+    },
+    {
+      "source": "native/runtime/reflect_fields.asm",
+      "object": "reflect_fields.obj"
+    },
+    {
+      "source": "native/runtime/inet_address.asm",
+      "object": "inet_address.obj"
+    },
+    {
+      "source": "native/runtime/string_sequence_replace.asm",
+      "object": "string_sequence_replace.obj"
+    },
+    {
+      "source": "native/runtime/system.asm",
+      "object": "system.obj"
+    },
+    {
+      "source": "native/runtime/resources.asm",
+      "object": "resources.obj"
+    },
+    {
+      "source": "native/runtime/layers.asm",
+      "object": "layers.obj"
+    },
+    {
+      "source": "native/runtime/string_lowercase.asm",
+      "object": "string_lowercase.obj"
+    },
+    {
+      "source": "native/runtime/word_break.asm",
+      "object": "word_break.obj"
+    },
+    {
+      "source": "native/runtime/unicode_context.asm",
+      "object": "unicode_context.obj"
+    },
+    {
+      "source": "native/runtime/string_construction.asm",
+      "object": "string_construction.obj"
+    },
+    {
+      "source": "native/runtime/module_objects.asm",
+      "object": "module_objects.obj"
+    },
+    {
+      "source": "native/runtime/modules.asm",
+      "object": "modules.obj"
+    },
+    {
+      "source": "native/runtime/vm_clock.asm",
+      "object": "vm_clock.obj"
+    },
+    {
+      "source": "native/runtime/system_properties.asm",
+      "object": "system_properties.obj"
+    },
+    {
+      "source": "native/runtime/string_concat_api.asm",
+      "object": "string_concat_api.obj"
+    },
+    {
+      "source": "native/runtime/identity_hash.asm",
+      "object": "identity_hash.obj"
+    },
+    {
+      "source": "native/runtime/hex_strings.asm",
+      "object": "hex_strings.obj"
+    },
+    {
+      "source": "native/runtime/builder_snapshot.asm",
+      "object": "builder_snapshot.obj"
+    },
+    {
+      "source": "native/runtime/vm_properties.asm",
+      "object": "vm_properties.obj"
+    },
+    {
+      "source": "native/runtime/class_queries.asm",
+      "object": "class_queries.obj"
+    },
+    {
+      "source": "native/runtime/string_replace.asm",
+      "object": "string_replace.obj"
+    },
+    {
+      "source": "native/runtime/array_clone.asm",
+      "object": "array_clone.obj"
+    },
+    {
+      "source": "native/runtime/vm_registration.asm",
+      "object": "vm_registration.obj"
+    },
+    {
+      "source": "native/runtime/unsafe_bootstrap.asm",
+      "object": "unsafe_bootstrap.obj"
+    },
+    {
+      "source": "native/runtime/thread_natives.asm",
+      "object": "thread_natives.obj"
+    },
+    {
+      "source": "native/runtime/scoped_memory.asm",
+      "object": "scoped_memory.obj"
+    },
+    {
+      "source": "native/runtime/winnt_file_system.asm",
+      "object": "winnt_file_system.obj"
+    },
+    {
+      "source": "native/runtime/reflection_arrays.asm",
+      "object": "reflection_arrays.obj"
+    },
+    {
+      "source": "native/runtime/class_loaders.asm",
+      "object": "class_loaders.obj"
+    },
+    {
+      "source": "native/runtime/windows_startup.asm",
+      "object": "windows_startup.obj"
+    },
+    {
+      "source": "native/runtime/signal_natives.asm",
+      "object": "signal_natives.obj"
+    },
+    {
+      "source": "native/runtime/access_context.asm",
+      "object": "access_context.obj"
+    },
+    {
+      "source": "native/runtime/thread_registry.asm",
+      "object": "thread_registry.obj"
+    },
+    {
+      "source": "native/runtime/signal_control.asm",
+      "object": "signal_control.obj"
+    },
+    {
+      "source": "native/runtime/signals.asm",
+      "object": "signals.obj"
+    },
+    {
+      "source": "native/runtime/string_prefix.asm",
+      "object": "string_prefix.obj"
+    },
+    {
+      "source": "native/runtime/system_streams.asm",
+      "object": "system_streams.obj"
+    },
+    {
+      "source": "native/runtime/string_chars.asm",
+      "object": "string_chars.obj"
+    },
+    {
+      "source": "native/runtime/class_for_name.asm",
+      "object": "class_for_name.obj"
+    },
+    {
+      "source": "native/runtime/reflect_new.asm",
+      "object": "reflect_new.obj"
+    },
+    {
+      "source": "native/runtime/string_split.asm",
+      "object": "string_split.obj"
+    },
+    {
+      "source": "native/runtime/typed_arrays.asm",
+      "object": "typed_arrays.obj"
+    },
+    {
+      "source": "native/runtime/runtime_resources.asm",
+      "object": "runtime_resources.obj"
+    },
+    {
+      "source": "native/runtime/reflect_constructors.asm",
+      "object": "reflect_constructors.obj"
+    },
+    {
+      "source": "native/runtime/shutdown.asm",
+      "object": "shutdown.obj"
+    },
+    {
+      "source": "native/runtime/vm_thread_bootstrap.asm",
+      "object": "vm_thread_bootstrap.obj"
+    }
+  ],
+  "link_unit_order": [
+    "shutdown.obj",
+    "reflect_fields.obj",
+    "reflect_constructors.obj",
+    "runtime_resources.obj",
+    "parallel.obj",
+    "pool.obj",
+    "heap.obj",
+    "java_concat.obj",
+    "java_bitcasts.obj",
+    "java_unsafe.obj",
+    "java_unsafe_fields.obj",
+    "java_class_lookup.obj",
+    "java_caller.obj",
+    "stack_probe.obj",
+    "java_class_bootstrap.obj",
+    "java_properties.obj",
+    "java_string_intern.obj",
+    "heap_root_spans.obj",
+    "monitors.obj",
+    "arrays.obj",
+    "objects.obj",
+    "scheduler.obj",
+    "references.obj",
+    "classes.obj",
+    "classes32.obj",
+    "unwind.obj",
+    "types.obj",
+    "strings.obj",
+    "unicode_case.obj",
+    "mirrors.obj",
+    "java_classes.obj",
+    "string_dynamic.obj",
+    "concat.obj",
+    "runtime_types.obj",
+    "runtime_type_index.obj",
+    "field_address.obj",
+    "covariant_arrays.obj",
+    "exceptions.obj",
+    "vm_clock.obj",
+    "system_properties.obj",
+    "string_concat_api.obj",
+    "identity_hash.obj",
+    "hex_strings.obj",
+    "builder_snapshot.obj",
+    "vm_properties.obj",
+    "class_queries.obj",
+    "string_replace.obj",
+    "access_context.obj",
+    "signal_natives.obj",
+    "windows_startup.obj",
+    "class_loaders.obj",
+    "reflection_arrays.obj",
+    "scoped_memory.obj",
+    "winnt_file_system.obj",
+    "unsafe_bootstrap.obj",
+    "thread_natives.obj",
+    "thread_registry.obj",
+    "reference_pending.obj",
+    "monitor_abort.obj",
+    "object_wait.obj",
+    "vm_thread_bootstrap.obj",
+    "signal_control.obj",
+    "signals.obj",
+    "string_prefix.obj",
+    "system_streams.obj",
+    "string_chars.obj",
+    "array_clone.obj",
+    "vm_registration.obj",
+    "typed_arrays.obj",
+    "modules.obj",
+    "module_objects.obj",
+    "string_construction.obj",
+    "word_break.obj",
+    "unicode_context.obj",
+    "string_lowercase.obj",
+    "class_for_name.obj",
+    "reflect_new.obj",
+    "string_split.obj",
+    "layers.obj",
+    "resources.obj",
+    "system.obj",
+    "string_join.obj",
+    "string_sequence_replace.obj",
+    "inet_address.obj",
+    "cds.obj",
+    "file_descriptors.obj",
+    "file_streams.obj",
+    "frames.obj",
+    "throwables.obj"
+  ],
+  "exports": [
+    "boom_scoped_native_register",
+    "boom_scoped_close_unavailable",
+    "boom_winfs_init",
+    "boom_reflect_array_allocate",
+    "boom_class_loader_field",
+    "boom_class_loader_bind",
+    "boom_class_loader_register",
+    "boom_class_loader_retrieve",
+    "boom_windows_error_mode",
+    "boom_signal_native_query",
+    "boom_signal_native_bind",
+    "boom_access_context_query",
+    "boom_access_bind_domain",
+    "boom_unsafe_native",
+    "boom_unsafe_constants_fill",
+    "boom_trace_enter",
+    "boom_trace_leave",
+    "boom_trace_release",
+    "boom_trace_head",
+    "boom_throwable_fill",
+    "boom_stream_fields_init",
+    "boom_stream_descriptor",
+    "boom_fd_service",
+    "boom_cds_service",
+    "boom_layer_intrinsic",
+    "boom_field_service",
+    "boom_field_virtual",
+    "boom_field_static_address",
+    "boom_field_instance_address",
+    "boom_constructor_service",
+    "boom_constructor_virtual",
+    "boom_processor_count",
+    "boom_runtime_available_processors",
+    "boom_runtime_resource",
+    "boom_class_for_name",
+    "boom_class_find_bootstrap",
+    "boom_class_loader_key",
+    "boom_heap_contains",
+    "boom_reflect_new",
+    "boom_exception_create",
+    "boom_string_split",
+    "boom_string_lowercase",
+    "boom_word_is_boundary",
+    "boom_word_next",
+    "boom_unicode_context",
+    "boom_string_new",
+    "boom_string_construct_chars",
+    "boom_string_construct_chars_all",
+    "boom_boot_unnamed_publish",
+    "boom_module_objects_value",
+    "boom_module_pool_valid",
+    "boom_module_index",
+    "boom_module_load",
+    "boom_module_intrinsic",
+    "boom_string_join",
+    "boom_string_replace_sequence",
+    "boom_platform_properties",
+    "boom_java_concat",
+    "boom_java_class_bootstrap",
+    "boom_java_caller",
+    "boom_java_caller_type",
+    "boom_stack_probe",
+    "boom_java_class_lookup",
+    "boom_java_bitcast",
+    "boom_java_unsafe",
+    "boom_java_unsafe_field",
+    "boom_java_unsafe_field_address",
+    "boom_java_unsafe_memory",
+    "boom_java_unsafe_constants",
+    "boom_java_property_array",
+    "boom_java_property_copy",
+    "boom_java_property_literal",
+    "boom_string_concat_api",
+    "boom_identity_hash",
+    "boom_hex_string",
+    "boom_builder_snapshot",
+    "boom_vm_properties",
+    "boom_class_is_hidden",
+    "boom_class_name",
+    "boom_class_value_field",
+    "boom_shutdown_native",
+    "boom_string_replace",
+    "boom_string_replace_literal_chars",
+    "boom_string_to_chars",
+    "boom_string_starts_with",
+    "boom_signal_find",
+    "boom_thread_native_0",
+    "boom_thread_native_1",
+    "boom_thread_native_2",
+    "boom_thread_native_3",
+    "boom_thread_native_4",
+    "boom_thread_native_5",
+    "boom_thread_native_6",
+    "boom_thread_native_7",
+    "boom_thread_native_8",
+    "boom_thread_native_9",
+    "boom_thread_native_10",
+    "boom_thread_native_11",
+    "boom_thread_native_12",
+    "boom_thread_native_13",
+    "boom_thread_native_14",
+    "boom_thread_native_15",
+    "boom_thread_native_16",
+    "boom_thread_native_17",
+    "boom_threads_set_priority",
+    "boom_reference_pending_create",
+    "boom_reference_pending_publish",
+    "boom_reference_pending_get",
+    "boom_reference_pending_has",
+    "boom_reference_pending_wait",
+    "boom_reference_pending_stop",
+    "boom_reference_pending_stopping",
+    "boom_reference_pending_roots_begin",
+    "boom_reference_pending_roots_end",
+    "boom_reference_pending_destroy",
+    "boom_monitor_wait",
+    "boom_monitor_wait_open",
+    "boom_monitor_wait_close",
+    "boom_monitor_wait_stop",
+    "boom_monitor_wait_stopping",
+    "boom_monitor_wait_notify",
+    "boom_monitor_wait_notify_all",
+    "boom_monitor_wait_interrupt",
+    "boom_monitor_abort_owned",
+    "boom_thread_native_register",
+    "boom_thread_native_dispatch",
+    "boom_thread_native_bind",
+    "boom_vm_thread_bootstrap",
+    "boom_threads_create",
+    "boom_threads_destroy",
+    "boom_threads_next_id",
+    "boom_threads_id_address",
+    "boom_threads_id_memory",
+    "boom_threads_attach",
+    "boom_threads_detach",
+    "boom_threads_current",
+    "boom_threads_start",
+    "boom_threads_join",
+    "boom_threads_result",
+    "boom_threads_release",
+    "boom_threads_roots",
+    "boom_threads_roots_end",
+    "boom_signal_control_create",
+    "boom_signal_control_close",
+    "boom_signal_control_register",
+    "boom_signal_control_raise",
+    "boom_signal_control_snapshot",
+    "boom_signal_control_thread_slots",
+    "boom_signal_control_console",
+    "boom_system_stream_set",
+    "boom_array_clone",
+    "boom_vm_native",
+    "boom_finalization_enabled",
+    "boom_inet_address_init",
+    "boom_inet_address_available",
+    "boom_typed_multi_new",
+    "boom_typed_array_length",
+    "boom_vm_adjustment_from_filetime",
+    "boom_system_register",
+    "boom_system_dispatch",
+    "boom_system_arraycopy",
+    "boom_resource_bytes",
+    "boom_mirror_primitive",
+    "boom_mirror_typeid",
+    "boom_vm_current_time_millis",
+    "boom_vm_nano_time",
+    "boom_vm_filetime_to_millis",
+    "boom_vm_counter_to_nanos",
+    "boom_class_ensure32",
+    "boom_exception_prepare",
+    "boom_exception_materialize",
+    "boom_exception_init_failure",
+    "boom_exception_class_failed",
+    "boom_exception_npe_message",
+    "boom_exception_set32",
+    "boom_exception_match32",
+    "boom_exception_take32",
+    "boom_covariant_array",
+    "boom_runtime_type",
+    "boom_runtime_row",
+    "boom_runtime_index_prepare",
+    "boom_field_address",
+    "boom_runtime_cast",
+    "boom_runtime_instanceof",
+    "boom_runtime_getclass",
+    "boom_java_class_load",
+    "boom_java_class_typeid",
+    "boom_java_class_bind_loader",
+    "boom_java_class_bind_module",
+    "boom_java_class_seal",
+    "boom_java_class_query",
+    "boom_java_class_name",
+    "boom_java_string_intern",
+    "boom_class_is_instance",
+    "boom_mirror_load",
+    "boom_mirror_intrinsic",
+    "boom_string_concat",
+    "boom_string_allocate",
+    "boom_string_intern",
+    "boom_string_load",
+    "boom_unicode_case",
+    "boom_unicode_equals_ci",
+    "boom_string_intrinsic",
+    "boom_string_get_chars",
+    "boom_type_assignable",
+    "boom_parallel_i32",
+    "boom_class_ensure",
+    "boom_parallel_numeric",
+    "boom_pool_create",
+    "boom_pool_run",
+    "boom_pool_run_budget",
+    "boom_scheduler_create",
+    "boom_scheduler_run",
+    "boom_scheduler_budget",
+    "boom_scheduler_reset",
+    "boom_scheduler_destroy",
+    "boom_pool_destroy",
+    "boom_monitor_enter",
+    "boom_monitor_exit",
+    "boom_monitor_notify",
+    "boom_monitor_notify_all",
+    "boom_heap_create",
+    "boom_heap_alloc",
+    "boom_heap_collect",
+    "boom_heap_collect_spans",
+    "boom_heap_destroy",
+    "boom_array_new",
+    "boom_array_length",
+    "boom_array_load",
+    "boom_array_store",
+    "boom_array_copy",
+    "boom_object_new",
+    "boom_object_check",
+    "boom_reference_array_new",
+    "boom_reference_array_length",
+    "boom_reference_array_load",
+    "boom_reference_array_store"
+  ],
+  "link_flags": [
+    "/NOLOGO",
+    "/DLL",
+    "/NOENTRY",
+    "/MACHINE:X64",
+    "/DYNAMICBASE",
+    "/NXCOMPAT"
+  ],
+  "sdk_libraries": [
+    "kernel32.lib",
+    "synchronization.lib",
+    "bcrypt.lib",
+    "advapi32.lib",
+    "shell32.lib",
+    "ole32.lib",
+    "ntdll.lib",
+    "user32.lib",
+    "ws2_32.lib"
+  ],
+  "data_sources": [
+    "native/runtime/unicode_case.json",
+    "third_party/unicode/LICENSE.txt"
+  ],
+  "optional_word_plan": {
+    "object": "word-plan.obj",
+    "export": "boom_get_word_plan",
+    "before": "layers.obj"
+  }
+}

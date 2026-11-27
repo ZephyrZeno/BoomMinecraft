@@ -36,7 +36,7 @@ def build(directory, accepted_sha, output, assembler, linker, synchronization, k
     inputs += [S.artifact(p) for p in (runtime, runtime_lib, runtime.with_name('runtime.json'),
         assembler, linker, synchronization, kernel32, Path(__file__), M.ROOT/'scripts/vm-entry-source.py',
         M.ROOT/'scripts/runtime-provider-source.py', M.ROOT/'scripts/provider-tool-manifest.py',
-        M.ROOT/'scripts/Run-VmEntry.ps1', M.ROOT/'scripts/decode-vm-entry-report.py',
+        M.ROOT/'scripts/run-vm-entry.py', M.ROOT/'scripts/decode-vm-entry-report.py',
         M.ROOT/'scripts/verify-vm-entry.py', M.ROOT/'scripts/canonical-link-response.py', M.ROOT/'native/entry/vm_process.asm.inc')]
     winsock_libraries=[]
     if winsock:

@@ -3,7 +3,7 @@
   "kind": "runtime-provider-tool-manifest",
   "legacy_prefix": {
     "count": 105,
-    "sha256": "e9a87cfad93b62c64784041f3eb4a3451da1bea658d0f5ba880e6c718bab5780"
+    "sha256": "54e06f88957747ce5a336fcfbfa0336c97809da48814b23e3ceca5b64d99b2e0"
   },
   "tool_order": [
     "scripts/build-runtime-provider-pack.py",
@@ -11,7 +11,7 @@
     "scripts/verify-runtime-provider-pack.py",
     "scripts/verify-batch-frames.py",
     "scripts/verify-batch-assembly.py",
-    "scripts/Build-RuntimeProviderPack.ps1",
+    "scripts/build-runtime-provider.py",
     "native-config/runtime-providers.json",
     "native/providers/native-wrapper.asm.tpl",
     "native/providers/cds.asm.inc",
@@ -130,7 +130,7 @@
     "scripts/verify-runtime-provider-pack.py",
     "scripts/verify-batch-frames.py",
     "scripts/verify-batch-assembly.py",
-    "scripts/Build-RuntimeProviderPack.ps1",
+    "scripts/build-runtime-provider.py",
     "native-config/runtime-providers.json",
     "native/providers/native-wrapper.asm.tpl",
     "scripts/verify-batch-metadata.py",
@@ -1534,6 +1534,14 @@
         "native/runtime/runtime_types.asm",
         "native/runtime/types.asm"
       ],
+      "dynamic_modules": []
+    },
+    "scripts/build-runtime-provider.py": {
+      "tool_sources": [
+        "scripts/build-runtime-provider-pack.py",
+        "scripts/verify-runtime-provider-pack.py"
+      ],
+      "runtime_sources": [],
       "dynamic_modules": []
     }
   },

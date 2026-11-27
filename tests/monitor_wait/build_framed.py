@@ -63,8 +63,8 @@ if __name__=='__main__':
              *(x for n in ROOTS for x in ('--class-root','bootstrap:'+n)),
              *(x for cls,n in ENTRIES for x in ('--entry',f'bootstrap:{cls}:{n}:()V')),
              *(x for pack in packs for x in ('--provider-pack',pack))],directory/'selection.log',1200)
-    execute([shutil.which('pwsh') or 'powershell','-NoProfile','-File',ROOT/'scripts/Build-DiagnosticClosure.ps1',
-             '-Batch',batch,'-Plan',plan,'-Runtime',runtime,'-Output',stage,'-PreparedSelection'],directory/'link-verify.log',1200)
+    execute([sys.executable,ROOT/'scripts/build-diagnostic-closure.py',
+             '--batch',batch,'--plan',plan,'--runtime',runtime,'--output',stage,'--prepared-selection'],directory/'link-verify.log',1200)
     execute([sys.executable,'-u',HERE/'test_framed.py','--runtime',runtime,'--selection',stage,
              '--output',directory/'result.json'],directory/'execution.log',45)
     print((directory/'result.json').read_text(),flush=True)

@@ -142,7 +142,7 @@ def prepare(batch, plan, runtime, output, profile, provider_paths, continue_syst
         config['additional_source_method_roots']=[list(row) for row in extra_method_roots]
         config['additional_source_roots_counted_as_execution']=False
     config['inputs'] = [S.artifact(p) for p in [Path(__file__), ROOT/'native/runtime/vm_thread_bootstrap.asm',
-        ROOT/'tests/host/NormalVmThreadBootstrapProbe.cs', ROOT/'scripts/Run-NormalVmThreadBootstrap.ps1',
+        ROOT/'tests/host/NormalVmThreadBootstrapProbe.cs',
         output/'closure.json', output/'diagnostic.json', output/'initialization-closure.asm', runtime, runtime.with_name('runtime.json')]]
     S.write(output/'vm-thread-bootstrap.json', config)
     print(json.dumps(dict(source_Java_constructors=len(selected), original_branches_preserved=True,

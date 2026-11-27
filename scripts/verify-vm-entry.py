@@ -31,7 +31,7 @@ def verify(directory):
             'Native entry scope differs')
     for record in manifest['inputs']:
         S.check(S.artifact(record['path']) == record, 'Native entry input changed: '+record['path'])
-    for name in ('scripts/Run-VmEntry.ps1','scripts/decode-vm-entry-report.py',
+    for name in ('scripts/run-vm-entry.py','scripts/decode-vm-entry-report.py',
                  'scripts/runtime-provider-source.py','scripts/provider-tool-manifest.py'):
         S.check(S.artifact(M.ROOT/name) in manifest['inputs'],'Native entry omitted a sealed source/execution/report dependency')
     closure, proof, old = M.accepted(manifest['baseline_directory'], manifest['accepted_source_verification_sha256'])

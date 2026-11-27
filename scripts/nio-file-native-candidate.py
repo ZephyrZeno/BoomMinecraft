@@ -299,8 +299,8 @@ def prepare_selection(config_file,previous=None):
     run([sys.executable,ROOT/'scripts/prepare-diagnostic-closure.py',batch,'--plan',plan,'--output',selection,
          '--runtime',Path(config['runtime'])/'boom-runtime.dll','--entry','bootstrap:'+ATTRS+':isRegularFile:()Z',
          '--receiver-class','bootstrap:'+ATTRS,'--admit-profile',profile,*provider_args],selection,'source-selection.log')
-    run(['pwsh','-NoProfile','-File',ROOT/'scripts/Build-DiagnosticClosure.ps1','-Batch',batch,'-Plan',plan,
-         '-Output',selection,'-Runtime',config['runtime'],'-PreparedSelection'],selection,'source-build.log')
+    run([sys.executable,ROOT/'scripts/build-diagnostic-closure.py','--batch',batch,'--plan',plan,
+         '--output',selection,'--runtime',config['runtime'],'--prepared-selection'],selection,'source-build.log')
     return selection
 
 

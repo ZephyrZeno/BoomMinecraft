@@ -105,7 +105,7 @@ sealed class LauncherForm : Form {
     void StartTask(string executable,string[] args) {
         if(child!=null)return;
         try {
-            if(!File.Exists(executable)) throw new FileNotFoundException("尚未构建此程序，请运行 scripts/Build-Launcher.ps1。",executable);
+            if(!File.Exists(executable)) throw new FileNotFoundException("尚未构建此程序，请使用 scripts/build-launcher.py 构建启动器。",executable);
             var directory=Path.Combine(root,".boom","launcher-runs",Guid.NewGuid().ToString("N")); Directory.CreateDirectory(directory); logFile=Path.Combine(directory,"output.log");
             log.Clear(); child=new BoomChild(); child.Start(executable,root,args);
             foreach(var button in taskButtons)button.Enabled=false; memory.Enabled=false; stop.Enabled=true;

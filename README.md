@@ -206,13 +206,20 @@ v93 让通用入口闭包自动展开已生成的虚调用／接口表，纳入�
 ## 启动器
 
 ```powershell
-.\scripts\Build-Launcher.ps1
-.\dist\BoomLauncher.exe
+python scripts/build-launcher.py --root . --output dist/launcher --target-dir .boom/launcher-cargo `
+  --cargo "<cargo.exe>" --rustc "<rustc.exe>" --csc "<csc.exe>" --javac "<javac.exe>" `
+  --assembler "<ml64.exe>" --linker "<link.exe>" --dumpbin "<dumpbin.exe>" `
+  --sdk-lib "<Windows-SDK/Lib/version/um/x64>" --recipe native-config/assembly-runtime-build.json
+.\dist\launcher\BoomLauncher.exe
 ```
+
+将尖括号中的占位内容替换为本机已安装工具的绝对路径，SDK 路径指向对应版本的 `um/x64` 目录。
+
+提供者工具清单改用 Python 会形成新的来源 epoch，即使清单项数仍为 117。旧 35 包和旧 Main 回执保留原有范围，当前源码树需重新完成对应验证后才能记为 current。
 
 启动器只提供游戏设置、启动、停止和日志。翻译、编译、校验等工作属于启动流程，不提供编译或测试按钮。开发命令仅保留在下文。
 
-**当前启动器不能启动完整游戏。** `play` 入口会在预检时明确报告缺少的执行能力，尚未实现完整自动构建及游戏启动，不会下载大量输入后伪装启动成功，也不会切换到 JVM。界面后续验证不使用 Computer Use；可用 `scripts/Test-Launcher.ps1` 运行无界面的启动参数测试。
+**当前启动器不能启动完整游戏。** `play` 入口会在预检时明确报告缺少的执行能力，尚未实现完整自动构建及游戏启动，不会下载大量输入后伪装启动成功，也不会切换到 JVM。界面后续验证不使用 Computer Use；构建后的启动器支持 `--self-test --workspace <项目目录>`，可在不打开界面的情况下检查启动参数。
 
 ## 工具
 
