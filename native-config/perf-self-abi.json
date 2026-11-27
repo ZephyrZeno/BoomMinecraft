@@ -1,0 +1,156 @@
+{
+  "schema": "PERF-native-AOT-self-owner-ABI-v1",
+  "status": "frozen-native-entry-wire-contract;implementation-and-machine-proof-pending",
+  "architecture": "Windows-x64 pure MASM; no JVM/CRT runtime",
+  "symbols": {
+    "pool": "boom_provider_perf_pool",
+    "service": "boom_provider_perf_service",
+    "owner_open": "boom_perf_owner_open",
+    "owner_close": "boom_perf_owner_close"
+  },
+  "open": "Win64 RCX=actual ready existing MainRW Owner128* -> EAX status; no Context or Java heap; single startup; repeat same open must not reset epoch/entries/bindings",
+  "close": "Win64 no arguments -> EAXstatus; only after all Java/native users/workers and original library users are quiescent, after RFIO/GetAttrs drain, before source root snapshot, registry/frame/JavaHeap destruction and MainRW owner.close; no Context writes; actual Core frees; nonzero retains native pointer/state for retry and caller preserves the VM",
+  "entry_order": {
+    "open_after": "real existing MainRW owner open/ready",
+    "open_before": [
+      "normal VM bootstrap",
+      "primordial constructors",
+      "System phase1"
+    ],
+    "close_after": [
+      "all Java/native users and workers joined/quiescent",
+      "original library unload",
+      "RFIO and GetAttrs drain"
+    ],
+    "close_before": [
+      "source root snapshot",
+      "thread registry/frame/Java heap destruction",
+      "MainRW owner close"
+    ]
+  },
+  "service": "Win64 RCX Context32*,RDX argv QWORD*,R8 exact local pool,R9D operation; result Java QWORD/Context propagation; pending kind/oop/VMplan preserves all32B",
+  "operations": {
+    "0": "registerNatives()V full source table publication",
+    "1": "attach0(I)ByteBuffer; initial domain self0/currentPID only",
+    "2": "detach(ByteBuffer)V; only source-created self attachment; no unmap of live self region",
+    "3": "createLong(String,IIJ)ByteBuffer; exact original checks/order and 8byte long storage",
+    "4": "createByteArray(String,II[BI)ByteBuffer; bounded valid zero-terminated String counters",
+    "5": "highResCounter()J = real QPC - startup epoch",
+    "6": "highResFrequency()J = captured actual QPF"
+  },
+  "registration": {
+    "source_table_count": 6,
+    "rows": [
+      [
+        "attach0",
+        "(I)Ljava/nio/ByteBuffer;"
+      ],
+      [
+        "detach",
+        "(Ljava/nio/ByteBuffer;)V"
+      ],
+      [
+        "createLong",
+        "(Ljava/lang/String;IIJ)Ljava/nio/ByteBuffer;"
+      ],
+      [
+        "createByteArray",
+        "(Ljava/lang/String;II[BI)Ljava/nio/ByteBuffer;"
+      ],
+      [
+        "highResCounter",
+        "()J"
+      ],
+      [
+        "highResFrequency",
+        "()J"
+      ]
+    ],
+    "cache": "six exact source-bound ASM backend PROC pointers; actual subsequent native dispatch loads these slots",
+    "publication": "all source identities and ready epoch/owned backing storage checked before locked publication; repeat exact registrations idempotent",
+    "unsupported_backend_rule": "explicit Context20 and capability metadata; never reported as implemented native behavior"
+  },
+  "owner_storage": {
+    "backend": "existing pureASM native memory Core op0 allocation and op2 free under actual MainRW Owner",
+    "main_region_bytes": 1048576,
+    "counter_capacity": 1024,
+    "maximum_counter_name_UTF16_units": 1024,
+    "private_name_metadata": "native-only fixed arrays, not Java objects or public PerfData payload",
+    "UsePerfData": "enabled self instrumentation; not forced false",
+    "nonself_attach": "explicit unsupported20, no host process/account inspection",
+    "overflow_or_unbounded_inputs": "explicit boundary; no fake empty buffer or claimed C-heap overflow fallback"
+  },
+  "pool": {
+    "bytes": 256,
+    "magic": "PERF",
+    "abi": 1,
+    "offsets": {
+      "magic_D": 0,
+      "abi_D": 4,
+      "bytes_D": 8,
+      "owner_state_D": 12,
+      "registration_state_D": 16,
+      "active_calls_D": 20,
+      "publication_lock_D": 24,
+      "reserved_D": 28,
+      "Owner128_Q": 32,
+      "region_address_Q": 40,
+      "region_bytes_Q": 48,
+      "reserved_Q": 56,
+      "QPC_epoch_Q": 64,
+      "QPF_frequency_Q": 72,
+      "next_region_offset_Q": 80,
+      "counter_count_D": 88,
+      "counter_capacity_D": 92,
+      "immutable_source_table_Q": 96,
+      "declaring_Class_Q": 104,
+      "six_backend_cache_Q": 112,
+      "close_attempts_Q": 160,
+      "allocation_success_Q": 168,
+      "createLong_calls_Q": 176,
+      "createByteArray_calls_Q": 184,
+      "self_attach_calls_Q": 192,
+      "self_detach_calls_Q": 200,
+      "clock_calls_Q": 208,
+      "last_status_D": 216,
+      "last_OS_error_D": 220,
+      "profile_flags_Q": 224,
+      "native_request_slots_Q": 232,
+      "request_count_D": 240,
+      "request_stride_D": 244,
+      "reserved_Q248": 248
+    },
+    "owner_states": {
+      "cold": 0,
+      "open": 1,
+      "draining": 2,
+      "closed": 3
+    },
+    "registration_states": {
+      "unbound": 0,
+      "source_table_bound": 1
+    }
+  },
+  "source_DirectByteBuffer": "Original constructor resolved dynamically: (JILjava/lang/Object;Ljava/lang/foreign/MemorySegment;)V, normal layout, null attachment/null segment; source class ensure first; capacity8 for long; no field writes by host",
+  "GC_scope": "explicit quiescent nonmoving collection only; all Java callbacks outside metadata/Core locks; native counter metadata contains no Java oops; no automatic native-stack roots claimed",
+  "acceptance_layers": [
+    "official source/original Class/Code/Frame projection",
+    "full six-slot register/dispatcher machine and lifecycle",
+    "actual clocks against source/JDK delta/frequency oracle",
+    "actual self counter storage+original DirectByteBuffer/LongBuffer APIs",
+    "byte array/self attach/detach subset",
+    "original Main native-only prefix and normal cleanup"
+  ],
+  "production_sources_registered": false,
+  "machine_assembled": false,
+  "guest_executed": false,
+  "runtime_acceptance_complete": false,
+  "open_failure_rollback": [
+    "Validate immutable pool/header and actual ready Owner128 before any allocation.",
+    "Capture QPF and initial QPC before Core allocation; invalid frequency/clock call returns failure with cold state and no Java writes.",
+    "Core op0 allocation failure leaves cold/unregistered state and no published backing.",
+    "Only after actual allocation and source-header initialization publish open state; no Java callback occurs in open.",
+    "Any failure after acquiring a backing allocation must execute real Core op2 free; if free fails, retain exact Owner/base/bytes and draining state for close retry; never claim a clean cold state while a native allocation remains."
+  ],
+  "close_quiescence_precondition": "All native calls active0; close admission first; never invoke Java callbacks. Under persistent failure leave remaining native backing tracked and nonzero return, so caller native_owner_error preserves original VM/Main Context. After successful backing free, old Java buffer objects may remain temporarily but no Java user can access them before normal heap destruction."
+}

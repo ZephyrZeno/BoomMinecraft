@@ -1,0 +1,3 @@
+# These native inputs have exact byte pins; preserve them across checkouts.
+native/providers/perf_self.asm.inc -text
+native-config/perf-self-abi.json -text
