@@ -10,6 +10,10 @@ The source fragments are
 [field registration](../native/providers/inflater_ids.asm.inc), and
 [the service](../native/providers/inflater_rw_service.asm.inc).
 [INFL256/2](../native-config/inflater-rw-abi.json) specifies their shared layout.
+The service uses the separate
+[raw reason decoder](../native/kernels/deflate_stream_reason64.asm.inc) and
+[zlib reason decoder](../native/kernels/zlib_stream_reason64.asm.inc), under the
+[reason ABI](../native-config/inflater-codec-reason-abi.json).
 The generated headers supply actual source-derived Class, FieldID, FMAPPROC,
 native Frame32, type-map, and exception-constructor bindings. These fragments
 contain no fixed Java method IDs or local build paths.
@@ -52,21 +56,39 @@ The current source epoch verified 8,656 classes and 71,776 Java methods. All
 previous 71,775 method rows stayed identical; only the original
 `DataFormatException(String)` constructor and its class were added.
 
-An actual 228-object assembly component completed System initialization phases
+An actual 230-object assembly component completed System initialization phases
 1, 2, and 3 and used the real primordial thread. Fourteen original-Java cases
 executed 14 constructors, 147 public inflate calls, two private error calls,
 and 28 `end` calls including repeats. Empty, stored and fixed streams, fragmented
 input/output, reset/reuse, consumed counts, Adler values, exception types, and
-cleanup matched the locked JDK reference within those cases. All twelve cleanup
+cleanup matched the locked JDK reference within those cases, including all
+compared error messages. All twelve cleanup
 observations passed; the final native root snapshot contained 2,523 references.
 
-Exact error-message comparison still has four differences across two malformed
-stream types: the candidate returns `Invalid compressed data` where the
-reference returns `incorrect header check` or `invalid block type`. The overall
-exact comparison remains false. The successful normal-behavior checks do not
-establish complete zlib, Inflater, concurrency, or game compatibility.
+The earlier generic-message candidate remains historical. Actual FCHECK failure
+now selects `incorrect header check`; reserved BTYPE selects `invalid block
+type`; an invalid stored LEN/NLEN pair selects `invalid stored block lengths`.
+The original-Java 14-case run has no remaining comparison differences. Other
+malformed-stream reasons still use the generic message, and dictionary/direct
+buffer support remains incomplete. These cases do not establish complete zlib,
+Inflater, concurrency, or game compatibility.
 
-The original server `Main --help` image subsequently passed source, complete
+The reason-aware entry points use Job96 with a four-byte reason output at byte
+92. Their private persistent reason cells use raw-state byte 140 and zlib-header
+byte 72; the state allocation sizes stay unchanged. The original codec objects
+remain linked for the existing owner's reset operations, while the service
+calls the new step entry points. This avoids changing the old Job80 entry point.
+The published fragments rebuild to the complete COFF of the actual executed
+units, including all nondebug sections, symbol auxiliaries, relocations, and
+unwind data.
+
+Separate native regression covered 324 sequential cases, including 247 invalid
+FCHECK values, plus 256 cases across eight distinct OS threads synchronized by
+a barrier. The 8,768 codec calls preserved the old codec's progress, output and
+state outside the new reason cells; terminal retries and the original resets
+also passed. That decoder-only test is separate from the original-Java run.
+
+A separate original server `Main --help` image passed source, complete
 COFF, canonical LINK-response, import-policy, and whole-PE relink checks. Its
 actual process advanced beyond `Inflater.initIDs` and stopped at the missing
 `java.lang.reflect.Array.newArray(Class,int)` native binding. System reached VM

@@ -3,6 +3,9 @@
 ; before Java callbacks, field writes or return. No private handle is a pointer.
 ; Dictionary/direct-buffer methods remain explicit Context20 boundaries.
 .const
+ifr_bad_header_check WORD 105,110,99,111,114,114,101,99,116,32,104,101,97,100,101,114,32,99,104,101,99,107
+ifr_bad_block_type WORD 105,110,118,97,108,105,100,32,98,108,111,99,107,32,116,121,112,101
+ifr_bad_stored_lengths WORD 105,110,118,97,108,105,100,32,115,116,111,114,101,100,32,98,108,111,99,107,32,108,101,110,103,116,104,115
 ifr_bad_data WORD 73,110,118,97,108,105,100,32,99,111,109,112,114,101,115,115,101,100,32,100,97,116,97
 ifr_alloc_error WORD 73,110,102,108,97,116,101,114,32,97,108,108,111,99,97,116,105,111,110,32,102,97,105,108,101,100
 ifr_state_error WORD 73,110,102,108,97,116,101,114,32,110,97,116,105,118,101,32,115,116,97,116,101,32,102,97,105,108,117,114,101
@@ -27,12 +30,33 @@ ifr_throw PROC PRIVATE FRAME
  mov rbx,rcx
  mov rsi,rdx
  mov r12d,r8d
+ mov edi,r9d
  cmp r12d,2
  ja ifrt_done
  lea r8,ifr_bad_data
  mov r9d,23
  test r12d,r12d
- jz ifrt_message
+ jnz ifrt_non_data
+ cmp edi,1
+ je ifrt_header_check
+ cmp edi,4
+ je ifrt_block_type
+ cmp edi,5
+ je ifrt_stored_lengths
+ jmp ifrt_message
+ifrt_header_check:
+ lea r8,ifr_bad_header_check
+ mov r9d,22
+ jmp ifrt_message
+ifrt_block_type:
+ lea r8,ifr_bad_block_type
+ mov r9d,18
+ jmp ifrt_message
+ifrt_stored_lengths:
+ lea r8,ifr_bad_stored_lengths
+ mov r9d,28
+ jmp ifrt_message
+ifrt_non_data:
  lea r8,ifr_alloc_error
  mov r9d,26
  cmp r12d,1
@@ -300,10 +324,10 @@ ifrs_zero_job:
  lea rcx,[rsp+32]
  cmp DWORD PTR [r13+24],0
  je ifrs_step_zlib
- call boom_deflate_stream_step
+ call boom_deflate_stream_step_reason
  jmp ifrs_step_result
 ifrs_step_zlib:
- call boom_zlib_stream_step
+ call boom_zlib_stream_step_reason
 ifrs_step_result:
  mov DWORD PTR [rsp+240],eax
  mov r15,QWORD PTR [rsp+88]
@@ -340,6 +364,7 @@ ifrs_data_error:
  mov rdx,QWORD PTR [rsp+200]
  mov eax,DWORD PTR [rsp+88]
  mov DWORD PTR [rdx],eax
+ mov r9d,DWORD PTR [rsp+124]
  xor r8d,r8d
  jmp ifrs_throw
 ifrs_finished:

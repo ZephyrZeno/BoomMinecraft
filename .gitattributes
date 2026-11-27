@@ -5,3 +5,6 @@ native/kernels/inflater_rw_owner64.asm.inc -text
 native/providers/inflater_ids.asm.inc -text
 native/providers/inflater_rw_service.asm.inc -text
 native-config/inflater-rw-abi.json -text
+native/kernels/deflate_stream_reason64.asm.inc -text
+native/kernels/zlib_stream_reason64.asm.inc -text
+native-config/inflater-codec-reason-abi.json -text

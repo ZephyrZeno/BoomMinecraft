@@ -1,0 +1,119 @@
+{
+  "architecture": "Windows_x64_pure_MASM",
+  "dependency_contract": {
+    "do_not_include_old_and_new_service_objects_together": true,
+    "keep_original_raw_and_zlib_objects": true,
+    "old_exports_required": [
+      "boom_deflate_stream_reset",
+      "boom_zlib_stream_reset"
+    ],
+    "old_owner_and_IDs_and_native_frames_unchanged": true,
+    "reason_codec_units_add_unique_exports": true,
+    "replace_only_previous_inflater_service_object": true,
+    "separate_translation_units_required": "Each codec fragment owns private labels/tables; assemble in separate standalone units.",
+    "zlib_reason_unit_direct_imports": [
+      "boom_deflate_stream_reset",
+      "boom_deflate_stream_step_reason"
+    ]
+  },
+  "entrypoints": {
+    "adler_update": "boom_adler32_update_reason",
+    "raw_reset": "boom_deflate_stream_reset_reason",
+    "raw_step": "boom_deflate_stream_step_reason",
+    "reset_call": "RCX points to trusted state; EDX exact state bytes; EAX status",
+    "step_call": "RCX points to trusted Job96; EAX status",
+    "zlib_reset": "boom_zlib_stream_reset_reason",
+    "zlib_step": "boom_zlib_stream_step_reason"
+  },
+  "job_prefix_offsets": {
+    "cumulative_input_Q": 64,
+    "cumulative_output_Q": 72,
+    "destination_Q": 24,
+    "destination_capacity_Q": 32,
+    "flags_D": 40,
+    "input_used_Q": 48,
+    "output_used_Q": 56,
+    "reason_D": 92,
+    "source_Q": 8,
+    "source_bytes_Q": 16,
+    "state_Q": 0,
+    "status_D": 44,
+    "zlib_adler_D": 80,
+    "zlib_dictionary_id_D": 84,
+    "zlib_trailer_D": 88
+  },
+  "message_limits": [
+    "No exact message is claimed for CMF method/window, Huffman, symbol/repeat/distance errors, truncation, Adler mismatch or CINFO overdistance.",
+    "Dictionary and direct-buffer native method forms remain the existing explicit unsupported domain.",
+    "Reasons are decoder branch outputs; there is no fixture ID, input fingerprint, or test-case dispatch."
+  ],
+  "name": "InflaterCodecReason1",
+  "reason_lifetime": "A failure reason is cached in source-unused state bytes and reproduced on sticky-error calls until a real full reset; status alone does not select a specific message.",
+  "reason_output": {
+    "job_bytes": 96,
+    "new_entrypoints_only": true,
+    "offset": 92,
+    "raw_job_bytes80_to91": "uninterpreted reserved bytes",
+    "raw_job_legacy_prefix_bytes": 80,
+    "width_bytes": 4,
+    "zlib_job_legacy_prefix_bytes": 92
+  },
+  "reasons": {
+    "0": {
+      "DFE_message": "Invalid compressed data",
+      "meaning": "No specific reason selected; includes successful calls and unspecified errors"
+    },
+    "1": {
+      "DFE_message": "incorrect header check",
+      "branch": "RFC1950 header FCHECK modulo-31 validation failed after existing CMF checks",
+      "status": 10
+    },
+    "4": {
+      "DFE_message": "invalid block type",
+      "branch": "RFC1951 reserved block type BTYPE=3",
+      "status": 5
+    },
+    "5": {
+      "DFE_message": "invalid stored block lengths",
+      "branch": "RFC1951 stored block LEN/NLEN complement mismatch",
+      "status": 5
+    }
+  },
+  "schema": 1,
+  "service": {
+    "DFE_message_selection": "Reason is passed after actual decoder borrow release, only for DFE error kind.",
+    "export": "boom_provider_inflater_service",
+    "required_error_ctors": [
+      {
+        "descriptor": "(Ljava/lang/String;)V",
+        "name": "<init>",
+        "owner": "java/util/zip/DataFormatException"
+      },
+      {
+        "descriptor": "(Ljava/lang/String;)V",
+        "name": "<init>",
+        "owner": "java/lang/OutOfMemoryError"
+      },
+      {
+        "descriptor": "(Ljava/lang/String;)V",
+        "name": "<init>",
+        "owner": "java/lang/InternalError"
+      }
+    ],
+    "required_source_binding": "Producer emits current class/layout/ctor table ifr_errors and IFR_THROWABLE_TYPE from original Source/Code/Frame identities. No Java IDs are stored in the fragment."
+  },
+  "state": {
+    "legacy_comment_Job80": "The raw source keeps its original legacy-prefix comment; callers of step_reason must supply Job96.",
+    "raw_bytes": 34304,
+    "raw_private_reason_D_offset": 140,
+    "resets_zero_complete_state": true,
+    "zlib_bytes": 34560,
+    "zlib_private_reason_D_offset": 72,
+    "zlib_raw_state_offset": 256
+  },
+  "unchanged_domain": [
+    "RFC1950/RFC1951 decoding state machine except explicit reason output and source-unused reason cache",
+    "Validation order, IO counters, output bytes and legacy status values",
+    "Existing RW owner borrow/release and failure retention"
+  ]
+}
