@@ -51,6 +51,51 @@ The earlier exit86 run passed its cleanup checks; the later exit70 run did not.
 Main initialization, its body, help output, the client window and a playable
 world remain incomplete.
 
+A hardware Context20 watch on a fresh byte-identical image located the
+first failure inside `boom_windows_nio_dispatcher_init_ids`, through the
+original `WindowsNativeDispatcher.<clinit>` callback. The actual linked
+UFMP2 header had capacity109946 while the WNID guard expected109945. One
+static scan also found the equivalent RFID and INID guards. Three derived
+registry objects now each change exactly one source constant and one machine
+immediate to the actual capacity; their other code, relocations and unwind
+metadata remain equal. The updated whole-PE proof SHA is
+`9ab75f518d4b4b0c110cbfd33437ada32a07515bc834b3fcfcf6a2e33d6d3cda`.
+
+The subsequent native execution naturally exited86 with diagnostic row110111
+for the original protected native `Object.clone()Object`, method42390. It is
+a native declaration gap, not a Java method that can be source-admitted.
+System123/VM4 and all strict heap/thread/JMAP256/NMWO320 cleanup checks passed,
+with zero held monitors and cleanup flags7. All image inputs and 117 source
+tools remained unchanged. The execution SHA is
+`87eec9f4fe9bed3547ed2ba61b45e1c87b9ba6ce47a74b5a2a090d4140727a0d`.
+Main initialization and its body still did not complete; no game startup is
+established. The earlier failed records remain separate history.
+
+## Checking namespace capacity consumers
+
+`scripts/audit-namespace-capacities.py` derives the type capacity from the
+actual linked UFMP2 pool assembly, then checks every linked assembly unit's
+`*_UFMP_TYPES` constant and its explicit pool+8 comparison. It accepts the
+image manifest and its independent full-PE proof with explicit SHA bindings;
+the sources must be pinned by both, and the actual executable, runtime and
+object identities are checked. Original IDs and generated method IDs are not
+treated as capacity constants.
+
+```text
+python scripts/audit-namespace-capacities.py --image <overlay.json> --image-sha256 <sha256> --proof <verification.json> --proof-sha256 <sha256> --output .boom/namespace-capacity-checks/review.json
+```
+
+The tool writes a fresh report under `.boom`, `target` or `dist`. Exit0 means
+the recognized UFMP2 capacity guards match; exit2 reports stale guards. This
+is a static build check, with no game execution or runtime acceptance. It is
+separate from the 117-tool provider source identity and does not register a
+new runtime provider.
+
+The verified single-Lambda image before the three registry fixes produces
+three stale guard findings and direct Python exit2; the repaired verified
+image produces zero stale findings and exit0. These are actual image inputs,
+with the same UFMP2 capacity109946, rather than synthetic constant examples.
+
 ## Generic source rule
 
 `normal-lambda-source.py` reads the pinned original classfile, BootstrapMethods,
