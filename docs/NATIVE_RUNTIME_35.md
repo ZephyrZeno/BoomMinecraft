@@ -96,6 +96,9 @@ ABI14 report  d957b84c53a03ca4da353a80c6dcd16100dd60c8271b233f94b6e3e968fcabe8
 
 ## 可写内存接入后的实际 Main
 
+本次绑定为原版专用服务器 `net/minecraft/server/Main`（方法 491841、类 49839），参数 `--help`。
+这是无账号的共用运行时初始化验证；客户端图形入口需要另行选择来源、构建和实际执行。
+
 `.boom/vm-entry-images/v234-current35-owned-memory-main-a` 已完成实际构建、规范机器码检查、
 完整 PE 独立重链接比对及主 agent 的一次隔离进程执行。
 它替换原镜像索引 94／95／196／202 的四个对象，增加五个对象，合计 210 个；

@@ -64,6 +64,12 @@ SHA256 `1197c0d708d6249ec559f029de05e3fa89eaaf93c618e038d56a5c3fc568e2da`。
 `24b499d914a915ec36c4b60bff9e753ffa52e1a86fef5cfd18ab560b0418822d`。
 初次向量测试误按另一 Context kind 判断 Java Throwable 的失败记录保留，修正仅涉及测试判定，服务汇编未改。
 
+后续独立 c 组件保留服务源码不变，再次通过上述向量／并发，并增加真实借用冲突时的读写／释放／调整重试、
+两秒超时后 Context20 且区域和内容保留、退租后的正常回收，以及静止后的四轮显式 GC 和根快照检查。
+有意超时发生在测试私有进程，未记作正常游戏路径；没有启动自动或并发 GC。
+本地 `consumer-vectors-v235-c/execution.json` SHA256 为
+`6ac4c17d58c4de95d38dd73290475dc4051888124994dfd048e6013e8debaf57`。
+
 ## 原版进程生命周期
 
 `scripts/main-native-memory-owner-source.py` 生成独立进程 owner 和四处可逆入口改动。
@@ -72,6 +78,6 @@ SHA256 `1197c0d708d6249ec559f029de05e3fa89eaaf93c618e038d56a5c3fc568e2da`。
 当前开发配置为 4,096 个记录槽、1 GiB 预算；并非预分配 1 GiB。
 独立 CREATE_NEW 的 320 字节报告记录真实状态、计数和前后完整 Context，未执行状态保留 FFFFFFFF。
 
-主 agent 的[实际 Main 运行](NATIVE_RUNTIME_35.md#可写内存接入后的实际-main)现已越过内存分配停止，
+主 agent 的[实际专用服务器 Main 初始化](NATIVE_RUNTIME_35.md#可写内存接入后的实际-main)现已越过内存分配停止，
 实际创建 2 KiB 区域并在退出时释放，清理标志为 7。
 新的缺口是 Windows NIO 文件系统初始化；Main 类初始化、方法体和完整游戏仍未完成。
