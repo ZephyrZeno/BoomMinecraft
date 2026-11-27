@@ -131,8 +131,9 @@ tool-only JDK, eight-worker, ABI and pending/invalid-Context suite in
 `51e656c10e177e77b4c4a10596405c2f3bbf16879a87aa40739bf98c80271572`;
 execution SHA256 is
 `1a09b707e61ada620d757a28d6510eff8b346f3288710a1dac7fda0384bdc12d`.
-All five actual-prefix mutation tests also passed. Root checked every frozen
-source before committing. This repeats the standalone scope above; valid
+All five actual-prefix mutation tests also passed. Root also checked all six
+frozen code/test files before publication; this note was appended after review.
+This repeats the standalone scope above; valid
 Java Unsafe, DirectByteBuffer and combined bridge execution remain unverified.
 
 ## Subsequent bulk-read boundary
