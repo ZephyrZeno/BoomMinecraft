@@ -13,3 +13,22 @@ __pycache__/
 /session.json
 /auth.json
 /credentials.json
+
+# Local PowerShell files are not published.
+*.[pP][sS]1
+*.[pP][sS][mM]1
+*.[pP][sS][dD]1
+
+# One-off Python work belongs in ignored local directories.
+/tmp/
+/temp/
+/scratch/
+/.tmp/
+/.temp/
+/.scratch/
+*.tmp.py
+*.temp.py
+*.scratch.py
+tmp_*.py
+temp_*.py
+scratch_*.py
