@@ -152,6 +152,70 @@ capture SHA is
 This locates the next missing VarHandle invocation rule; no code or Java
 fields were changed by the observation.
 
+A later source-bound reference-field CAS bridge adds two assembly units and
+replaces 46 complete signature-polymorphic diagnostic tails. Original-Class
+verification covers all 46 CP sites and 81 selected bytecode occurrences.
+The bridge delegates to the original translated reference-field CAS method
+and existing Unsafe assembly service; it has no map/field-name special case.
+The independently rebuilt 251-object, 68-role image retains the same roots
+and original Java frames. Complete PE equality proof SHA is
+`2cba3ff4f2b6be23650abbfa9084ab49f860bc471f4b071d62e481061aad9291`.
+
+Its actual Main naturally exited86 at a new first diagnostic, row106858:
+the native `Class.getDeclaredFields0(boolean)Field[]`, method41458. The
+run SHA is
+`2a1302a1357f6fe67b506153a05eb5e701dd583992551b8a3d211e106f6fead4`.
+System123/VM4, cleanup flags7, zero held monitors, JMAP256/NMWO320 checks and
+all immutable source/input identities passed. Main initialization, its body
+and help remain incomplete. This run does not establish execution of every
+CAS site, general VarHandle support or a game performance improvement.
+
+A separate CAS component subsequently passed real normal/exact calls,
+success/failure/clear results, a typed WrongMethodTypeException and pending
+Context preservation. It uses the original initialized HEAD VarHandle and
+the translated Index constructor. Eight actual OS workers with original
+Thread/FLS identities made 128 contended CAS attempts over 16 rounds; each
+round had exactly one winner and the observed head value matched it. All
+12 component cleanup checks and immutable input checks passed. Execution SHA is
+`f411f0e92637b678441ad12b8c15ae8c214d1855e0efc8daa2abb3fc22d5edf7`.
+The earlier original put attempt remains a failed observation at Random's
+reflection dependency. Complete put/get/size and concurrent map-operation
+tests are deferred; this narrower CAS test does not replace them.
+
+Read-only source/COFF/PE/unwind recovery proves the immediate original caller
+is Class.privateGetDeclaredFields, method41442 at PC34. A bounded typed
+observation read 552 bytes and identified the canonical Class mirror for
+java.util.Random, type6559, with publicOnly=false; capture SHA is
+`44c04aec1bfd0778650ad46d710bbc206338b0e3a90023a7c0173f7a167ebbab`.
+The observed Context at the first write names Random's initializer at PC76;
+that Context alone is not a recovered dynamic Java stack. Native field
+reflection must enumerate all 13 original declarations, including three
+instance fields. The selected static-state table's ten fields cannot stand
+in for the complete original Class field list.
+
+The reusable CAS sources are now `native/providers/varhandle_reference_cas.asm.inc`,
+`native-config/varhandle-reference-cas-abi.json` and
+`scripts/varhandle-reference-cas-source.py`. Its explicit
+`index(summary, classes, selection, diagnostic, layouts, frame)` API derives
+the original CP sites, coordinate types, field-address callbacks, Java target
+and exception constructor. `render(metadata)` emits the two units. The CLI
+checks source-summary/Class/layout lineage and confines fresh outputs to
+`.boom`, `target` or `dist`; it has no dependency on local temporary drivers.
+Regenerated sources match the executed sources byte for byte. The enabled
+domain remains reference-instance CAS; unsupported families stay explicit.
+
+The next experimental Main adds normal field reflection as two assembly units,
+preserving the original Field constructor and native Frame32. Its 253 objects,
+70 roles and complete 701,877,248-byte PE passed independent relinking; proof
+SHA is `f314f1cf2e93ddfce9987f6a625a798af0f195acd4e4859601b4b689d50a0bff`.
+Actual execution naturally exited86 at a new first diagnostic, row50696:
+`Unsafe.objectFieldOffset0(Field)long`, native method113561. The execution
+SHA is `bfa8fdfa1fb5d10959817ffff5164a45432c31e68633a0541e0a2e883ffe2e17`.
+All source/input identities and System123/VM4/resource cleanup checks passed,
+with zero held monitors and cleanup flags7. Main initialization and its body
+still did not complete. This progression does not replace the separate full
+field-reflection component checks, nor establish a game or world startup.
+
 ## Checking namespace capacity consumers
 
 `scripts/audit-namespace-capacities.py` derives the type capacity from the

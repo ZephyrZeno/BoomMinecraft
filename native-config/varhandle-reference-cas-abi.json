@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "family": "source-reference-instance-varhandle-cas",
+  "pool": {"magic": "VRCB", "abi": 1, "bytes": 160, "site_row_bytes": 32, "dispatch_row_bytes": 64},
+  "context_bytes": 32,
+  "argv_slots": 4,
+  "operations": [{
+    "id": 1,
+    "name": "compareAndSet",
+    "owner": "java/lang/invoke/VarHandle",
+    "native_descriptor": "([Ljava/lang/Object;)Z",
+    "opcode": 182,
+    "coordinates": "three_reference_arguments",
+    "return_descriptor": "Z",
+    "active_families": [{
+      "owner": "java/lang/invoke/VarHandleReferences$FieldInstanceReadWrite",
+      "method": "compareAndSet",
+      "descriptor": "(Ljava/lang/invoke/VarHandle;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z",
+      "fields": {"exact": "exact", "receiver_class": "receiverType", "field_class": "fieldType"}
+    }]
+  }],
+  "wrong_method_type": {"owner": "java/lang/invoke/WrongMethodTypeException", "constructor": "()V", "detailed_message_exact": false},
+  "existing_unsafe": {"owner": "jdk/internal/misc/Unsafe", "method": "compareAndSetReference", "descriptor": "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z", "packed_operation": 73},
+  "behavior": {
+    "nonexact": "Delegate unchanged four-slot argv to the original selected static Java reference CAS method.",
+    "exact": "Require all three source CP coordinate TYPE IDs to equal the represented receiver/field/field Class identities, then delegate.",
+    "unmatched_family_or_operation": 20,
+    "malformed_metadata": 7,
+    "allocation_failure": 3,
+    "incoming_pending_context": "Preserve all 32 bytes and perform no operation.",
+    "null_varhandle": "Original invokevirtual receiver check precedes the bridge; direct native fallback is builtin Context4."
+  },
+  "resource_contract": {"persistent_oop_roots": 0, "native_resources": 0, "close_hook": false, "Java_callbacks_under_locks": false, "GC_scope": "existing explicit quiescent collection"},
+  "scope": "One active reference-instance CAS dispatch family. Other VarHandle shapes, static/indexed/primitive families and MethodHandle invocation remain unsupported. No complete game acceptance is implied."
+}

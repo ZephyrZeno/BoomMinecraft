@@ -55,7 +55,7 @@ Lookup and ConcurrentSkipListMap initialization/construction. The reusable
 emitter reconstructs all five executed source units byte for byte; actual and
 canonical MASM outputs match their complete verified COFF contributions.
 
-The current independently relinked 249-object Main uses these services and
+The independently relinked 249-object integration checkpoint uses these services and
 advances to a VarHandle signature-polymorphic call. It still exits86 before
 Main initialization completes. Neither complete Minecraft startup nor client,
 world, general MethodHandle support or game performance is established. See
