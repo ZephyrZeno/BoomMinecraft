@@ -1,8 +1,9 @@
 # 可写原生内存 owner
 
 `native/kernels/native_memory_owner64.asm.inc` 实现独立的纯 MASM 内存 owner。
-它是 [Main 当前 `Unsafe.allocateMemory0` 缺口](SIGNAL_SHUTDOWN_ORDER.md)的底层组件，
-尚未接入游戏镜像；独立内核测试不等于原 Java 包装或 Main 已执行。
+它是 [Main 原 `Unsafe.allocateMemory0` 缺口](SIGNAL_SHUTDOWN_ORDER.md)的底层组件，
+现已通过[组合服务](UNSAFE_OWNED_MEMORY.md)接入独立 Main 派生镜像，并实际分配和清退区域。
+完整游戏和 Main 方法体仍未启动；独立内核与原版入口的执行范围分别记录。
 原 89 源汇编运行时、117 项工具来源和原 Java Code 未修改。
 
 ## 内核与生命周期
@@ -63,9 +64,8 @@ D:\Dev\Python312\python.exe -B scripts/native-memory-owner-candidate.py build --
 `.boom/native-memory-owner-v224-a/root-test-v227-a/verification.json`，SHA256
 `3b37d3c6faae1fab46ce6629fbead59908dbb51dc16853a057c4ac230dd137b9`。
 
-## 待接入范围
+## 上层接入范围
 
-下一层将为原六个 Unsafe 内存声明绑定正常 Frame，组合普通类型读写、原堆、RO 映射和 RW owner。
-heap byte[]／char[] 与原生地址之间的复制需要独立验证真实堆块成员身份和物理字节边界，
-不能把候选 header 当作成员证明。原 Java 参数检查和控制流保留。
-当前构建和测试成功不代表这些组合服务或完整游戏已经启动。
+[组合服务](UNSAFE_OWNED_MEMORY.md)已为原六个声明绑定正常 Frame，组合 plain 类型读写、原堆、RO 映射和 RW owner。
+heap byte[]／char[] 与原生地址之间的复制使用独立验证的真实块成员身份和物理字节边界。
+原 Java 参数检查和控制流保留；RW volatile／CAS、部分 RO 复制域和完整游戏仍未完成。
