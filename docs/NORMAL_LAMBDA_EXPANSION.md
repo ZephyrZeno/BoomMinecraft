@@ -91,6 +91,28 @@ all input identities and the 117 source tools remained unchanged. The run SHA is
 Main initialization, its body and help output remain incomplete. This does
 not establish client/window/world startup or game performance.
 
+Read-only hardware observation has now recovered the four actual native
+arguments from a source/COFF-proved caller stack position. A subsequent bounded
+typed capture read 1,158 bytes: the request is `ConcurrentSkipListMap.head`,
+with field type `ConcurrentSkipListMap$Index`, REF_getField, lookupMode95 and
+speculative=false. The original declaration is private/transient, not volatile;
+UFMP field35305 has payload offset24 and the distinct VM offset token
+`0x55464c320089ea80`. The capture SHA is
+`79a492008471b6fc98cee0f65f9f3417b7b39093122a932262aadd88a0d2b82c`.
+
+An isolated Java21 reference experiment covers 12 native field-resolution
+cases. It confirms canonical reference-kind/modifier flags, ordered interface
+lookup, no target-class initialization and preservation of `resolution` for
+the original Java Factory to finish. This is a development oracle, not AOT
+execution; its SHA is
+`cc8441cf87a6faf888b95874b22d59944429ff774a132d31e6354bf58d8a0b70`.
+The separate native binding-publication group has passed normal, repeated,
+invalid-table and concurrent-publication tests. A source-derived field lookup
+group has passed 17 pure native cases, including inheritance and interface
+order. Full registration/Factory/Lookup integration is still under component
+verification. These results do not establish a working MethodHandle runtime
+or Minecraft startup.
+
 ## Checking namespace capacity consumers
 
 `scripts/audit-namespace-capacities.py` derives the type capacity from the
