@@ -13,3 +13,7 @@ native-config/reflection-array-normal-abi.json -text
 native/kernels/class_lookup_cnfe64.asm.inc -text
 native/providers/class_lookup_cnfe_throw.asm.inc -text
 native-config/class-lookup-cnfe-abi.json -text
+native/kernels/class_lookup_builtin64.asm.inc -text
+native/providers/class_lookup_builtin_throw.asm.inc -text
+native/providers/class_lookup_builtin_namespace.asm.inc -text
+native-config/class-lookup-builtin-abi.json -text

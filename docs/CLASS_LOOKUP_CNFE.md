@@ -6,6 +6,10 @@ This experimental Windows x64 MASM candidate binds the original
 normal Frame32 envelopes, JCFN128/1 lookup data, and original Java method bodies
 remain the source of their identities.
 
+The subsequent [built-in loader candidate](CLASS_LOOKUP_BUILTIN.md) adds
+prelinked platform/application lookup with separate tests and Main evidence.
+The bootstrap and validation-only results below retain their original scope.
+
 The [lookup kernel](../native/kernels/class_lookup_cnfe64.asm.inc) and
 [exception helper](../native/providers/class_lookup_cnfe_throw.asm.inc) use
 [read-only callback metadata](../native-config/class-lookup-cnfe-abi.json).
