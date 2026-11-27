@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "name": "VPCP192/1 source-bound primitive comparison sites",
+  "service": "boom_varhandle_primitive_compare",
+  "pool": "boom_varhandle_primitive_pool",
+  "context_bytes": 32,
+  "argv_QWORD_slots": ["VarHandle", "receiver", "expected primitive", "new primitive"],
+  "operations": {"compareAndSet": 1, "weakCompareAndSetPlain": 2, "weakCompareAndSet": 3, "weakCompareAndSetAcquire": 4, "weakCompareAndSetRelease": 5},
+  "wire_kinds": {"I": 1, "J": 2},
+  "active_runtime_families": ["java/lang/invoke/VarHandleInts$FieldInstanceReadWrite", "java/lang/invoke/VarHandleLongs$FieldInstanceReadWrite"],
+  "pool_layout": {"bytes": 192, "magic": "0x50435056", "abi": 1, "sites_D12": 12, "heapCell_Q16": 16, "RTYP_Q24": 24, "JCLS_Q32": 32, "siteRows_Q40": 40, "dispatchRows_Q48": 48, "dispatchCount_D56": 56, "siteBytes_D60": 60, "dispatchBytes_D64": 64, "argvSlots_D68": 68, "WMTclass_Q72": 72, "WMTlayout_Q80": 80, "WMTctor_Q88": 88, "ThrowableTYPE_Q96": 96, "reserved_zero_Q104_through184": 104},
+  "site64": {"caller_D0": 0, "constant_D4": 4, "opcode_D8": 8, "operation_D12": 12, "argument_TYPEs_D16_D20_D24": 16, "booleanResultTag_D28": 28, "primitiveWire_D32": 32, "argvSlots_D36": 36, "reserved_zero_Q40_Q48_Q56": 40},
+  "dispatch80": {"operation_D0": 0, "runtimeClass_D4": 4, "originalJava_Q8": 8, "layout_Q16": 16, "exactFMAPPROC_Q24": 24, "receiverTYPEFMAPPROC_Q32": 32, "primitiveTYPE_D40": 40, "primitiveWire_D44": 44, "argumentCount_D48": 48, "booleanResultTag_D52": 52, "scopeFlags_D56": 56, "reserved_D60": 60, "fieldOffsetFMAPPROC_Q64": 64, "reserved_Q72": 72},
+  "behavior": {"nonexact": "Only same-primitive I/I or J/J coordinates are activated; original static Java target performs casts/null/cookie/atomic behavior.", "exact": "Require source receiver nominal TYPE equal actual VarHandle receiver Class TYPE and both primitive TYPEs equal the family primitive TYPE; mismatch creates original typed WMT().", "conversion_boundary": "Widening, narrowing, boxing/unboxing, other result types or unmatched families explicitly return capability-deferred Context20; no Java WMT claim for deferred nonexact conversions.", "WMT_detailed_message_exact": false, "pending": "Preserve all Context32 bytes and perform no operation; VMplan remains opaque."},
+  "existing_reference_CAS": "Separate existing two units and all 46 original reference sites remain byte-identical and are not redefined.",
+  "additional_oop_roots": [],
+  "native_resources_or_close_hook": false,
+  "GC": "existing explicit/quiescent collection; no held lock across Java callbacks",
+  "complete_VarHandle_or_MethodHandle_support": false
+}

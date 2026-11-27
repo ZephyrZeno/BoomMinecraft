@@ -216,6 +216,45 @@ with zero held monitors and cleanup flags7. Main initialization and its body
 still did not complete. This progression does not replace the separate full
 field-reflection component checks, nor establish a game or world startup.
 
+A subsequent primitive comparison experiment adds 19 original CP sites,
+32 selected Code occurrences and ten static Java target rows for int/long
+instance-field CAS and weak CAS. It retains the reference CAS units unchanged.
+The same image also physically substitutes both corrected reflected-Unsafe
+objects; equal normalized native code is not represented as equal object files.
+All 257 objects, 74 roles and 701,884,928 PE bytes passed independent relinking;
+proof SHA is `72b10f15dd81c95d2126d1861ef9707efdb5b80d995d20d8974701961443e9ba`.
+
+The actual run naturally exited70 and **failed** the unchanged canonical
+decoder's cleanup/protocol check. Its execution SHA is
+`66a4438955be4863a3b0093922a5c7f6c8b91099b8dae4c719a153db5b7c8f9d`.
+Raw ABI14 fields show kind20, one held monitor, cleanup flags0 and teardown
+error170. The outer Main Context does not identify the first failing callee.
+This run is not a verified startup prefix or a game startup result; the failed
+reports are retained without weakening the decoder or forcing monitor cleanup.
+
+The separate primitive component passed the real LongAdder constructor,
+add/sum sequence and AtomicBoolean's five comparison modes, exact/WMT cases
+and an eight-worker, 128-attempt release-CAS contention check. The basic and
+extended execution SHAs are respectively
+`e7594f3bbe979ec2af64e48c594cdb210dd906f17d0e68e393f7c62dd828b513`
+and `c643e9f9e34f79f44881c1ae32511d5163d28a1fe387118b744275ebeacabcd8`.
+Long weakPlain/weakAcquire have direct original-static-target evidence only;
+there are no corresponding JJ-shaped CP sites in this candidate. Neither
+these cases nor the source inventory prove every bridge row executed.
+
+A fresh hardware kind20 watch located the first failure in the existing
+field-only `mhf_service` at its explicit unsupported branch. Complete linked
+function bytes match the source COFF outside named relocations. A subsequent
+bounded read of 1,910 bytes identifies an actual MethodType-form request for
+`ServiceLoader.load(Class,ClassLoader)ServiceLoader`, REF_invokeStatic6,
+lookupMode95, speculative=false, from PropertiesUtil$Environment. Its
+MemberName has flags0x06010000, method=null and unchanged nonnull resolution.
+Capture SHA is
+`b8638b86032b47e48454352c3a91f30962daefd046e04b52287382f54f8cb9e4`.
+This is an observed method-resolution capability gap. Method-domain resolution
+and its VM-owned ResolvedMethodName state remain to be implemented; the original
+zero-payload Java layout must not receive injected HotSpot fields.
+
 ## Checking namespace capacity consumers
 
 `scripts/audit-namespace-capacities.py` derives the type capacity from the

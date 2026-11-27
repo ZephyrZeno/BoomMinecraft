@@ -10,6 +10,8 @@ An experimental AOT compiler, assembly runtime, and launcher for Minecraft: Java
 
 后续引用字段 CAS 桥已逐项核对 46 个原始常量池调用点及 81 处已选择字节码调用。251 对象映像的完整 PE 独立重链接通过；实际原生 Main 不再停在上述 VarHandle 缺口，推进到 `Class.getDeclaredFields0`。CAS 独立组件另通过 8 个 OS 线程、128 次争用和精确调用／异常验证。[正常字段反射汇编服务](docs/NORMAL_FIELDS.md)已通过 12 组、972 次原版调用；接入[反射字段的 Unsafe 偏移查询](docs/UNSAFE_REFLECTED_FIELDS.md)后，255 对象映像独立重链接及实际资源清理通过，推进到 `Striped64` 的 long 类型 `VarHandle.weakCompareAndSetRelease`。完整 Main、客户端和世界仍未完成；这不代表全部 CAS 调用点或完整 VarHandle 家族已执行验收。
 
+[int/long VarHandle 比较桥](docs/PRIMITIVE_VARHANDLE_COMPARISONS.md)已接入 19 个原 CP 调用点，独立原版 LongAdder、AtomicBoolean 与 8 线程争用验证通过。257 对象镜像通过完整 PE 独立重链接，但实际运行退出70，严格清理验证失败。只读捕获定位到方法句柄对 `ServiceLoader.load(Class, ClassLoader)` 的静态方法解析；当前方法域及 VM 原生 ResolvedMethodName 状态仍待实现，失败记录没有计作启动成功。
+
 [方法枚举](docs/NORMAL_METHODS.md)、[原常量池读取](docs/NORMAL_CONSTANT_POOL.md)和[有界反射调用](docs/METHOD_INVOKE_STATIC.md)的独立汇编候选已通过原 Java API、JDK 对照、OS 线程与显式 GC 验证，并连同标准输出接入新 35 包的来源验证。派生启动试验已越过这些反射缺口，推进到 JDK jimage 资源读取；完整 Main 仍未完成。[资源映射联合组件](docs/JIMAGE_NATIVE_MAP.md)已实际完成原库与类初始化、真实 CPU 能力查询、原 ByteBuffer 构造和映射 getInt，8 OS 线程的 512 次调用、4 轮静止 GC、JDK 对照与完整关闭均通过独立复跑。[原 Java 批量读取](docs/JIMAGE_JAVA_BULK.md)也通过了缺口对照和接入汇编实现后的 0 至 64 KiB、目标偏移与位置检查。[Inflater 数组接口](docs/INFLATER_NORMAL.md)已有独立内核验证；原构造／end 的三声明前缀也通过了真实 System123 和三后台线程清理。
 
 Windows 文件元数据内核通过 JDK 对照，窗口调用桥通过无窗口契约测试；图形运行时和创建世界仍在实现。多核线程内核已有并发测试，游戏性能提升需要在完整启动后测量；自动／并发收集未实现。[Lambda 通用展开](docs/NORMAL_LAMBDA_EXPANSION.md)已在独立候选中执行原严格 Builder；当前单站点派生镜像的接线已通过机器验证，正式共享流程及当前游戏路径执行仍待验收。
