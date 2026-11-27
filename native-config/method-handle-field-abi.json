@@ -1,0 +1,432 @@
+{
+  "schema": 1,
+  "scope": "AOT original field MemberName resolver and native binding publication; not complete MethodHandle support",
+  "registration": {
+    "schema": 1,
+    "name": "MHRG128-native-binding-publication-v1",
+    "pool_symbol": "boom_mhn_bindings_pool",
+    "service_symbol": "boom_mhn_bindings_service",
+    "register_symbol": "boom_mhn_bindings_register",
+    "service_abi": "Win64(Context32 RCX, argv RDX, exact MHRG128 pool R8, source operation R9D); operation0 registers, operations1..N dispatch",
+    "register_abi": "Win64(Context32 RCX, exact pool RDX)->EAX0 after actual validated publication; EAX87 for invalid table; pending input returns0 unchanged",
+    "pool": {
+      "bytes": 128,
+      "magic_hex": "0x4752484d",
+      "fields": [
+        {
+          "offset": 0,
+          "type": "DWORD",
+          "name": "magic"
+        },
+        {
+          "offset": 4,
+          "type": "DWORD",
+          "name": "abi",
+          "value": 1
+        },
+        {
+          "offset": 8,
+          "type": "DWORD",
+          "name": "bytes",
+          "value": 128
+        },
+        {
+          "offset": 12,
+          "type": "DWORD",
+          "name": "bindings_published",
+          "cold": 0,
+          "published": 1
+        },
+        {
+          "offset": 16,
+          "type": "QWORD",
+          "name": "SRW_lock",
+          "cold": 0
+        },
+        {
+          "offset": 24,
+          "type": "QWORD",
+          "name": "actual_input_rows"
+        },
+        {
+          "offset": 32,
+          "type": "QWORD",
+          "name": "immutable_expected_source_rows"
+        },
+        {
+          "offset": 40,
+          "type": "QWORD",
+          "name": "published_cells"
+        },
+        {
+          "offset": 48,
+          "type": "DWORD",
+          "name": "actual_count"
+        },
+        {
+          "offset": 52,
+          "type": "DWORD",
+          "name": "expected_count"
+        },
+        {
+          "offset": 56,
+          "type": "QWORD",
+          "name": "actual_normal_Frame_pool"
+        },
+        {
+          "offset": 64,
+          "type": "DWORD",
+          "name": "Frame_ABI",
+          "value": 3
+        },
+        {
+          "offset": 68,
+          "type": "DWORD",
+          "name": "row_bytes",
+          "value": 64
+        },
+        {
+          "offset": 72,
+          "type": "QWORD[7]",
+          "name": "reserved",
+          "value": 0
+        }
+      ]
+    },
+    "source_row64": "methodID D0, declaringClassID D4, operation D8, support D12, native-entry Q16, handler Q24, actual MethodRow32 Q32, UTF16name Q40, UTF16descriptor Q48, nameUnits D56, descriptorUnits D60",
+    "published_cell24": "native-entry Q0, handler Q8, support D16, reserved D20=0",
+    "support_states": {
+      "0": "explicit unsupported handler, returns Context20",
+      "1": "external delegated handler; not a declaration of complete domain support"
+    },
+    "required_resolver_callback": {
+      "symbol": "boom_mhn_resolve_external",
+      "ABI": "Win64(Context32 RCX, argv RDX)->MemberName or0; callback has its own source-bound pool",
+      "provided_by_this_group": true
+    },
+    "registration_semantics": "Validate entire original source table and all native Frame rows before writing cells; publish state1 last under exclusive SRW lock. Repeat must match every previously published cell. No Java field/Class state/VM-ready flag write.",
+    "dispatch_semantics": "Snapshot and validate a published handler under shared SRW lock; release lock before native handler or original Java callback. Unsupported never returns a fake MemberName.",
+    "capability_scope": "Native entry binding publication only. Unsupported MHN operations and reflective MethodHandle invoke/invokeExact are explicitly unsupported until their actual semantic backend is supplied; source inventory records their expected original UOE behavior.",
+    "existing_Context": "kind or pending nonzero: all32 bytes preserved",
+    "Java_oop_roots": [],
+    "lifecycle": "static native data contains no oops or owned OS resources; caller guarantees its image lifetime until all users end",
+    "registered_pack": false,
+    "full_MethodHandle_support": false
+  },
+  "field": {
+    "schema": 1,
+    "name": "MHFR256/1 source-bound field MemberName resolver",
+    "pool_symbol": "boom_mhn_field_pool",
+    "exports": {
+      "boom_mhn_resolve_external": "Win64 RAX(Context32 RCX, argv{MemberName,callerClass,lookupMode,speculative} RDX)",
+      "boom_mhn_object_field_offset_external": "Win64 RAX(Context32 RCX, argv{MemberName} RDX)",
+      "boom_mhn_static_field_offset_external": "Win64 RAX(Context32 RCX, argv{MemberName} RDX)",
+      "boom_mhn_static_field_base_external": "Win64 RAX(Context32 RCX, argv{MemberName} RDX)",
+      "boom_mhn_member_vm_info_external": "Win64 RAX(Context32 RCX, argv{MemberName} RDX)"
+    },
+    "pool": {
+      "bytes": 256,
+      "magic": "0x5246484d",
+      "abi": 1,
+      "D0_magic": 0,
+      "D4_abi": 4,
+      "D8_bytes": 8,
+      "D12_descriptor_count": 12,
+      "Q16_heap_cell": 16,
+      "Q24_runtime_type_map": 24,
+      "Q32_ClassPool144": 32,
+      "Q40_UFMP128": 40,
+      "Q48_FLUP80": 48,
+      "Q56_DescriptorRow16_directory": 56,
+      "Q64_MemberName_layout": 64,
+      "Q72_MemberName_TYPE": 72,
+      "Q80_String_layout": 80,
+      "Q88_String_TYPE": 88,
+      "Q96_original_String_toCharArray": 96,
+      "Q104_original_Long_valueOf": 104,
+      "Q112_Object_array_TYPE": 112,
+      "Q120_Throwable_TYPE": 120,
+      "Q128_ExceptionRow24_directory": 128,
+      "Q136_original_ABI2_property_pool": 136,
+      "Q144_MessageRow16_directory": 144,
+      "Q152_original_record_class_bits": 152,
+      "D160_original_class_count": 160,
+      "D164_reserved0": 164,
+      "Q168_reserved0": 168,
+      "Q176_reserved0": 176,
+      "Q184_reserved0": 184,
+      "D192_MemberName_clazz_offset": 192,
+      "D196_name_offset": 196,
+      "D200_type_offset": 200,
+      "D204_method_offset": 204,
+      "D208_resolution_offset": 208,
+      "D212_flags_offset": 212,
+      "D216_Class_loader_offset": 216,
+      "D220_char_array_type_id": 220,
+      "Q224_reserved0": 224,
+      "Q232_reserved0": 232,
+      "Q240_reserved0": 240,
+      "Q248_reserved0": 248
+    },
+    "DescriptorRow16": {
+      "UTF16_pointer": 0,
+      "units_D": 8,
+      "status_D": 12,
+      "status_encoding": "bit0 provided; bits8..15 source defining loader: bootstrap1/platform2/app3; NULL Class loader accepted only for source bootstrap identities"
+    },
+    "ExceptionRow24": {
+      "ClassDescriptor_pointer": 0,
+      "layout_pointer": 8,
+      "original_String_ctor_pointer": 16
+    },
+    "exception_rows": [
+      "InternalError",
+      "IllegalArgumentException",
+      "NoSuchFieldError"
+    ],
+    "MessageRow16": {
+      "UTF16_pointer": 0,
+      "units_D": 8,
+      "reserved_D0": 12
+    },
+    "original_field_lookup": "Nio frozen FLUP80/Query32/Result32; own then ordered interfaces then superclass",
+    "field_cookie": "actual UFMP tag112 | ((actual fieldID+1)<<8) | 0x80 for ABI2, validated Field64 identity; ABI1 uses tag | (id+1)",
+    "namespace": "actual runtime RTYP/JCLS/UFMP capacities agree dynamically; immutable original descriptor catalogue can be shorter",
+    "field_initialization": "only original MemberName clazz, flags, method are canonicalized after all validation; resolution is never written; original Java Factory performs completion",
+    "caller_loader_constraints": "trusted null caller, UNCONDITIONAL, or actual canonical caller/holder Class loader identity equal; other cases explicitly Context20",
+    "field_type": "normal canonical Class only in this first domain; symbolic String and method domains explicitly unsupported",
+    "GC": "existing explicit/quiescent native-frame discipline; no automatic collection or additional persistent oop roots",
+    "no_target_class_initialization": true,
+    "registered_pack": false,
+    "runtime_acceptance": false
+  },
+  "ordered_lookup": {
+    "schema": 1,
+    "service": "boom_source_field_lookup",
+    "index_symbol": "boom_source_field_lookup_index",
+    "calling_convention": "Win64 EAX(RCX readonly FLUP80*, EDX originalClassID, R8 readonly Query32*, R9 writable Result32*)",
+    "statuses": {
+      "0": "found",
+      "1": "complete text lookup miss",
+      "2": "outside indexed catalogue or unsupported hierarchy",
+      "3": "invalid native arguments/index bounds"
+    },
+    "failure_result": "all32 bytes unchanged",
+    "pool": {
+      "bytes": 80,
+      "magic": "0x50554c46",
+      "abi": 1,
+      "offsets": {
+        "magic": 0,
+        "abi": 4,
+        "total_bytes": 8,
+        "class_count": 12,
+        "field_count": 16,
+        "interface_count": 20,
+        "search_holder_count": 24,
+        "UTF16_units": 28,
+        "classes_offset": 32,
+        "fields_offset": 36,
+        "direct_interfaces_offset": 40,
+        "search_holders_offset": 44,
+        "UTF16_offset": 48,
+        "class_stride32": 52,
+        "field_stride40": 56,
+        "reserved_D0": 60,
+        "reserved_Q0": 64,
+        "reserved_Q1": 72
+      }
+    },
+    "ClassRow32": {
+      "first_field": 0,
+      "field_count": 4,
+      "first_direct_interface": 8,
+      "direct_interface_count": 12,
+      "superclass_id_or_FFFFFFFF": 16,
+      "first_search_holder": 20,
+      "search_holder_count": 24,
+      "status1_available_0_unsupported": 28
+    },
+    "FieldRow40": {
+      "name_offset_units": 0,
+      "name_units": 4,
+      "descriptor_offset_units": 8,
+      "descriptor_units": 12,
+      "UFMP_field_id": 16,
+      "original_declaration_slot": 20,
+      "original_access_flags": 24,
+      "declaring_loader_resolved_type_id_or_FFFFFFFF": 28,
+      "storage_bytes": 32,
+      "UFMP_kind": 36
+    },
+    "Query32": {
+      "trusted_UTF16_name_pointer_Q": 0,
+      "trusted_UTF16_descriptor_pointer_Q": 8,
+      "name_units_D": 16,
+      "descriptor_units_D": 20,
+      "reserved_Q0": 24
+    },
+    "Result32": {
+      "declaring_holder_id": 0,
+      "UFMP_field_id": 4,
+      "original_slot": 8,
+      "original_access": 12,
+      "field_type_id_or_FFFFFFFF": 16,
+      "storage_bytes": 20,
+      "UFMP_kind": 24,
+      "reserved_D0": 28
+    },
+    "catalogue": "original Class IDs from the immutable original input plan; generated/array type IDs outside it return2, never fake NoSuchField",
+    "namespace_capacity": "no hard RTYP/JCLS/UFMP type/method capacity equality; readonly index is source-role bound independently",
+    "search": "own declared fields first; raw direct interfaces in exact original declaration order recursively; superclass recursively; preproject first-visit holder sequence, never sorted TypeDesc ancestry",
+    "duplicate_ancestors": "first-visit deduplication is equivalent for immutable name+descriptor first-match lookup: a matching repeated holder would already have matched on its first visit",
+    "not_implemented": [
+      "caller-loader constraints",
+      "access checks",
+      "Java Class initialization",
+      "member mutation",
+      "exception creation",
+      "MethodHandle invocation"
+    ],
+    "side_effects": "none except Result32 publication on success; no Context, Java oop ownership, heap, allocation, locks or callbacks",
+    "trusted_native_contract": "metadata and Query native buffers live/trusted; at most65535 UTF16 units per view; not an arbitrary native pointer sandbox"
+  },
+  "native_table": [
+    {
+      "owner": "java/lang/invoke/MethodHandleNatives",
+      "name": "init",
+      "descriptor": "(Ljava/lang/invoke/MemberName;Ljava/lang/Object;)V",
+      "operation": 1,
+      "handler": "boom_mhn_unsupported",
+      "original_native_backend": "MHN_init_Mem"
+    },
+    {
+      "owner": "java/lang/invoke/MethodHandleNatives",
+      "name": "expand",
+      "descriptor": "(Ljava/lang/invoke/MemberName;)V",
+      "operation": 2,
+      "handler": "boom_mhn_unsupported",
+      "original_native_backend": "MHN_expand_Mem"
+    },
+    {
+      "owner": "java/lang/invoke/MethodHandleNatives",
+      "name": "resolve",
+      "descriptor": "(Ljava/lang/invoke/MemberName;Ljava/lang/Class;IZ)Ljava/lang/invoke/MemberName;",
+      "operation": 3,
+      "handler": "boom_mhn_resolve_external",
+      "original_native_backend": "MHN_resolve_Mem"
+    },
+    {
+      "owner": "java/lang/invoke/MethodHandleNatives",
+      "name": "getNamedCon",
+      "descriptor": "(I[Ljava/lang/Object;)I",
+      "operation": 4,
+      "handler": "boom_mhn_unsupported",
+      "original_native_backend": "MHN_getNamedCon"
+    },
+    {
+      "owner": "java/lang/invoke/MethodHandleNatives",
+      "name": "objectFieldOffset",
+      "descriptor": "(Ljava/lang/invoke/MemberName;)J",
+      "operation": 5,
+      "handler": "boom_mhn_object_field_offset_external",
+      "original_native_backend": "MHN_objectFieldOffset"
+    },
+    {
+      "owner": "java/lang/invoke/MethodHandleNatives",
+      "name": "setCallSiteTargetNormal",
+      "descriptor": "(Ljava/lang/invoke/CallSite;Ljava/lang/invoke/MethodHandle;)V",
+      "operation": 6,
+      "handler": "boom_mhn_unsupported",
+      "original_native_backend": "MHN_setCallSiteTargetNormal"
+    },
+    {
+      "owner": "java/lang/invoke/MethodHandleNatives",
+      "name": "setCallSiteTargetVolatile",
+      "descriptor": "(Ljava/lang/invoke/CallSite;Ljava/lang/invoke/MethodHandle;)V",
+      "operation": 7,
+      "handler": "boom_mhn_unsupported",
+      "original_native_backend": "MHN_setCallSiteTargetVolatile"
+    },
+    {
+      "owner": "java/lang/invoke/MethodHandleNatives",
+      "name": "copyOutBootstrapArguments",
+      "descriptor": "(Ljava/lang/Class;[III[Ljava/lang/Object;IZLjava/lang/Object;)V",
+      "operation": 8,
+      "handler": "boom_mhn_unsupported",
+      "original_native_backend": "MHN_copyOutBootstrapArguments"
+    },
+    {
+      "owner": "java/lang/invoke/MethodHandleNatives",
+      "name": "staticFieldOffset",
+      "descriptor": "(Ljava/lang/invoke/MemberName;)J",
+      "operation": 9,
+      "handler": "boom_mhn_static_field_offset_external",
+      "original_native_backend": "MHN_staticFieldOffset"
+    },
+    {
+      "owner": "java/lang/invoke/MethodHandleNatives",
+      "name": "staticFieldBase",
+      "descriptor": "(Ljava/lang/invoke/MemberName;)Ljava/lang/Object;",
+      "operation": 10,
+      "handler": "boom_mhn_static_field_base_external",
+      "original_native_backend": "MHN_staticFieldBase"
+    },
+    {
+      "owner": "java/lang/invoke/MethodHandleNatives",
+      "name": "getMemberVMInfo",
+      "descriptor": "(Ljava/lang/invoke/MemberName;)Ljava/lang/Object;",
+      "operation": 11,
+      "handler": "boom_mhn_member_vm_info_external",
+      "original_native_backend": "MHN_getMemberVMInfo"
+    },
+    {
+      "owner": "java/lang/invoke/MethodHandle",
+      "name": "invoke",
+      "descriptor": "([Ljava/lang/Object;)Ljava/lang/Object;",
+      "operation": 12,
+      "handler": "boom_mhn_unsupported",
+      "original_native_backend": "MH_invoke_UOE"
+    },
+    {
+      "owner": "java/lang/invoke/MethodHandle",
+      "name": "invokeExact",
+      "descriptor": "([Ljava/lang/Object;)Ljava/lang/Object;",
+      "operation": 13,
+      "handler": "boom_mhn_unsupported",
+      "original_native_backend": "MH_invokeExact_UOE"
+    }
+  ],
+  "registrar": {
+    "owner": "java/lang/invoke/MethodHandleNatives",
+    "name": "registerNatives",
+    "descriptor": "()V",
+    "operation": 0
+  },
+  "original_native_reference": {
+    "url": "https://raw.githubusercontent.com/openjdk/jdk21u/jdk-21.0.13%2B3/src/hotspot/share/prims/methodHandles.cpp",
+    "sha256": "95b29ae2ff432495d92b98b89a5f63074a6445138243440b9f6d31f39bc0874e",
+    "role": "native table order and semantic reference; Class declarations and method IDs always come from explicit original inputs"
+  },
+  "field_errors": {
+    "offset_unresolved": "mname not resolved",
+    "instance_required": "non-static field required",
+    "static_required": "static field required",
+    "missing": "Class <symbolic owner external name> does not have member field '<field type external name> <original field name>'"
+  },
+  "supported_domain": {
+    "fields": true,
+    "canonical_Class_type": true,
+    "original_class_catalogue": true,
+    "field_type_primitive_and_arrays": true,
+    "method_and_constructor_resolution": false,
+    "symbolic_String_type": false,
+    "cross_loader_constraints": "null caller / UNCONDITIONAL / verified equal actual defining-loader identity; otherwise explicit Context20"
+  },
+  "no_added_Java_fields_or_oop_roots": true,
+  "no_target_class_initialization": true,
+  "resolution_field_never_written": true,
+  "native_binding_publication_is_not_Java_VM_ready": true,
+  "registered_pack": false,
+  "runtime_acceptance_complete": false
+}
