@@ -86,6 +86,8 @@ ABI14 report  d957b84c53a03ca4da353a80c6dcd16100dd60c8271b233f94b6e3e968fcabe8
 `Unsafe.allocateMemory0(J)J`，原生方法 113555、诊断行 51631。
 对应的[纯汇编可写内存 owner](NATIVE_MEMORY_OWNER.md)已通过独立 native、并发和 JDK 向量验证；
 六声明及类型路由的组合服务仍待接入。
+[原始类型数组的物理范围检查](PRIMITIVE_HEAP_SPAN.md)也已通过 181 个 native 用例、
+8 个 OS 线程共 512 次调用及完整 COFF／PE 等价验证，为堆与原生内存复制提供成员身份和字节边界检查。
 该派生镜像复用当前 Java 来源，没有把额外 native 当作原始 35 包 source V 已覆盖的内容。
 必须按原 `java.home/lib/modules` 路径打开真实锁定输入，在工作线程全部退出后卸载自有库引用，
 并在 Java／堆用户结束后释放 ByteBuffer 持有的映射与文件句柄。
