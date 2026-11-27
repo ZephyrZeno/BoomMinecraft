@@ -1,0 +1,221 @@
+{
+  "schema": "RAF-RO-shared-NFIO-service-ABI-v1",
+  "status": "source_bound_wire_contract_only; implementation_and_execution_proofs_are_separate",
+  "scope": "Original read-only RandomAccessFile native service sharing the registered FileInputStream owner; source ABI, not an execution certificate",
+  "symbols": {
+    "pool": "boom_provider_random_access_file_pool",
+    "service": "boom_provider_random_access_file_service",
+    "quiet_drain": "boom_random_access_file_io_drain"
+  },
+  "service": "Win64 RCX Context32*, RDX argv, R8 exact RFIO64 pool, R9D operation. Return QWORD primitive/void result, propagate original Context; all4Q preserved on existing kind/pending-oop/VM-plan.",
+  "pool_bytes": 64,
+  "pool_offsets": {
+    "magic_D0": 0,
+    "abi_D1": 4,
+    "bytes_D64": 8,
+    "admission_state_D": 12,
+    "supported_mask_D": 16,
+    "active_calls_D": 20,
+    "legacy_capacity_D4096": 24,
+    "reserved_D0": 28,
+    "old_FIS_property_pool_Q": 32,
+    "original_RFID128_pool_Q": 40,
+    "old_FD_bootstrap_NFIO_pool_Q": 48,
+    "reserved_Q0": 56
+  },
+  "pool_magic": "RFIO",
+  "pool_abi": 1,
+  "admission_states": {
+    "ready": 0,
+    "draining": 1,
+    "closed": 2
+  },
+  "supported_mask": 63,
+  "operations": {
+    "0": {
+      "name": "open0",
+      "argv_Q_offsets": {
+        "RAF_receiver": 0,
+        "path_String": 8,
+        "mode_int": 16
+      },
+      "result": "void",
+      "supported": true
+    },
+    "1": {
+      "name": "read0",
+      "argv_Q_offsets": {
+        "RAF_receiver": 0
+      },
+      "result": "unsigned byte or -1 EOF",
+      "supported": true
+    },
+    "2": {
+      "name": "readBytes0",
+      "argv_Q_offsets": {
+        "RAF_receiver": 0,
+        "byte_array": 8,
+        "offset_int": 16,
+        "length_int": 24
+      },
+      "result": "positive read count, -1 EOF, zero before FD lookup when requested length0",
+      "supported": true
+    },
+    "3": {
+      "name": "getFilePointer",
+      "argv_Q_offsets": {
+        "RAF_receiver": 0
+      },
+      "result": "long current position",
+      "supported": true
+    },
+    "4": {
+      "name": "seek0",
+      "argv_Q_offsets": {
+        "RAF_receiver": 0,
+        "position_long": 8
+      },
+      "result": "void",
+      "supported": true
+    },
+    "5": {
+      "name": "length0",
+      "argv_Q_offsets": {
+        "RAF_receiver": 0
+      },
+      "result": "long length",
+      "supported": true
+    },
+    "6": {
+      "name": "write0",
+      "argv_Q_offsets": {
+        "RAF_receiver": 0,
+        "byte_int": 8
+      },
+      "result": "void",
+      "supported": false
+    },
+    "7": {
+      "name": "writeBytes0",
+      "argv_Q_offsets": {
+        "RAF_receiver": 0,
+        "byte_array": 8,
+        "offset_int": 16,
+        "length_int": 24
+      },
+      "result": "void",
+      "supported": false
+    },
+    "8": {
+      "name": "setLength0",
+      "argv_Q_offsets": {
+        "RAF_receiver": 0,
+        "length_long": 8
+      },
+      "result": "void",
+      "supported": false
+    }
+  },
+  "open_domain": {
+    "mode": 1,
+    "mode_name": "exact original O_RDONLY only",
+    "CreateFileW": {
+      "access": "GENERIC_READ",
+      "share": "FILE_SHARE_READ|FILE_SHARE_WRITE",
+      "disposition": "OPEN_EXISTING",
+      "flags": "FILE_ATTRIBUTE_NORMAL"
+    },
+    "file_type": "FILE_TYPE_DISK only; isolated ordinary files tested separately; no strict regular-file test or additional device-path blacklist",
+    "mode_other_than1": "Context20 unsupported; no CreateFile and no capability escalation",
+    "temporary_or_RW_or_sync_or_delete_modes_claimed": false,
+    "future_RW": "Requires a versioned permission+generation design and verified legacy record reuse/clear semantics; reserved24 or stale sidecar bits never authorize writes."
+  },
+  "owner": {
+    "source": "Entire source-bound selected FileInputStream provider assembly, appended before its final END; all original code/data/relocation/symbol/unwind prefixes protected",
+    "registry": "private fir_registry_lock, fir_find, boom_file_input_owners Slot32x4096 and existing FD root bank",
+    "slot_offsets": {
+      "state_D": 0,
+      "borrow_D": 4,
+      "owned_HANDLE_Q": 8,
+      "IO_SRW_Q": 16,
+      "reserved_Q": 24
+    },
+    "states": {
+      "free": 0,
+      "open": 1,
+      "closing": 2,
+      "failed_owned": 3,
+      "opening": 4
+    },
+    "shared_API_visibility": "appended PRIVATE native helpers used inside the composite object; no general untrusted HANDLE adoption export",
+    "root_bank": "original boom_file_input_owner_roots QWORD4096 DUP0; no new HANDLE-root bank",
+    "reserve": "Under the actual original registry lock validate real FD/registration/handle-1/int-1, reject existing FD ownership, claim root+state4 before callback/OS work.",
+    "publish": "Under the same lock validate exact slot+FD+state4 and only the fresh CreateFile result from this service; write original FD.handle and append=false, slot HANDLE/state1/counter, wake waiters.",
+    "abort": "No handle: clear reservation and wake. Fresh locally owned handle cleanup failure: retain exact handle+FDroot/state3/live counter; never clear or lose ownership.",
+    "borrow": "Under the same lock find exact rooted FD/state1/storedHANDLE==source FD.handle, increment original borrow count, then unlock; take per-slot IO SRW outside registry lock.",
+    "release": "Release per-slot IO lock first; decrement original borrow count, WakeByAddressAll at0; callbacks only after both locks/borrow are released.",
+    "close": "Original method39399 Frame/native/service unchanged. It finds the legitimately shared RAF FD record and closes via the original ownership protocol. No second close symbol/router or bare unknown CloseHandle."
+  },
+  "native_internal_job96": {
+    "visibility": "trusted stack metadata, not exposed to Java",
+    "offsets": {
+      "Context_Q": 0,
+      "FD_Q": 8,
+      "slot_Q": 16,
+      "index_D": 24,
+      "state_D": 28,
+      "owned_HANDLE_Q": 32,
+      "result_Q": 40,
+      "flags_D": 48,
+      "status_D": 52,
+      "captured_OS_error_D": 56,
+      "reserved_D": 60,
+      "reserved_Q64": 64,
+      "reserved_Q72": 72,
+      "reserved_Q80": 80,
+      "reserved_Q88": 88
+    },
+    "status": {
+      "ok": 0,
+      "miss": 1,
+      "busy": 2,
+      "argument": 3,
+      "OS": 4,
+      "invariant": 5,
+      "capacity": 7,
+      "closed": 9,
+      "cleanup_retained": 12
+    }
+  },
+  "callbacks": {
+    "path": "reuse actual source-bound private fir_path and original String.length/toCharArray callbacks",
+    "exception": "reuse actual source-bound private fir_throw after all registry/IO locks and borrows released",
+    "fir_throw_kinds": {
+      "IOException": 0,
+      "FileNotFoundException": 1,
+      "NullPointerException": 2,
+      "IndexOutOfBoundsException": 3
+    },
+    "other_failures": "preserve existing nonzero Context, real OOM guard, or explicit unsupported20; do not fabricate successful Java exceptions",
+    "GC_scope": "same existing explicit quiescent nonmoving snapshot scope; no automatic/concurrent GC during native callbacks is claimed",
+    "native_stack_temporary_oops_automatically_registered": false,
+    "future_auto_GC": "must first provide real native temporary-root bank/stack maps; this contract does not silently inherit such support"
+  },
+  "shutdown": {
+    "ABI": "boom_random_access_file_io_drain()->EAX status; no Java Context argument or Main Context mutation",
+    "position": "after Java/native workers+Signal+original libraries unload and GetAttrs drain, before complete root snapshot/registry/frame/heap destruction",
+    "admission": "close newRAF admission; reject active calls or any opening/closing/borrowed legacy NFIO record with170; retain VM",
+    "known_records_only": "close each actually registered open1/failed3 HANDLE using the original private lock/identity/root state machine, never an unknown FD field",
+    "failure": "capture OS error immediately, retain handle+root+live count/state3 and return nonzero; no false success or blind root clear",
+    "success": "all shared FD owner roots/handles/buffers gone, original consumer snapshot/guard passes; old Owner/resources may then close"
+  },
+  "verification_required": [
+    "Exact old whole source prefix plus END replacement reversibility",
+    "All old function/code/data/symbols/relocation targets and unwind prefix identical",
+    "Whole composite fresh canonical COFF and exact new imports/exports",
+    "Actual original RAF constructor/open/read/seek/length/Java close chain via unchanged39399",
+    "Actual FIS old behavior/close compatibility; no standard or unknown handle close",
+    "Read/close and open/close concurrency, OS/rollback/close fault retention, quiescent drain retry before heap destruction"
+  ],
+  "implementation_or_Main_acceptance_claimed": false
+}
