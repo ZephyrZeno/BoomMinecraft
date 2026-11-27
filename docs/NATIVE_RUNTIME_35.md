@@ -1,6 +1,7 @@
 # 35 包来源校验与原版资源读取接入
 
 35 包已在当前 117 项工具来源下完成来源、Frame 和实际 COFF 校验。
+新的标准原生入口已实际越过反射缺口，停在 JDK 资源映射的原生声明。
 状态仍为 `pending_runtime_acceptance`；完整 Main、帮助输出、游戏和世界尚未启动。
 [31 包原生运行](NATIVE_RUNTIME_31.md)保留为原来输入下的独立历史，不改写成新版本的运行结果。
 
@@ -52,7 +53,30 @@ SHA256 为 `7dc2abc9962c0fe4f3ec9b7d2155366b954f8991b0794a3e055f98cbe5d3a19c`。
 新 Main 源选择仅补入资源读取必需的三个类和四个原始 Java 方法：
 `NativeImageBuffer`、其 `$1` 类和 `DirectBuffer` 接口。
 私有 `DirectByteBuffer(long,long)` 构造器及标量／复制 Java 调用链原已选入。
-源准备结果为 8,655 类、71,775 个 Java 方法和 192,735 个汇编函数；完整来源验证与实际执行单独记录。
+完整独立来源验证自然退出 0，用时 965.938 秒，覆盖 8,655 类、71,775 个 Java 方法、
+192,735 个汇编函数及 26,932 格静态／初始化失败根。相对旧 Main 恰好增加三个类和四个 Code；
+其余 71,771 个方法的来源与 Code 摘要逐个保持不变。
+源目录为 `.boom/diagnostic-startup/v205-current35-jimage-source-a`，
+`selection-verification.json` 的 SHA256 为
+`c498825de85af8b660c97554519add80e4ec0727562c27042c7acd0d8944c317`。
+
+标准原生入口 `.boom/vm-entry-images/v210-current35-main-baseline-a` 已完成实际构建、独立验证和执行。
+它复用全部已校验 Java 对象，仅新汇编进程入口，没有接入上述五个额外候选。
+原 System 三阶段返回、VM 到达 4，原 argv 为 `['--help']`；
+Main 日志初始化越过先前的反射缺口，停在原 `NativeImageBuffer.getNativeMap` 方法 111359，
+源行 51461，原 Java caller 111087／PC45。Main 类初始化未返回，Main 方法体和帮助输出均未执行。
+该诊断声明的停止不证明 `NativeImageBuffer` 自身初始化已经执行。
+
+实际 ABI14／576 字节报告记录两个后台 Thread.exit 和两个 OS 记录回收、
+完整根快照 2,637 个非空项、Parker 打开和关闭各一次；
+活动 Parker、文件输入句柄／缓冲／owner 根、监视器持有及 worker failure 全部为零。
+堆、注册表、Java 帧清理标志为 7；没有触发自动回收。
+
+```text
+native proof  fe7b13518b36a71f7bd057b35ccce79741b183100e79e2e777c6d15b15d225ba
+execution     c6e4e262c7474d79e60255a9f15f99b6df7ec2a8a4bfa1bc8c4743400cc78707
+ABI14 report  d957b84c53a03ca4da353a80c6dcd16100dd60c8271b233f94b6e3e968fcabe8
+```
 
 正式进程还需要纯汇编的资源 owner 启动和退出流程。
 必须按原 `java.home/lib/modules` 路径打开真实锁定输入，在工作线程全部退出后卸载自有库引用，

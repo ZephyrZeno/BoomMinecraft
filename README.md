@@ -4,7 +4,7 @@ An experimental AOT compiler, assembly runtime, and launcher for Minecraft: Java
 
 自研编译器将 JVM 字节码翻译为 x86-64 汇编，目标是通过启动器运行完整原版 Minecraft。游戏逻辑、运行时及游戏执行中的多核、GPU、内存优化均以汇编实现。翻译器使用 Rust，构建工具使用 Python 和 PowerShell，启动器使用 C#。
 
-**项目处于开发阶段，完整 Minecraft 客户端和世界尚未启动。** 新的[35 包来源校验](docs/NATIVE_RUNTIME_35.md)已完成，正式运行验收仍在推进。此前[31 包原生入口](docs/NATIVE_RUNTIME_31.md)在包含71,771个原始 Java 方法的源选择上通过独立来源／ASM／COFF 校验，实际完成 System 三阶段到 VM4、正常 argv、Parker 生命周期、完整根快照及后台线程退出清理。该标准入口在原 Main 日志初始化的 `Class.getDeclaredMethods0` 缺口停止，Main 方法体和帮助输出尚未完成。方法数量与实际执行范围分别记录。
+**项目处于开发阶段，完整 Minecraft 客户端和世界尚未启动。** 新的[35 包原生入口](docs/NATIVE_RUNTIME_35.md)已在包含71,775个原始 Java 方法的完整来源校验后实际运行：System 三阶段返回、VM 到达 4，Main 日志初始化越过反射缺口，停在 JDK 资源映射的 `NativeImageBuffer.getNativeMap`。后台线程、Parker、根快照及退出清理通过，Main 方法体和帮助输出尚未执行。此前的[31 包运行记录](docs/NATIVE_RUNTIME_31.md)保留独立历史。方法数量与实际执行范围分别记录。
 
 [方法枚举](docs/NORMAL_METHODS.md)、[原常量池读取](docs/NORMAL_CONSTANT_POOL.md)和[有界反射调用](docs/METHOD_INVOKE_STATIC.md)的独立汇编候选已通过原 Java API、JDK 对照、OS 线程与显式 GC 验证，并连同标准输出接入新 35 包的来源验证。派生启动试验已越过这些反射缺口，推进到 JDK jimage 资源读取；完整 Main 仍未完成。[资源映射联合组件](docs/JIMAGE_NATIVE_MAP.md)已实际完成原库与类初始化、真实 CPU 能力查询、原 ByteBuffer 构造和映射 getInt，8 OS 线程的 512 次调用、4 轮静止 GC、JDK 对照与完整关闭均通过独立复跑。[原 Java 批量读取](docs/JIMAGE_JAVA_BULK.md)也通过了缺口对照和接入汇编实现后的 0 至 64 KiB、目标偏移与位置检查。[Inflater 数组接口](docs/INFLATER_NORMAL.md)已有独立内核验证；原构造／end 的三声明前缀也通过了真实 System123 和三后台线程清理。
 
