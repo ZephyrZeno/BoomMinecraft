@@ -48,7 +48,7 @@ SHA256 为 `7dc2abc9962c0fe4f3ec9b7d2155366b954f8991b0794a3e055f98cbe5d3a19c`。
 候选构建工具只接受 31 或 35 包状态，并要求状态中的完整工具摘要与当前工具来源相等。
 这项限制用于开发构建的一致性，不是游戏性能优化。
 
-## 正式入口剩余接入
+## Main 来源与实际运行
 
 新 Main 源选择仅补入资源读取必需的三个类和四个原始 Java 方法：
 `NativeImageBuffer`、其 `$1` 类和 `DirectBuffer` 接口。
@@ -78,7 +78,10 @@ execution     c6e4e262c7474d79e60255a9f15f99b6df7ec2a8a4bfa1bc8c4743400cc78707
 ABI14 report  d957b84c53a03ca4da353a80c6dcd16100dd60c8271b233f94b6e3e968fcabe8
 ```
 
-正式进程还需要纯汇编的资源 owner 启动和退出流程。
+## 资源 owner 的接入边界
+
+[纯汇编资源 owner 及其生成器](MAIN_JIMAGE_OWNER.md)已通过源码、完整 COFF 和五类实际原生资源测试，
+正式 Main 中的库引用卸载和资源联合执行仍待完成。
 必须按原 `java.home/lib/modules` 路径打开真实锁定输入，在工作线程全部退出后卸载自有库引用，
 并在 Java／堆用户结束后释放 ByteBuffer 持有的映射与文件句柄。
 先前组件试验的宿主准备不能替代正式进程的这段实现。
