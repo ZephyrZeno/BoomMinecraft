@@ -7,6 +7,31 @@ This is a compiler-owned expansion experiment over the historical 64-slot / 26
 provider source selection. It is not a production batch receipt, a complete
 LambdaMetafactory implementation, or a Minecraft startup result.
 
+The current 1.21.1 native Main experiment has now reached a logging-library
+lambda after bulk selection of 9,640 existing generated logging methods.
+The new source full verifier covered 81,476 original Java methods, and the
+241-object native image passed independent complete PE relinking. Actual
+execution stopped at diagnostic row5173, kind45057 and natural exit86:
+PropertiesUtil class52039, its original class initializer method510874 at
+PC0, CP328, invokedynamic descriptor `()Ljava/util/function/Supplier;`.
+The original log4j-api 2.22.1 Class SHA is
+`d4903a1673e427e10c353be7502ba0920e2c90b3f8b061f57b1600ceb217d96d`.
+
+Independent original-Class/BootstrapMethods decoding identifies zero
+captures, erased `Supplier.get()Object`, instantiated `()PropertiesUtil`,
+and the same-host private static synthetic implementation method510873,
+`lambda$static$0`. The existing static-reference source rule accepts this
+site. The original target, Object constructor and LambdaMetafactory class
+initializer are already selected in the current source.
+
+Current-program integration remains in progress: the historical sparse
+overlay must also update the newer G lookup and RARP48 array capacity
+consumers and register the generated-class failure root. No current-program
+lambda factory/SAM execution is established by the Main stop. That run
+passed all heap/thread/jimage/native-memory cleanup checks, but Main class
+initialization, its body, help output, the client window and a playable
+world remain incomplete.
+
 ## Generic source rule
 
 `normal-lambda-source.py` reads the pinned original classfile, BootstrapMethods,
