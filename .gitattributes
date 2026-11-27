@@ -8,3 +8,5 @@ native-config/inflater-rw-abi.json -text
 native/kernels/deflate_stream_reason64.asm.inc -text
 native/kernels/zlib_stream_reason64.asm.inc -text
 native-config/inflater-codec-reason-abi.json -text
+native/providers/reflection_array_normal.asm.inc -text
+native-config/reflection-array-normal-abi.json -text

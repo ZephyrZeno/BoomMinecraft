@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "name": "RARP48/2",
+  "architecture": "Windows_x64_pure_MASM",
+  "service": "boom_provider_reflection_array_allocate",
+  "signature": "RCX=Context32*, RDX=argv[Class oop,int or int[]], R8=RARP48*, R9D=operation; RAX=array oop/null",
+  "pool": {
+    "bytes": 48,
+    "magic": "0x50524152",
+    "version": 2,
+    "offsets": {
+      "magic_D": 0,
+      "abi_D": 4,
+      "heap_cell_Q": 8,
+      "JCLS144_Q": 16,
+      "next_array_rows_Q": 24,
+      "RTYP2_Q": 32,
+      "type_capacity_D": 40,
+      "reserved_D": 44
+    },
+    "heap_cell": "boom_heap_ptr",
+    "class_pool": "boom_java_class_pool",
+    "type_map": "boom_runtime_type_map",
+    "rows": "boom_provider_reflection_array_rows"
+  },
+  "row": {
+    "bytes": 16,
+    "offsets": {
+      "next_array_TypeDesc_Q": 0,
+      "next_array_type_id_D": 8,
+      "component_rank_D": 12
+    },
+    "void_rank": "0xffffffff",
+    "source": "read-only original type/array graph; no fixed Java IDs"
+  },
+  "calling_operations": {
+    "single": 0,
+    "multi": 1
+  },
+  "bounds": {
+    "type_capacity_max": 1048576,
+    "dimensions_min": 1,
+    "dimensions_max": 255,
+    "total_rank_max": 255,
+    "multi_dimensions_argument": "ordinary VM int[] under the existing primitive tag 266"
+  },
+  "runtime_requirements": {
+    "class_pool": "JCLS144/1",
+    "type_map": "RTYP/2",
+    "descriptor": "TYPE/1",
+    "functions": [
+      "boom_java_class_typeid",
+      "boom_typed_multi_new"
+    ],
+    "allocator_signature": "RCX=heap, RDX=int64 lengths*, R8=final TypeDesc*, R9D=allocated levels, stack32=Context32*"
+  },
+  "failure_contexts": {
+    "null_Class_or_dimensions": 4,
+    "negative_length": 2,
+    "void_or_bad_rank_or_dimension_count": 18,
+    "OOM": 3,
+    "invalid_private_protocol": 7,
+    "missing_predeclared_array_metadata": 20
+  },
+  "actual_Java_Throwable_and_message_equivalence": false,
+  "ordinary_VM_oops_only": true,
+  "forged_interior_pointer_membership_proven": false,
+  "dynamic_TypeDesc_creation": false,
+  "Java_or_Class_fields_host_written": false,
+  "additional_native_oop_roots": 0,
+  "automatic_GC": false,
+  "unsupported_family_members": [
+    "getLength",
+    "get",
+    "set",
+    "primitive getters and setters"
+  ]
+}

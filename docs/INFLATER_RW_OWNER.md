@@ -100,3 +100,8 @@ bytes. This remains a diagnostic prefix rather than a game startup result.
 Local execution receipts and one-off orchestration stay in ignored `.boom`.
 Only reusable assembly sources and the ABI are published here. The earlier
 [normal-array slice](INFLATER_NORMAL.md) retains its separate historical scope.
+
+The later [normal reflection-array candidate](REFLECTION_ARRAY_ALLOCATION.md)
+passed that native diagnostic. Its separate Main run reached a ServiceLoader
+runtime error and failed cleanup; that later result does not change the clean
+three-report observation of the Main image described above.
