@@ -6,11 +6,11 @@ An experimental AOT compiler, assembly runtime, and launcher for Minecraft: Java
 
 **项目处于开发阶段，完整 Minecraft 客户端和世界尚未启动。** 当前[原生初始化链](docs/NATIVE_RUNTIME_35.md)已完成 System 三阶段到 VM4；[内存接入镜像](docs/UNSAFE_OWNED_MEMORY.md)、[Windows NIO 登记](docs/WINDOWS_NIO_INIT_IDS.md)、[文件属性查询](docs/WINDOWS_NIO_ATTRIBUTES.md)、[RAF 文件操作](docs/RANDOM_ACCESS_FILE_IO.md)和[Perf 汇编服务](docs/PERF_NATIVE.md)已逐步接入原版初始化。[新的 Inflater 所有权与数组接口](docs/INFLATER_RW_OWNER.md)实际完成 14 个原 Java 测试的精确 JDK 对照，包含已修正的错误消息；[反射数组分配](docs/REFLECTION_ARRAY_ALLOCATION.md)的 49 个有效用例也已通过原 API 对照。原版专用服务器 `Main --help` 已越过 `Inflater.initIDs`，[Class.forName 汇编修复](docs/CLASS_LOOKUP_CNFE.md)已修正参数顺序并构造真实缺类异常；[原版系统／平台加载器的预链接查找](docs/CLASS_LOOKUP_BUILTIN.md)已通过 10 个原生用例，包含应用类及实际模块归属。
 
-日志库已有汇编的 9,640 个 Java 方法已批量选入，并逐项核对原始 Class、字节码及汇编哈希；新的完整来源校验覆盖 81,476 个原始 Java 方法，旧有 71,884 个方法及 193,025 个生成函数的身份全部保留。新程序的 241 个实际对象和完整 PE 独立重链接校验均已通过。实际原生 Main 已越过此前的日志方法选源阻塞，推进到 `PropertiesUtil` 中的[无捕获 Supplier Lambda 接线](docs/NORMAL_LAMBDA_EXPANSION.md)；本次堆、线程、jimage 和原生内存资源清理均通过。Main 类初始化、方法体和帮助输出仍未完成；客户端窗口尚未验证。方法数量与实际执行范围分别记录。此前的[31 包运行记录](docs/NATIVE_RUNTIME_31.md)保留独立历史。
+日志库已有汇编的 9,640 个 Java 方法已批量选入，并逐项核对原始 Class、字节码及汇编哈希；新的完整来源校验覆盖 81,476 个原始 Java 方法，旧有 71,884 个方法及 193,025 个生成函数的身份全部保留。此前的 241 对象镜像实际推进到 `PropertiesUtil` 的[无捕获 Supplier Lambda 接线](docs/NORMAL_LAMBDA_EXPANSION.md)。新的单站点派生镜像已接入生成类和配套汇编元数据，242 个对象、14 段根引用及完整 PE 独立重链接校验通过。本次实际原生运行停在 Main 类初始化期间，最后 Context 记录为 `AbstractQueuedSynchronizer.release` 的调用点；退出码 70，仍有一个监视器未释放，清理检查未通过。Lambda 工厂及 SAM 的实际执行尚未单独证明。Main 类初始化、方法体和帮助输出仍未完成；客户端窗口尚未验证。方法数量与实际执行范围分别记录。此前的[31 包运行记录](docs/NATIVE_RUNTIME_31.md)保留独立历史。
 
 [方法枚举](docs/NORMAL_METHODS.md)、[原常量池读取](docs/NORMAL_CONSTANT_POOL.md)和[有界反射调用](docs/METHOD_INVOKE_STATIC.md)的独立汇编候选已通过原 Java API、JDK 对照、OS 线程与显式 GC 验证，并连同标准输出接入新 35 包的来源验证。派生启动试验已越过这些反射缺口，推进到 JDK jimage 资源读取；完整 Main 仍未完成。[资源映射联合组件](docs/JIMAGE_NATIVE_MAP.md)已实际完成原库与类初始化、真实 CPU 能力查询、原 ByteBuffer 构造和映射 getInt，8 OS 线程的 512 次调用、4 轮静止 GC、JDK 对照与完整关闭均通过独立复跑。[原 Java 批量读取](docs/JIMAGE_JAVA_BULK.md)也通过了缺口对照和接入汇编实现后的 0 至 64 KiB、目标偏移与位置检查。[Inflater 数组接口](docs/INFLATER_NORMAL.md)已有独立内核验证；原构造／end 的三声明前缀也通过了真实 System123 和三后台线程清理。
 
-Windows 文件元数据内核通过 JDK 对照，窗口调用桥通过无窗口契约测试；图形运行时和创建世界仍在实现。多核线程内核已有并发测试，游戏性能提升需要在完整启动后测量；自动／并发收集未实现。[Lambda 通用展开](docs/NORMAL_LAMBDA_EXPANSION.md)已在独立候选中执行原严格 Builder，正式稀疏类型接线仍待完成。
+Windows 文件元数据内核通过 JDK 对照，窗口调用桥通过无窗口契约测试；图形运行时和创建世界仍在实现。多核线程内核已有并发测试，游戏性能提升需要在完整启动后测量；自动／并发收集未实现。[Lambda 通用展开](docs/NORMAL_LAMBDA_EXPANSION.md)已在独立候选中执行原严格 Builder；当前单站点派生镜像的接线已通过机器验证，正式共享流程及当前游戏路径执行仍待验收。
 
 v145 新增[正常 BootLoader 模块发布](docs/NORMAL_BOOTLOADER_MODULE.md)，正式原生初始化链已验收相应前缀。[ClassLoader 汇编实现](docs/CLASS_LOADER_ASSERTIONS.md)已作为第 23 包通过独立源选择、原 Java 冷初始化、八线程、真实堆耗尽及正常根图 GC 检查。动态模块／类加载、后续 VM 初始化和游戏启动仍未完成。
 

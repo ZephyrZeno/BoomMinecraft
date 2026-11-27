@@ -24,12 +24,31 @@ and the same-host private static synthetic implementation method510873,
 site. The original target, Object constructor and LambdaMetafactory class
 initializer are already selected in the current source.
 
-Current-program integration remains in progress: the historical sparse
-overlay must also update the newer G lookup and RARP48 array capacity
-consumers and register the generated-class failure root. No current-program
-lambda factory/SAM execution is established by the Main stop. That run
-passed all heap/thread/jimage/native-memory cleanup checks, but Main class
-initialization, its body, help output, the client window and a playable
+A subsequent single-site derived image now includes the generated class
+109945 and methods530837-530839, the extended sparse metadata consumers,
+the generated-class failure root, and the host protection-domain mapping.
+The original Java Code and metadata prefix remain unchanged. Its 242 actual
+objects, 14 root spans and five additional oop cells passed complete object
+checks and independent full-PE relinking. The resulting PE SHA is
+`643970256966d87d0000a0d794f83d6ae4608f8526bbca4961b25286aec9a530`;
+the independent proof SHA is
+`3d5243c1c0ca399c98207521ebba28a780a82719ce3be10149c00281f2a9eb44`.
+This is an explicit local derived candidate, not a shared production receipt.
+
+Its actual owned native execution naturally exited70. System phase2 and
+phase3 returned successfully, reaching VM4, but Main class initialization
+did not complete and Main's body was not called. The latest Context is
+kind20 / PC2 / method70790 (`AbstractQueuedSynchronizer.release(I)Z`);
+this outer position is not a recovered dynamic Java stack or proof of the
+first failing callee. One monitor acquisition remained, cleanup flags were0,
+and teardown error170 caused the unchanged canonical decoder to reject the
+run. The JMAP256 and NMWO320 resource parsers also rejected incomplete cleanup.
+All 1,160 pinned inputs and the 117 formal tool sources were rechecked unchanged.
+The raw observation SHA is
+`abe9a50a353ecaa7cab5f038c068b9a716c0da47399117a53a787c559a5c25ce`.
+No current-program lambda factory/SAM execution is established by these reports.
+The earlier exit86 run passed its cleanup checks; the later exit70 run did not.
+Main initialization, its body, help output, the client window and a playable
 world remain incomplete.
 
 ## Generic source rule
