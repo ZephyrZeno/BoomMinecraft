@@ -162,3 +162,14 @@ pending-context checks, quiescent collection and the 32 MiB copy passed again.
 The five actual machine mutation tests also passed independently. This retains
 the standalone scope above: the original Java bulk consumer and complete
 normal native adapter have not been executed by these receipts.
+
+The subsequent [combined original Java probe](JIMAGE_JAVA_BULK.md) did execute
+the full native adapter with the original Unsafe receiver, original
+ByteBuffer.get/getArray and Java input checks. Root first observed the actual
+missing copyMemory0 stop, then ran a separate image adding this implementation.
+All listed 0 to 64 KiB copies, a nonzero destination offset, position semantics
+and pending Context32 preservation passed, alongside the retained NIO worker,
+quiescent GC and complete shutdown suite. The positive execution SHA256 is
+`1d90a9eb668a77598994266fc072fb4240f3c8fe3b6c682df9b1bd04cbde288e`.
+This adds joint evidence without changing the standalone receipts or claiming
+full VM, arbitrary off-heap copying or Minecraft startup.

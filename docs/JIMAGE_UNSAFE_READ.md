@@ -172,7 +172,8 @@ RO owner range, and the destination to a validated normal heap byte array.
 Original Java checks, signed sizes, source+length/destination+length overflow,
 the actual array-base/byte-view ABI, and complete source/destination bounds must
 be preserved. Its read lock covers the physical copy, with no Java callback
-inside it. Its original Java bulk consumer remains a separate pending test.
+inside it. The subsequent [original Java bulk consumer](JIMAGE_JAVA_BULK.md)
+passed the listed 0 to 64 KiB and destination-offset cases in a separate image.
 Writes into mappings, arbitrary off-heap copies and heap-to-heap
 copies remain separate unsupported domains. The original source contract is
 retained under `.boom/jimage-unsafe-read/source-inspection-a/bulk-copy-path.json`.

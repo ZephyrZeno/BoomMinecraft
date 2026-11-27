@@ -55,4 +55,4 @@ a 至 d 是测试器在 guest 前被拒的历史：缺正常 worker 关闭边界
 
 主 agent 在 `root-joint-v193-a` 全新构建和冷进程中再次完成上述原调用链、8 OS 线程共 512 次查询/构造/读取及 4 轮 GC，回收对象数为 `[1143,0,1,1]`。主线程、后台线程、句柄、映射、native 节点、租约和 self pin 全部正常关闭。`execution.json` SHA256 为 `3b1063a22c93c884af8b88bc9c6142bf9d129850471c7f8c7f76fca8a8f16ba5`；另一次 13 项 JDK 联合对照位于 `root-joint-oracle-v196-a/result.json`，SHA256 `d34a2b021b9d8faaa6319bfe06e78b089a3675c65e4af1d8bb216a2267aaca0f`。
 
-该联合结果验收正常映射缓冲区及上述标量读取。原 Java 批量读取仍在单独接线；完整 Main、完整 VM 启动、自动或并发 GC、完整 Minecraft 和世界均未完成。原 f、失败尝试和独立内核回执保留各自的历史范围。
+该联合结果验收正常映射缓冲区及上述标量读取。后续[原 Java 批量读取](JIMAGE_JAVA_BULK.md)已通过独立缺口对照及接入实现后的 0 至 64 KiB 样本、非零目标偏移和位置语义检查。完整 Main、完整 VM 启动、自动或并发 GC、完整 Minecraft 和世界均未完成。原 f、失败尝试和独立内核回执保留各自的历史范围。
