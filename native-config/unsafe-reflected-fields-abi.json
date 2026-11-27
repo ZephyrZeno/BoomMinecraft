@@ -1,0 +1,51 @@
+{
+  "schema": "NORMAL_UNSAFE_REFLECTED_FIELD_ABI_v1",
+  "scope": "normal original java.lang.reflect.Field to exact original UFMP declaration and UFL2 cookie; not static memory implementation",
+  "pool_symbol": "boom_unsafe_reflected_field_pool",
+  "service_symbol": "boom_unsafe_reflected_field_service",
+  "call": "RAX service(RCX Context32*, RDX argv{Unsafe_this,Field}*, R8 exactPool128*, R9D operation)",
+  "operations": {
+    "0": "objectFieldOffset0: nonstatic original field, opaque UFMP cookie",
+    "1": "staticFieldOffset0: static original field, opaque UFMP cookie",
+    "2": "staticFieldBase0: static original field, original declaring Class mirror"
+  },
+  "pool_bytes": 128,
+  "pool_layout": {
+    "0": "DWORD magic 0x5546524F",
+    "4": "DWORD ABI 1",
+    "8": "DWORD bytes 128",
+    "12": "DWORD supported_mask 7",
+    "16": "QWORD actual UFMP128 pointer",
+    "24": "QWORD actual normal Field layout",
+    "32": "QWORD original IllegalArgumentException Class descriptor",
+    "40": "QWORD original IllegalArgumentException layout",
+    "48": "QWORD original IllegalArgumentException() Java constructor",
+    "56": "QWORD original Throwable TYPE",
+    "64": "DWORD Field clazz offset, derived from original packed layout",
+    "68": "DWORD Field class-local slot offset, derived from original packed layout",
+    "72": "DWORD Field modifiers offset, derived from original packed layout",
+    "76": "DWORD original Field Class/type ID",
+    "80": "QWORD reserved zero",
+    "88": "QWORD reserved zero",
+    "96": "QWORD reserved zero",
+    "104": "QWORD reserved zero",
+    "112": "QWORD reserved zero",
+    "120": "QWORD reserved zero"
+  },
+  "invariants": [
+    "Read actual normal Field payload only after heap, normal layout and exact runtime type validation.",
+    "Reverse its canonical declaring mirror through actual JCLS; never initialize represented class.",
+    "Use original class-local slot into actual UFMP classRanges, then validate exact Field64 owner/slot/id/access/kind/width/reserved fields.",
+    "Validate actual UFMP, JCLS and RTYP capacities agree dynamically; no single or batch namespace capacity literal.",
+    "Require Field.modifiers equals recognized original access bits; wrong operation staticness throws original selected IllegalArgumentException().",
+    "Form cookie from actual validated UFMP tag and ID using its ABI; never expose a physical field address.",
+    "Native static base returns exact declaring mirror; downstream static memory remains independently unsupported where existing provider returns Context20.",
+    "Existing nonclean Context32 is unchanged; service performs no I/O, locks or borrows, no new persistent roots; Java error callback occurs with no retained resource.",
+    "Null behavior is tested through original public Unsafe wrappers; direct native null/forged normal Field is not a JDK supported oracle domain."
+  ],
+  "new_oop_roots": [],
+  "normal_native_Frame": "one standard original Frame32 adapter per selected private instance native; original declarations remain CodeNone",
+  "units": ["unsafe-reflected-fields-native", "unsafe-reflected-fields-service"],
+  "runtime_accepted": false,
+  "registered_pack": false
+}
