@@ -109,9 +109,48 @@ execution; its SHA is
 The separate native binding-publication group has passed normal, repeated,
 invalid-table and concurrent-publication tests. A source-derived field lookup
 group has passed 17 pure native cases, including inheritance and interface
-order. Full registration/Factory/Lookup integration is still under component
-verification. These results do not establish a working MethodHandle runtime
+order. These results alone do not establish a working MethodHandle runtime
 or Minecraft startup.
+
+Subsequent native component execution completed the original cold
+MethodHandleNatives initializer, all 13 binding publications, MemberName/Factory
+field resolution, and the original ConcurrentSkipListMap initializer and
+constructor through its public caller-sensitive Lookup chain. The Java-chain
+execution SHA is
+`62bad06eab23ba214ebb7430f2c254aeb15c89b3465a043e5963ffeb6af35161`.
+Separate direct-handler tests cover field-kind canonicalization, opaque offset
+tokens, static bases and the real Object[]/Long VM-info result. Exact error
+tests retain the failed preliminary constructor observations and distinguish
+their fixtures from the Java21 reference. This remains field-domain support;
+general MethodHandle invocation is not implemented.
+
+The corrected field group was added to the actual batch Main as five native
+objects, without changing original Java Code, the 14 original native frame
+rows, the entry object or the 23 lambda expansions. The resulting image has
+249 objects, 66 roles, 14 root spans and the same 115 additional oop cells.
+Independent complete PE relinking matched all 675,177,984 bytes; proof SHA is
+`15240a0a9cedf2311a19deaa7c290019f0a6c5c681afcc84c7951160927a3fc8`.
+
+Its actual native execution naturally exited86 at a new first diagnostic,
+row5649: the signature-polymorphic call `boom_batch_call_6842_116_182` from
+ConcurrentSkipListMap.doPut, method68364 at PC66. The previous native resolve
+declaration is no longer the first stop. The run SHA is
+`42359304004652f4871c841662289f001d4309b16772a7b891b92f072edb2a9d`.
+System123/VM4, heap/frame/registry/thread-owner cleanup and JMAP256/NMWO320
+checks passed, with zero held monitors and cleanup flags7. All pinned inputs
+and 117 source tools remained unchanged. Main initialization, its body and
+help output still did not complete; the client, window and world remain untested.
+
+A fresh byte-identical hardware watch recovered the actual original call
+arguments from source, complete COFF, linked PE bytes and unwind metadata.
+Bounded typed observation read 713 bytes: the receiver is the original
+VarHandleReferences$FieldInstanceReadWrite (type5074), with exact=false and
+the same head-field token `0x55464c320089ea80`. The map's head is null and the
+requested replacement is a real ConcurrentSkipListMap$Index object. The
+capture SHA is
+`d4c75802a5ae42a335a2867b5305fb8df831c05635ddf4df97ada6bdc9f14189`.
+This locates the next missing VarHandle invocation rule; no code or Java
+fields were changed by the observation.
 
 ## Checking namespace capacity consumers
 
