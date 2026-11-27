@@ -71,6 +71,26 @@ tools remained unchanged. The execution SHA is
 Main initialization and its body still did not complete; no game startup is
 established. The earlier failed records remain separate history.
 
+The next derived image expands all 23 already verified static-reference,
+zero-capture source sites together and adds the normal native
+[Object.clone service](OBJECT_CLONE.md). It has 244 actual objects, 61 runtime
+and metadata roles, the same 14 root spans, and 115 additional oop cells
+(Class23/name46/domain23/failure23). The independent full-PE proof SHA is
+`bfa1c258e1535daea304cca26102695854d30448750c2e987ed83c6f9c51d510`.
+The generated range is types[109945,109968), methods[530837,530906); the
+PropertiesUtil expansion is now type109961, not the earlier single-site ID.
+One site has historical execution-stop evidence; the other 22 were selected
+from source. Batch compilation does not prove all factories/SAMs ran.
+
+Its actual native Main naturally exited86 at diagnostic row126316 for the
+original native `MethodHandleNatives.resolve(MemberName,Class,int,boolean)`
+declaration, method47023. These reports do not independently count clone calls. Heap,
+registry, frames, thread owners, JMAP256 and NMWO320 cleanup passed again;
+all input identities and the 117 source tools remained unchanged. The run SHA is
+`ab1de92edc8cf5503b831976800d18dc36ba7d007dcd7de6d8b581d2b9d79822`.
+Main initialization, its body and help output remain incomplete. This does
+not establish client/window/world startup or game performance.
+
 ## Checking namespace capacity consumers
 
 `scripts/audit-namespace-capacities.py` derives the type capacity from the
