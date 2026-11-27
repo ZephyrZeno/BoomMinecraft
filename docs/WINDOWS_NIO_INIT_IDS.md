@@ -1,5 +1,8 @@
 # Windows NIO 结果字段登记
 
+后续[文件属性查询](WINDOWS_NIO_ATTRIBUTES.md)已在独立派生镜像执行，实际初始化推进到 RandomAccessFile.initIDs。
+以下保留本轮登记组件及其 212 对象镜像的验证范围。
+
 `native/providers/windows_nio_dispatcher_ids.asm.inc` 实现纯 MASM 的
 `WindowsNativeDispatcher.initIDs` 登记服务。
 它通过原 `boom_class_ensure32` 完成七个结果类的初始化，核对原类型布局、UFMP 字段名称／种类／宽度及 FMAP，

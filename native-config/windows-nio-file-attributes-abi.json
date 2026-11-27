@@ -1,0 +1,193 @@
+{
+  "schema": "boom-windows-nio-file-attributes-abi-v1",
+  "operations": {
+    "GetFileAttributesEx0": 0
+  },
+  "normal_native_service": {
+    "symbol": "boom_provider_windows_nio_file_attributes_service",
+    "calling_convention": "Win64 RCX Context32, RDX argv, R8 exact provider pool, R9D operation0; void result0 with Context propagation",
+    "argv_byte_offsets": {
+      "path_address_QWORD": 0,
+      "output_address_QWORD": 8
+    },
+    "existing_pending_Context32_preserved": true
+  },
+  "slot_bytes": 192,
+  "slot_offsets": {
+    "path_Span64": 0,
+    "output_Span64": 64,
+    "state_DWORD": 128,
+    "Win32_last_error_DWORD": 132,
+    "Win32_result_DWORD": 136,
+    "native_cleanup_error_DWORD": 140,
+    "opaque_Context_key_QWORD": 144,
+    "call_sequence_QWORD": 152,
+    "operation_DWORD": 160,
+    "flags_DWORD": 164,
+    "reserved_QWORD_0": 168,
+    "reserved_QWORD_1": 176,
+    "reserved_QWORD_2": 184
+  },
+  "slot_states": {
+    "free": 0,
+    "active": 1,
+    "pending_cleanup": 2
+  },
+  "capacity_is_a_bounded_candidate_domain": true,
+  "arena_claim": "Hold the short pool publication xchg lock; select free0 with both tokens0 and root0; clear192 native bytes; publish active1 and counters; release lock. No Win32/Java/lease wait holds this lock.",
+  "storage_lifetime": "Persistent native-only module data, not a discarded stack Span64",
+  "Span64_ABI": {
+    "fields": {
+      "owner_QWORD": 0,
+      "address_QWORD": 8,
+      "minimum_bytes_QWORD": 16,
+      "remaining_QWORD": 24,
+      "token_QWORD": 32,
+      "generation_QWORD": 40,
+      "flags_DWORD": 48,
+      "status_DWORD": 52,
+      "os_error_DWORD": 56,
+      "reserved_DWORD": 60
+    },
+    "flags": {
+      "read": 1,
+      "write": 2,
+      "read_write": 3
+    },
+    "acquire": "boom_native_memory_span_acquire(Span64*) -> EAX status",
+    "release": "boom_native_memory_span_release(Span64*) -> EAX status; only success clears token/generation/remaining"
+  },
+  "acquisition_sequence": [
+    "Claim a persistent slot and copy the true bound Owner128 pointer into both Span64 values.",
+    "Acquire path read minimum2; do not dereference a path before successful owner/range validation.",
+    "Acquire output read probe minimum36 so a shared allocation can be detected without read-to-write self-deadlock.",
+    "Both spans have the exact same bound Owner pointer. Compare globally unique checked allocation generations; equal means same live allocation and is an explicitly unsupported private-native alias domain. Bounds are already helper-verified. Release both; return Context20.",
+    "Actually release output readonly probe before changing permissions; acquire write36 and require exactly the prior allocation generation before the OS call.",
+    "Find a UTF16 NUL within path.remaining/2 while the read lease is held. No unbounded raw-pointer scan.",
+    "Call GetFileAttributesExW(path, GetFileExInfoStandard0, output) while both final leases are held. Write the real36-byte result directly to the validated output range.",
+    "Capture FALSE and GetLastError DWORD immediately before any helper/release call.",
+    "Real release output then path on every branch. Both tokens must be zero before recycling the slot or constructing the original WindowsException.",
+    "On OS failure after successful releases, invoke the normal Java WindowsException(I)V helper; preserve the exact DWORD bits including zero."
+  ],
+  "retention_and_close": [
+    "If acquire or release returns with a live token, retain the complete Span64 in pending_cleanup and set a hard native Context20; do not reset or reuse its slot.",
+    "Opaque Context keys are never dereferenced after the caller returns.",
+    "After all Java/native users and workers have ended, close admission and drain real releases. Active slots or persistent failure remain busy and prevent false owner close.",
+    "Both actual tokens0, actual release status0 and separate root0 are required before free0. Otherwise retain pending_cleanup2 with opaque Context key0; no root/token reset may claim closure."
+  ],
+  "exception_helper": {
+    "symbol": "boom_windows_nio_throw_error",
+    "calling_convention": "Win64 RCX Context32*, EDX Win32 DWORD error bits, R8 trusted QWORD* temporary Throwable root initially0; EAX current Context kind",
+    "normal_callbacks": [
+      "boom_class_ensure32",
+      "boom_object_new",
+      "original WindowsException(I)V Java constructor",
+      "boom_exception_set32"
+    ],
+    "success": "Context16 pending-object16 holds the real normal WindowsException; origin pc/method/depth untouched; temporary root cleared after propagation",
+    "pending_on_entry": "Preserve all32 bytes and the supplied root cell; no Java callback or allocation",
+    "temporary_root_bank": "Separate QWORD bank indexed by slot; Span64 and the192-byte native slot contain no Java oops. Expose the exact bank/count to the consuming GC/root contract; do not claim automatic GC registration."
+  },
+  "source_public_wrapper_alias_proof": {
+    "normal_chain": "WindowsFileAttributes.get obtains and holds output NativeBuffer before WindowsNativeDispatcher.GetFileAttributesEx obtains the path NativeBuffer.",
+    "cache_transfer": "Original NativeBuffers.getNativeBufferFromCache clears the selected cache entry before returning it; a held output buffer is not available to the nested acquisition.",
+    "allocation": "Cache miss creates a new NativeBuffer via original Unsafe.allocateMemory; distinct live Owner allocations cannot overlap.",
+    "scope": "Distinct records follow from the ordinary source wrapper path. Arbitrary private-native/reflection input aliases remain explicitly guarded, not treated as a JDK invalid-pointer oracle."
+  },
+  "capacity": 256,
+  "Span64_contract": {
+    "schema": "boom-native-memory-borrowed-span-abi-v1",
+    "span_bytes": 64,
+    "offsets": {
+      "owner_q": 0,
+      "address_q": 8,
+      "minimum_bytes_q": 16,
+      "remaining_logical_bytes_q": 24,
+      "lease_token_q": 32,
+      "allocation_generation_q": 40,
+      "permissions_d": 48,
+      "status_d": 52,
+      "os_error_d": 56,
+      "reserved_d": 60
+    },
+    "exports": {
+      "boom_native_memory_span_acquire": "RCX=Span64*; EAX=Span.status. Requires token0,min>0,permissions1/2/3,reserved0. Calls actual CoreJob128 op8, then validates actual lease/token/record under Owner.SRW and returns remaining allocation logical bytes beginning at address.",
+      "boom_native_memory_span_release": "RCX=Span64*; EAX=Span.status. Calls actual CoreJob128 op9 for a nonzero token; token/generation/remaining clear ONLY on successful release. token0 is an idempotent no-op with remaining/generation0."
+    },
+    "permissions": {
+      "1": "shared read",
+      "2": "exclusive write",
+      "3": "exclusive read/write"
+    },
+    "lifetime": [
+      "After successful acquire, caller may use address..address+remaining while preserving permission and holding the exact lease. Core leases protect entire record from free/resize; read leases block all record writes, write leases are exclusive.",
+      "Core records logical requested bytes, not committed-page padding. No NUL scan, payload access, Win32 file API, Java Context, Java IDs or Java state writes occur in this helper.",
+      "Acquire immediately records any real returned token before metadata lookup. Query failure unlocks, calls actual op9, and reports failure. Successful rollback clears token; failed rollback retains token+generation, remaining0, with cleanup error status for explicit retry.",
+      "Acquire on an existing nonzero token returns busy2 and preserves the prior lease/bounds. No active token is overwritten.",
+      "Any error with token!=0 means caller MUST retry release and retain native resources. Error must never be treated as a usable new span.",
+      "Release failure retains token/generation/remaining and records actual status/OS error. Core owner.close remains busy while a real live lease is retained.",
+      "Owner/Span control metadata is trusted native caller storage, matching original Core ABI. Unknown payload addresses are never accessed; real Core domain/range validation runs first.",
+      "Only readonly/readwrite owned-native permissions; JIMAGE and ThreadIdentifiers domains remain outside the RW owner. No atomic/volatile/CAS or complete stale-raw-address ABA protection is added."
+    ],
+    "status_codes": {
+      "0": "success",
+      "1": "actual Core domain miss",
+      "2": "existing token or actual Core busy",
+      "3": "invalid Span arguments or actual Core range/overflow",
+      "4": "actual Core allocation OS failure if ever returned",
+      "5": "actual Core bad owner or locked metadata/token/generation invariant failed",
+      "7": "actual Core capacity/token exhaustion",
+      "9": "actual Core owner closed/draining",
+      "12": "actual cleanup failure; token preserved for release retry"
+    },
+    "query_checks": [
+      "owner magic/bytes/version/ready, capacity1..4096, metadata capacity*576 and pointer geometry, active leases and live counts",
+      "find exact nonzero live Lease32 token; index<record capacity; exact requested permissions/offset/minimum",
+      "Record64 live state, nonzero base/positive logical bytes/generation, generation==actual op8 output, active lease/writer counts consistent with permissions",
+      "address>=base, no base+logical overflow, offset==lease.offset, min<=logical-offset, output remaining=logical-offset"
+    ],
+    "consumer_contract": {
+      "UTF16_path": "acquire min2/read1; scan at most remaining//2 WORDs for NUL; do not use an unbounded raw-pointer strlen",
+      "WIN32_FILE_ATTRIBUTE_DATA": "acquire min36/write2; write only the required36 bytes",
+      "API_call": "keep both leases during Win32 call; immediately capture GetLastError before finally releases; original WindowsException construction occurs only after releasing"
+    },
+    "CoreKernel_sha256": "ff8467cd3f39576e65d4811d5c2a1ba37d65189cb70db7a17aad29442cde36a3"
+  },
+  "pool_bytes": 64,
+  "pool_magic": "0x54414657",
+  "pool_ABI": 1,
+  "pool_offsets": {
+    "magic": 0,
+    "abi": 4,
+    "bytes": 8,
+    "state": 12,
+    "slots": 16,
+    "roots": 24,
+    "count": 32,
+    "stride": 36,
+    "publication_lock": 40,
+    "active": 44,
+    "sequence": 48,
+    "pending": 56,
+    "drainer": 60
+  },
+  "pool_states": {
+    "admitting": 0,
+    "draining": 1,
+    "closed": 2
+  },
+  "native_root_spans": [
+    {
+      "symbol": "boom_windows_nio_attributes_throwable_roots",
+      "count": 256,
+      "kind": "pending native WindowsException across original source constructor"
+    }
+  ],
+  "control_exports": [
+    "boom_windows_nio_attributes_drain"
+  ],
+  "external_native_dependencies": [
+    "boom_native_memory_service",
+    "boom_provider_owned_unsafe_pool"
+  ]
+}
