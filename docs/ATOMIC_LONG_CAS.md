@@ -22,3 +22,5 @@ D:/Dev/Python312/python.exe -m unittest discover -s tests -p atomic_long_cas.py 
 主 agent 独立生成 `root-source-v191-a` 并再次完成源、原生帧和完整机器校验，回执 SHA256 为 `fb56385854b209daa47452a69f0e40bed82561110fa265dde539bbf7c2bfc27e`。全新 `root-execution-v191-a` 重跑全部硬件、并发、ABI、协议、合成叶边界和 JDK 对照通过，回执 SHA256 `fc17e5d4b2dbad7b19824b9cac95b341def7bf899a8abfa037bbb419999d4b9e`；7 项来源与实际 COFF 负测也独立通过。
 
 额外 `root-jdk-reference-v191-a/verification.json` 的 SHA256 为 `1fb5782c22498441f5d45d80a4d67f0b221f32cbe93bc4d34d162f55c4a48454`。该复核在原 JDK 再次执行 reference 前后分别封存 java/javac、jvm.dll、modules 和 release，确认 21.0.13 版本及 modules 的原锁定 SHA256；native 与原 Java 缓存布尔值仍一致。此补充仅加强开发 oracle 的工具身份记录，原 Java 初始化执行范围保持上述限制。
+
+后续 [NIO 联合组件](JIMAGE_NATIVE_MAP.md)已实际执行原 AtomicLong `<clinit>`，继续完成 Bits/DirectByteBuffer 初始化和 JNI 构造；原 Java 静态字段赋值没有被替换。主 agent 的全新 `root-joint-v193-a` 冷进程也通过该链、原 ByteBuffer.getInt、8 OS 线程 512 次调用、4 轮静止 GC 与所有资源关闭，执行回执 SHA256 为 `3b1063a22c93c884af8b88bc9c6142bf9d129850471c7f8c7f76fca8a8f16ba5`。这是额外联合验收，不修改上述独立内核回执的范围；完整 Minecraft 仍未启动。

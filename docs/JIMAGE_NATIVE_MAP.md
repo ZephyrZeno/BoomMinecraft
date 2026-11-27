@@ -45,6 +45,14 @@ JDK oracle 在 `.boom/jimage-native-map/jdk-oracle-v179-a/result.json`。13 项�
 
 a 至 d 是测试器在 guest 前被拒的历史：缺正常 worker 关闭边界、误用 entry_exports API、未显式允许 M 原有 GetTickCount64/Sleep、及用 `.boom` 专用检查器处理工具/SDK 输入。没有替换 Java 或绕过拒绝；各目录保留。e 已真实达到同一 AtomicLong frontier，但 finally 的 self pin 未卸载；f 用独立清理 Context 补全原 unload，保留 e 原证据。
 
-成功的 JNI JJ 构造、8 OS 并发、4 轮 GC、原 ByteBuffer typed read 和 bulk copy 均仍未完成；等待独立真实 CPU capability/readonly scalar slice 后按同一源闭包继续。测试器中的相应断言是后续验收要求，不能当作已执行证据。任何 GC 验收只能在所有 Java 帧及外部工人静止时覆盖本选择的九源 bank、primordial/main 和 native spans；Context pending exception oop、活动 frame/线程栈需要另一协议，不能称全部运行期根或自动 GC。正式 registry、工具清单、原 runtime DLL 均未接入或改动。
+上述 f 回执不包含成功的 JNI JJ 构造、8 OS 并发、4 轮 GC、原 ByteBuffer typed read 或 bulk copy；后续联合执行见下文。测试器中的断言须有实际执行结果才能计入验收。任何 GC 验收只能在所有 Java 帧及外部工人静止时覆盖本选择的九源 bank、primordial/main 和 native spans；Context pending exception oop、活动 frame/线程栈需要另一协议，不能称全部运行期根或自动 GC。正式 registry、工具清单、原 runtime DLL 均未接入或改动。
 
 主 agent 在全新 `root-frontier-v189-a` 冷进程独立重建并执行同一前缀，两份完整 COFF 校验再次通过。`execution.json` SHA256 为 `add7c1174d3e33b6b5ab6ba576ef56123bca7d2f90e20cf3f02f7a9c424261ed`，仍明确 `verified=false`，原 Context 为 B001、caller52776 pc41、native70380；所有清理项通过且 self module pins 为 0。独立 `review.json` SHA256 `2b88ad0fe479ebed5b8c5a9336cf102794009f69259f915c808d9f10c7df7f7a` 仅验收上述前缀、预期停止及完整清理，不提升 JNI 构造或游戏启动范围。全新 `root-oracle-v189-a` 的 13 项原 JDK 对照也通过；完整机器验证器的 2 个阳性和 8 个真实 COFF 篡改负例通过。早期独立复核把平面冻结记录传给仅接受嵌套摘要的检查接口，在任何 Java 执行前被拒；改为显式记录格式转换后重跑，原候选与共享源没有变化。
+
+后续 `atomic-baseline-v189-c` 在仅补入[真实 CX8 查询](ATOMIC_LONG_CAS.md)后完成原 AtomicLong/Bits/DirectByteBuffer 初始化和 JNI `(JJ)V` 构造。8 个真实 OS 线程各调用 64 次原 getNativeMap 与构造器，4 轮静止 GC 通过；此时原 `getInt` 仍报告 Context20，明确记录旧 typed 模块的堆外读取边界。
+
+`atomic-scalar-v192-a` 接入[只读标量读取](JIMAGE_UNSAFE_READ.md)后实际通过原 `getInt(0)`：Context.kind=0、值 `0xDADAFECA` 与映射文件头的大端解释及 JDK 一致。原 Java、源数据、VM 入口及已有 native 保持原字节；额外 native 对象分别经过来源、Frame8、完整 COFF 验证，剩余诊断桩使用严格的全叶函数校验器。父 accepted31 与候选 pending31 各自保留原标签，只在完整 batch/plan/provider/frame/runtime/tool 身份及明确父引用相等时合流。
+
+主 agent 在 `root-joint-v193-a` 全新构建和冷进程中再次完成上述原调用链、8 OS 线程共 512 次查询/构造/读取及 4 轮 GC，回收对象数为 `[1143,0,1,1]`。主线程、后台线程、句柄、映射、native 节点、租约和 self pin 全部正常关闭。`execution.json` SHA256 为 `3b1063a22c93c884af8b88bc9c6142bf9d129850471c7f8c7f76fca8a8f16ba5`；另一次 13 项 JDK 联合对照位于 `root-joint-oracle-v196-a/result.json`，SHA256 `d34a2b021b9d8faaa6319bfe06e78b089a3675c65e4af1d8bb216a2267aaca0f`。
+
+该联合结果验收正常映射缓冲区及上述标量读取。原 Java 批量读取仍在单独接线；完整 Main、完整 VM 启动、自动或并发 GC、完整 Minecraft 和世界均未完成。原 f、失败尝试和独立内核回执保留各自的历史范围。

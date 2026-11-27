@@ -101,11 +101,11 @@ Five actual typed-COFF negative cases reject an adapter instruction change, a
 write retargeted into the read profile, an omitted required read route, a
 substituted original Unsafe class relocation, and changed original unwind.
 
-Current scope still has `valid_Java_Unsafe_receiver_executed=false`,
+The standalone execution-a scope has `valid_Java_Unsafe_receiver_executed=false`,
 `original_Java_DirectByteBuffer_execution=false`,
 `bridge_runtime_binding_verified=false`, `registered=false` and
-`full_selection_reverified=false`. NIO's independent original getNativeMap /
-DirectByteBuffer source component must verify that combined runtime path.
+`full_selection_reverified=false`. The subsequent combined original Java path
+is recorded below; these standalone receipts retain their original scope.
 
 ## Reproduction
 
@@ -133,8 +133,31 @@ execution SHA256 is
 `1a09b707e61ada620d757a28d6510eff8b346f3288710a1dac7fda0384bdc12d`.
 All five actual-prefix mutation tests also passed. Root also checked all six
 frozen code/test files before publication; this note was appended after review.
-This repeats the standalone scope above; valid
-Java Unsafe, DirectByteBuffer and combined bridge execution remain unverified.
+This repeats the standalone scope above and does not itself verify a valid
+Java Unsafe receiver, DirectByteBuffer or the combined bridge.
+
+## Combined original Java execution
+
+The [normal image component](JIMAGE_NATIVE_MAP.md) subsequently executed the
+original cold image/library initialization, AtomicLong CPU query and private
+JNI `(JJ)V` constructor. Its scalar variant replaces exactly the original
+typed unit and adds the already verified wrapper/core objects. Original Java,
+metadata, VM entry and the other native routes retain their bytes.
+
+Root independently rebuilt `root-joint-v193-a` and ran a new cold process.
+Original `DirectByteBuffer.getInt(0)` through ScopedMemoryAccess and the actual
+Java Unsafe receiver returned `0xDADAFECA` with Context.kind=0. Eight distinct
+OS threads completed 512 original lookups, constructors and getInt calls.
+Four quiescent collections freed `[1143,0,1,1]`; all workers, handles,
+mapping nodes, leases and module pins closed, with no held monitors.
+
+Execution SHA256 is
+`3b1063a22c93c884af8b88bc9c6142bf9d129850471c7f8c7f76fca8a8f16ba5`.
+The fresh 13-case combined JDK oracle in `root-joint-oracle-v196-a` has SHA256
+`d34a2b021b9d8faaa6319bfe06e78b089a3675c65e4af1d8bb216a2267aaca0f`.
+These prove the combined receiver/binding/getInt path. They do not rerun the
+original full source selection over added native objects, register a provider,
+run all Java scalar consumers or complete Minecraft startup.
 
 ## Subsequent bulk-read boundary
 
@@ -144,11 +167,12 @@ reads it uses `ScopedMemoryAccess.copyMemory` 112724/Internal112725, original
 `(Ljava/lang/Object;JLjava/lang/Object;JJ)V`. That native is not part of the
 42-entry typed module and is not implemented by this scalar slice.
 
-An independent next slice must restrict the source to a null-base, live leased
+The independent [bulk-copy slice](JIMAGE_UNSAFE_COPY.md) restricts the source to a null-base, live leased
 RO owner range, and the destination to a validated normal heap byte array.
 Original Java checks, signed sizes, source+length/destination+length overflow,
 the actual array-base/byte-view ABI, and complete source/destination bounds must
-be preserved. The read lock must cover the physical copy, with no Java callback
-inside it. Writes into mappings, arbitrary off-heap copies and heap-to-heap
+be preserved. Its read lock covers the physical copy, with no Java callback
+inside it. Its original Java bulk consumer remains a separate pending test.
+Writes into mappings, arbitrary off-heap copies and heap-to-heap
 copies remain separate unsupported domains. The original source contract is
 retained under `.boom/jimage-unsafe-read/source-inspection-a/bulk-copy-path.json`.
