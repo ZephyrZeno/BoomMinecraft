@@ -88,9 +88,32 @@ the diagnostic kind45057 and process exit86.
 That run reported zero held monitors, cleanup flags7, and completed heap,
 registry, frame, jimage resource, and native-memory cleanup. Its original
 error Context was retained. Main class initialization and its method body
-still did not complete. The next step is source selection and generation of
-the existing original Java initialization and methods, not a hand-written
-substitute for that class.
+still did not complete.
+
+The next source selection automatically added 38 original classes and 108
+Java methods. Its full source verification covered 71,884 original Java
+methods and retained all 71,776 previous Code/source records and 192,738
+previous generated function hashes. These are selection and verification
+counts, not executed-method counts.
+
+The new source was bound to the assembly services and a 233-object, 42-role
+Main image with 13 physical root spans. Independent complete PE relinking
+matched byte for byte. This image uses the new source's original dispatch;
+the previous temporary SLNX observer and single-thunk diagnostic replacement
+were omitted.
+
+Actual execution passed the previous provider-initialization selection stop
+and reached a lazy dispatch target in the original logging library:
+org/apache/logging/log4j/MarkerManager$Log4jMarker.setParents(Marker[]).
+The next stop was unselected method501208, diagnostic row130263, kind45057,
+with caller method511277 at pc1 and natural process exit86. The original
+method already has generated assembly; it needs source selection and linking.
+
+This run again reported zero held monitors, cleanup flags7, all jimage pins
+and leases released, and 35 native-memory allocations matched by 35 frees.
+Its source and execution inputs were unchanged. Main class initialization,
+the Main method body, server help output, the client window, and a playable
+world remain unverified or incomplete.
 
 ## Boundaries
 
