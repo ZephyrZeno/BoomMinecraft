@@ -35,7 +35,7 @@ SHA256 为 `7dc2abc9962c0fe4f3ec9b7d2155366b954f8991b0794a3e055f98cbe5d3a19c`。
 - [标量读取](JIMAGE_UNSAFE_READ.md)：五个已持有映射内的只读 Unsafe 操作。
 - [批量复制](JIMAGE_UNSAFE_COPY.md)：映射到正常堆 byte[] 的原 `copyMemory0`。
 
-这些候选尚未加入 35 包的 Main 运行镜像。旧的 [Java 联合读取试验](JIMAGE_JAVA_BULK.md)
+这些额外候选未登记到原始 35 包集合，派生镜像的实际运行另列于下文。旧的 [Java 联合读取试验](JIMAGE_JAVA_BULK.md)
 仍绑定旧来源与旧测试镜像，其成功不记作当前 117 项来源下的正式 Main 运行。
 本轮独立复核重新执行了标量和复制候选的来源、Frame、规范重汇编、完整 COFF／PE 比对，
 并实际拒绝了 11 个旧来源或损坏状态。17 项现有相关回归测试通过。
@@ -81,8 +81,11 @@ ABI14 report  d957b84c53a03ca4da353a80c6dcd16100dd60c8271b233f94b6e3e968fcabe8
 ## 资源 owner 的接入边界
 
 [纯汇编资源 owner 及其生成器](MAIN_JIMAGE_OWNER.md)已通过源码、完整 COFF 和五类实际原生资源测试，
-正式 Main 中的库引用卸载和资源联合执行仍待完成。
+单独的[资源接入与 Signal 清理修复镜像](SIGNAL_SHUTDOWN_ORDER.md)已实际完成原库卸载、
+三工作线程回收及全部资源关闭，原 Main Context 保持不变；初始化链的新缺口为
+`Unsafe.allocateMemory0(J)J`，原生方法 113555、诊断行 51631。
+该派生镜像复用当前 Java 来源，没有把额外 native 当作原始 35 包 source V 已覆盖的内容。
 必须按原 `java.home/lib/modules` 路径打开真实锁定输入，在工作线程全部退出后卸载自有库引用，
 并在 Java／堆用户结束后释放 ByteBuffer 持有的映射与文件句柄。
-先前组件试验的宿主准备不能替代正式进程的这段实现。
+先前组件试验的宿主准备没有被用作这次进程生命周期的执行证据。
 自动／并发回收、任意地址 Unsafe 操作、完整游戏和游戏性能提升仍未验收。

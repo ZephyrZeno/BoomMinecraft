@@ -50,8 +50,11 @@ D:\Dev\Python312\python.exe -m unittest tests.main_jimage_owner_source -v
 
 这些测试提取的是原 JMAP 的五个纯原生生命周期函数，逐函数与已验证完整对象比对全部实际指令、
 重定位、符号位置／类型、节标志及 unwind。测试没有伪造 Java 回调，也没有执行原 `getNativeMap` 服务。
-完整 owner 的 unload 分支已经汇编并纳入 COFF 比对，但原 unload 的实际 VM 调用、
-主 Context 的运行时保持和接入资源后的 Main 仍待联合执行。
+完整 owner 的 unload 分支最初只完成汇编与 COFF 比对。
+随后[修复 Signal 退出顺序的原生入口](SIGNAL_SHUTDOWN_ORDER.md)已实际完成联合执行：
+原 unload 调用一次、库引用 1→0、owner 租约 2→0、JMAP 节点／租约 1→0、文件和映射均归零，
+原 Main Context 四个 QWORD 保持不变。该入口停在尚未实现的 `Unsafe.allocateMemory0`，
+Main 方法体及帮助输出仍未执行。原五类资源测试的回执不改写成这次联合运行。
 
 本地证据均位于忽略的 `.boom`：
 
