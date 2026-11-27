@@ -81,7 +81,9 @@ def prefix_proof(original,new,methods):
 
 def contract(state_file,owner_file):
     state_file,owner_file=Path(state_file).resolve(),Path(owner_file).resolve();state=S.read(state_file)
-    S.check(state['current_source_provider_verification_complete'] is True and state['provider_count']==31 and state['status'] in ('accepted','pending_runtime_acceptance'),'Current source-only provider state required')
+    S.check(state['current_source_provider_verification_complete'] is True and state['provider_count'] in (31,35) and
+        state['status'] in ('accepted','pending_runtime_acceptance') and state['tool_sources']==S.tools_identity(),
+        'Current 31/35 source-only provider state and tool namespace required')
     identity,summary,classes=S.base(Path(state['batch']),Path(state['plan']));N.verified_resolver(Path(state['batch']),summary,Path(state['plan']))
     S.check(identity['batch_summary']['digest']['sha256']==state['batch_summary_sha256'] and identity['base_verification']['digest']['sha256']==state['batch_verification_sha256'],'Actual source batch/full proof changed')
     frame=Path(state['frame_manifest']);actual=F.verify(frame,Path(state['batch']),Path(state['plan']));S.check(actual==S.read(frame.with_name('verification.json')) and S.digest(frame.with_name('verification.json'))['sha256']==state['frame_verification_sha256'],'Actual frame proof differs')
