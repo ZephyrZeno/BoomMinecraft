@@ -45,3 +45,42 @@ oracle; this does not establish AOT typed-Throwable or exception-message
 equivalence. Actual/canonical COFF checks and physical metadata checks belong
 to separate machine receipts. These source APIs do not establish complete
 MethodHandle support or Minecraft startup.
+
+## Current Consumer validation
+
+The original Log4j `PropertiesUtil$Environment` Class, constant 90, binds
+`Set.add(Object)boolean` as a `(Set)Consumer` factory. Its 649-byte derived Class
+uses the already selected ordinary interface thunk, discards the boolean result
+and retains the actual cast/invoke PCs 6/9. The 25-Class aggregate preserves the
+original 24-Class source and machine prefix. Its ten runtime projections,
+fifteen capacity consumers, complete 15-bank root geometry and entry count
+changes pass separate physical checks. The complete 266-object image passes
+independent whole-PE byte equality (`1ae457913ba10818e5e28d21c651f2e2c92c11bc18e5cd758e253569d313bff8`).
+
+Four separate native component runs pass, reporting 39 basic, 2 pending-guard,
+13 collection and 88 thread calls, 142 in total. Real original
+`PropertiesPropertySource` constructors and `HashSet.size/contains` observers
+verify fresh factories, duplicate-result discard and separate Sets. Wrong
+argument types produce built-in Context kind 12 at SAM PC 6; null receivers
+produce kind 4 at PC 9. Both retain method 530911. These built-in results do
+not establish materialized Java exceptions or exact JDK messages. A separately
+created real NPE remains byte-identical across both pending guards.
+
+After workers stop and join, the collector uses all 15 root banks and one
+additional closure root. Two collections retain the closure, Set, map,
+PropertySource and Properties; removing the closure root lets all five be
+reclaimed. Four real OS threads use normal Java Thread/FLS ownership, separate
+Sets and sixteen fresh closures. All four runs pass the twelve cleanup checks
+and unchanged-input checks. This establishes explicit quiescent collection and
+thread isolation; automatic collection and game performance remain unverified.
+Initial fixture metadata and error-number failures are retained separately.
+
+Actual original Main then advances beyond constant 90 and stops at constant
+110, `PropertySource.getPropertyNames()Collection` adapted to `Function`.
+It exits 86 after 25.469 seconds without a timeout; cleanup flags are 7 and
+held monitors and the registry lock are zero. The actual execution receipt is
+`c249b9f3c5eaea0842b8bc11ae4808fe411dcfdc4563e048cedbbc95cf6efcf7`.
+The new target needs an ordinary interface dispatch entry that is not already
+selected. Its default method body does not justify bypassing receiver overrides.
+Main Class initialization, Main execution, help output, the client and world
+creation remain unfinished.
