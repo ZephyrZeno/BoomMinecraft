@@ -1,6 +1,6 @@
 # Normal reference-capturing Lambda expansion
 
-The original Main currently reaches Log4j's
+The first reference-capture site added here is Log4j's
 `ServiceLoaderUtil.loadServices`, class 52050/CP53. Its standard metafactory
 site captures one `Set` and creates a `Predicate.test(Object): boolean`.
 The implementation handle is the original same-host static
@@ -72,7 +72,7 @@ The complete image links from 266 actual objects. An independent link produces
 the same complete PE bytes; the actual graph has 83 roles and retains all 15
 root spans. This establishes machine composition, not successful game startup.
 
-The actual original Main attempt exits 70 without a timeout and is rejected
+The initial original Main attempt exits 70 without a timeout and is rejected
 by the unchanged strict decoder. Its final Context is kind 20, PC 2, method
 70790 (`AbstractQueuedSynchronizer.release(I)Z`); that propagation point does
 not identify the first failing callee. One monitor acquisition remains, cleanup
@@ -80,6 +80,17 @@ flags are zero and teardown reports busy status 170. The original Main Class
 initializer, Main body and help output have not completed. The failed reports
 are retained; this run does not establish a verified startup prefix or captured
 factory/SAM execution.
+
+After the three registrars derive the correct name length, the corrected
+266-object image passes an independent whole-PE relink and actual original
+Main observation. The process exits 86 at a later source diagnostic after
+15.875 seconds, without a timeout. Cleanup flags are 7, held monitors and the
+registry lock are zero, and all resource owners close successfully. The 117
+registered source tools and all observed inputs remain unchanged. The new
+stop is `boom_batch_call_52041_90_186`, a standard metafactory site with
+factory descriptor `(Set)Consumer`. Main Class initialization, its body and
+help output still do not complete; this is a verified diagnostic observation,
+not a complete Minecraft launch.
 
 Four separate native component runs pass, with 74 reported original,
 generated and interface entry calls plus two pending-Context guard calls.
@@ -110,5 +121,9 @@ A separate source-only batch uses the maintained append API for 1796 more
 accepted sites, including 734 with reference captures. It generates 1796
 Classes, 5388 methods and 1070 reference fields while retaining the complete
 24-Class prefix. The unchanged generated-Class verifier accepts all 1820
-Classes. This batch has not been assembled, linked, supplied with complete
-runtime metadata, or executed.
+Classes. Its complete adapter COFF and the 24-Class machine prefix now pass
+independent checks. Ten projected runtime metadata units also pass complete
+COFF and physical checks, including the new field page. The final source
+binding includes the generic cross-unit EXTERN fix. The remaining capacity
+consumers and final root integration are separate work. The complete bulk
+image has not been linked or executed.
