@@ -74,7 +74,27 @@ all 117 protected tool identities also pass. The formal installation receipt is
 SHA256 `5b7131cae428e6380862e1e781c6367d52112be8333d45ba90297bee3d0a07e7`.
 No temporary coordinator is published.
 
-Full metadata integration, interface dispatch, collection, exceptions,
-concurrent execution and original Main execution require separate evidence.
-The latest actual Main still stops at CP119. Main initialization, help output,
-the client and world creation remain unfinished.
+## Metadata and actual-parent integration
+
+The caller now has a genuine independently verified 28-Class parent and unique
+original normal entry/body definitions for both private targets. Its completed
+proof is `.boom/private-lambda-machine-v486-a/candidate-a/verification.json`,
+SHA256 `d9788bf80e00dedfac2a958155ed7b9c54c8b89c7ebdb374f0914e983c809ef6`.
+The earlier machine-stage pending fact remains historical; a separate final
+parent-binding proof records this completed step.
+
+The ten runtime groups pass actual/canonical COFF and independent physical
+checks. Field193850 has kind1, width1, flags0 and FMAP reference0 at offset24;
+Field193851 remains an eight-byte reference at offset16. Row40/LOUT retain
+payload25/reference3. All old 28-Class physical rows remain exact. The fifteen
+consumer groups also pass complete COFF checks, including the three strict
+capacity registrars and the exact three Access relocation changes. Actual
+namespace dimensions are `109975 / 193852 / 1026509 / 190`.
+
+The complete-root update independently checks fifteen spans, 28,958 native
+cells and 150 additional oop roots. The full source/COFF graph join passes;
+whole-image construction is in progress. The latest actual Main has passed
+CP119 and stops at CP127, before this new private factory executes. Interface
+dispatch, collection, exceptions, concurrent private-call execution and original
+Main execution with these new Classes require separate evidence. Main
+initialization, help output, the client and world creation remain unfinished.

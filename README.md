@@ -40,6 +40,8 @@ v145 新增[正常 BootLoader 模块发布](docs/NORMAL_BOOTLOADER_MODULE.md)，
 
 后续[同宿主私有 Lambda 接口](docs/NORMAL_LAMBDA_PRIVATE_OWN_API.md)已补齐两个前瞻站点的源展开与调用适配器机器检查，包含精确 boolean 捕获。三个正式 API 保留候选函数源码及 AST，全部 30 个 Class 和整份汇编重放一致；新的字节字段不作为对象引用扫描。私有调用适配器仍需绑定真实父镜像，运行时整图和实际游戏行为尚未验收。
 
+最新 28 类、267 对象镜像通过完整 PE 独立重链接后，实际 Main 越过 CP119，停止于 CP127 的私有 Consumer 工厂。原生观察 23.453 秒、退出 86，无超时，资源清理、输入和全部 117 个工具身份检查通过。30 类版本已完成真实父绑定、十组运行时元数据、十五组消费者及完整根引用机器检查，正在构建完整镜像。Main 类初始化、帮助输出、客户端和世界仍未完成；详见[静态引用运行记录](docs/NORMAL_LAMBDA_STATIC_MODULE_SOURCE_API.md#actual-complete-image-execution)和[私有捕获接入](docs/NORMAL_LAMBDA_PRIVATE_OWN_API.md#metadata-and-actual-parent-integration)。
+
 首个目标版本为 Java 版 1.21.1，完成原版后再推进模组兼容。类加载器身份、变换链和优化失效边界提前纳入设计。启动器提供“启动游戏”入口，输入准备、翻译和构建由启动流程调用。
 
 - [架构设计](docs/DESIGN.md)

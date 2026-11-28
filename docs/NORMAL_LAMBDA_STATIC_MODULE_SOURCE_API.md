@@ -63,7 +63,26 @@ An initial checker incorrectly iterated the instruction generator twice; that
 checker failure is retained. A new checker materializes the instruction list
 once and verifies the same actual/canonical objects, without reassembling them.
 
-Runtime metadata, consumer integration, complete-image execution and Predicate
-runtime behavior require their own results. The latest actual Main observation
-still stops at CP119; Main initialization, its body, help output, the client
-and world creation remain unfinished.
+## Actual complete-image execution
+
+The 28-Class graph now includes the ten runtime metadata groups, fifteen
+consumers and the exact entry/root update. Its 267 objects, 84 roles and fifteen
+complete root spans pass full source/COFF joins. The namespace dimensions are
+`109973 / 193847 / 1026499 / 190`; the entry has 28 failure cells, 28,956 native
+root cells and 140 additional oop roots. Independent whole-PE relinking passes,
+receipt `.boom/instance-lambda-main-v486-a/independent-a/verification.json`,
+SHA256 `75a2899615e09e231c0aab5452431286fcdfb4e72e43a057845a042fb16f0d1e`.
+
+Actual original Main advances beyond CP119 and stops at CP127, the captured
+private `Environment.lambda$reload$2(String)V` Consumer factory in the same
+`reload()V` method at original PC78. Native observation takes 23.453 seconds,
+exits 86 without a timeout, and passes cleanup flags 7, zero held monitors and
+registry lock, unchanged inputs and all 117 protected tool identities. File
+mappings, pins, leases and owned native memory are closed. Its execution receipt
+is `.boom/native-main-runs/v493-static-nonnull-a/execution.json`, SHA256
+`54669b8f99d0447c9ada8eff99a5e67f325171481fe20eea05ac48ba942e1b55`.
+
+Passing factory creation does not prove execution of the lazy stream's
+Predicate SAM. Its individual runtime behavior still needs separate evidence.
+Main Class initialization, its body, help output, the client and world creation
+remain unfinished.
