@@ -59,3 +59,8 @@ Generated failure roots, Class/name roots and namespace consumers remain explici
 integration work. Existing other UFMP page objects must remain in the replacement
 complement. A source-only output does not establish native execution, collection
 reachability, thread isolation, complete reflection support or Minecraft startup.
+
+Public virtual/interface implementation handles have separate
+[instance-reference source APIs](NORMAL_LAMBDA_INSTANCE_SOURCE_API.md).
+They require explicit versioned Class verification and instance dispatch
+bindings; the static append API above does not implicitly accept their contracts.
