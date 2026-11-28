@@ -16,6 +16,8 @@ An experimental AOT compiler, assembly runtime, and launcher for Minecraft: Java
 
 [普通静态方法解析汇编服务](docs/METHOD_HANDLE_METHODS.md)现已通过真实 `ServiceLoader` 调用方、共享 RMN、fresh VMInfo、8 个 OS 线程和异常／pending Context 验证，并修复了应用加载器来源映射。260 对象、15 段根引用的新原版镜像通过完整 PE 独立重链接；实际 Main 越过原方法解析缺口，资源清理全部通过，新的停止点是 `PreviewFeatures.isPreviewEnabled()` 原生接口。完整 MethodHandle 调用、Main 帮助输出、客户端与世界仍未完成。
 
+[PreviewFeatures 汇编查询](docs/PREVIEW_FEATURES.md)已通过默认／启用两种独立配置的 216 次原版 API 调用，配置来自只读 VM 启动选项，原 Java 类初始化与缓存逻辑保持不变。262 对象、15 段根引用的镜像通过完整 PE 独立重链接；实际 Main 越过该接口，推进到 `Class.getEnclosingMethod0()`，资源清理全部通过。Main 初始化、帮助输出、客户端和世界仍未完成；这也不代表已支持 preview classfile。
+
 [方法枚举](docs/NORMAL_METHODS.md)、[原常量池读取](docs/NORMAL_CONSTANT_POOL.md)和[有界反射调用](docs/METHOD_INVOKE_STATIC.md)的独立汇编候选已通过原 Java API、JDK 对照、OS 线程与显式 GC 验证，并连同标准输出接入新 35 包的来源验证。派生启动试验已越过这些反射缺口，推进到 JDK jimage 资源读取；完整 Main 仍未完成。[资源映射联合组件](docs/JIMAGE_NATIVE_MAP.md)已实际完成原库与类初始化、真实 CPU 能力查询、原 ByteBuffer 构造和映射 getInt，8 OS 线程的 512 次调用、4 轮静止 GC、JDK 对照与完整关闭均通过独立复跑。[原 Java 批量读取](docs/JIMAGE_JAVA_BULK.md)也通过了缺口对照和接入汇编实现后的 0 至 64 KiB、目标偏移与位置检查。[Inflater 数组接口](docs/INFLATER_NORMAL.md)已有独立内核验证；原构造／end 的三声明前缀也通过了真实 System123 和三后台线程清理。
 
 Windows 文件元数据内核通过 JDK 对照，窗口调用桥通过无窗口契约测试；图形运行时和创建世界仍在实现。多核线程内核已有并发测试，游戏性能提升需要在完整启动后测量；自动／并发收集未实现。[Lambda 通用展开](docs/NORMAL_LAMBDA_EXPANSION.md)已在独立候选中执行原严格 Builder；当前单站点派生镜像的接线已通过机器验证，正式共享流程及当前游戏路径执行仍待验收。

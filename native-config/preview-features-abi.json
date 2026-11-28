@@ -1,0 +1,52 @@
+{
+  "schema": "PRVW16_v1",
+  "pool_abi": 1,
+  "pool_bytes": 16,
+  "pool_layout": {
+    "0": "DWORD magic 0x50525657",
+    "4": "DWORD ABI1",
+    "8": "DWORD bytes16",
+    "12": "DWORD immutable enable_preview 0/1"
+  },
+  "exports": {
+    "pool": "boom_preview_features_pool",
+    "service": "boom_preview_features_service"
+  },
+  "calling_convention": {
+    "ABI": "Windows x64 normal native service",
+    "RCX": "original Context32 pointer",
+    "RDX": "original argv pointer; static no-argument declaration uses no cells",
+    "R8": "readonly PRVW16 pool",
+    "R9D": "operation0",
+    "RAX": "zero-extended configured boolean, or0 on an existing/error Context"
+  },
+  "configuration": {
+    "schema": "closed-image-VM-options-v1",
+    "source": "Explicit immutable VM startup options, distinct from game arguments",
+    "original_default": false,
+    "original_option": "--enable-preview",
+    "pool_storage": "readonly image data; no runtime mutation API",
+    "parser_implemented_by_this_service": false
+  },
+  "original_VM_contract": {
+    "PreviewFeatures_java": "private static final ENABLED = isPreviewEnabled(); public isEnabled returns the cache",
+    "JNI": "PreviewFeatures.c calls JVM_IsPreviewEnabled",
+    "JVM": "jvm.cpp returns Arguments::enable_preview() as JNI_TRUE or JNI_FALSE",
+    "startup": "Arguments::_enable_preview defaults false; parsing --enable-preview sets it true",
+    "primary_source_repository": "https://github.com/openjdk/jdk21u",
+    "reference_source_tag": "jdk-21.0.13+3"
+  },
+  "native_Frame": "Retain the original normal native MethodRow32 and Class initializer; no synthetic Java Code",
+  "Java_cache_writer": "Original PreviewFeatures.<clinit> only",
+  "existing_Context32": "Service leaves all32 bytes unchanged when kind or pending is already nonzero",
+  "VMplan": "Opaque QWORD at Context+24, never interpreted or cleared",
+  "invalid_clean_call": "Invalid operation or pool schema/flag sets only Context.kind7 and returns0",
+  "additional_oop_roots": [],
+  "original_Java_Code_changed": false,
+  "preview_enabled_query_domain": [false, true],
+  "preview_classfile_execution_supported": false,
+  "compiler_input_boundary": "Existing frontends admit non-preview major45..65 and reject minor65535. Reading an enabled option does not change classfile admission.",
+  "source_verification_scope": "The source API may link an existing exact selection full-verification artifact; it does not run or fabricate that verification",
+  "machine_and_behavior_scope": "Source rendering does not imply assembler, COFF, component behavior or complete Minecraft startup acceptance",
+  "registered_pack": false
+}
