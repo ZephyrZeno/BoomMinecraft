@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "kind": "UFMP2_four_dimensional_source_audit_and_projection",
+  "library": "scripts/unsafe-field-namespace-source.py",
+  "source_only": true,
+  "runtime_or_machine_verification_implied": false,
+  "pool": {
+    "default_symbol": "boom_java_unsafe_field_pool",
+    "symbol_is_explicitly_overridable": true,
+    "magic": 1430670672,
+    "ABI": 2,
+    "bytes": 128,
+    "Field_record_bytes": 64,
+    "fields_per_page": 1024,
+    "dimension_offsets": {
+      "types": 8,
+      "fields": 12,
+      "name_units": 88,
+      "pages": 92
+    },
+    "dimension_width_bytes": 4,
+    "pages_must_equal_ceil_field_count_div_1024": true,
+    "source_declaration_shapes": ["DWORD scalar lists", "QWORD scalar or OFFSET-symbol lists"],
+    "namespace_dimensions": "positive values below 2^31",
+    "numeric_literals": ["decimal with optional plus", "MASM hexadecimal h/H suffix", "0x/0X hexadecimal"]
+  },
+  "consumers": {
+    "local_definition_patterns": [
+      "*_UFMP_TYPES EQU integer",
+      "*_UFMP_FIELDS EQU integer",
+      "*_UFMP_NAME_UNITS EQU integer",
+      "*_UFMP_PAGES EQU integer"
+    ],
+    "each_detected_prefix_requires_all_four_definitions": true,
+    "recognized_direct_pool_guards": "cmp DWORD PTR [register + dimension_offset], constant",
+    "pool_register_source_witnesses": ["lea register,pool_symbol", "lea register,[pool_symbol]", "mov register,OFFSET pool_symbol", "register copy of a witnessed pool register"],
+    "volatile_register_witnesses_are_invalidated_at_calls": true,
+    "recognized_extra_uses": "cmp register,constant, including field-index and UTF16 end bounds",
+    "branch_and_operand_provenance": "reported without claiming general control-flow or operand-value correctness",
+    "unknown_expressions_or_uses": "audit reports unsupported; projection rejects"
+  },
+  "API": {
+    "derive": "derive(pool_source, pool_symbol=...) -> four dimensions and exact declaration byte positions",
+    "audit": "audit(pool_source, role_to_consumer_source, pool_symbol=...) -> stale values, guards, bounds and unsupported issues",
+    "project": "project(pool_source, role_to_consumer_source, pool_symbol=...) -> projected UTF8 source strings and complete inverse plans",
+    "inputs": "explicit UTF8 strings or bytes; no filesystem reads by these pure APIs",
+    "projection_changes": "only stale integer tokens in the four recognized local EQU declarations",
+    "literal_base_comments_and_line_endings_preserved": true,
+    "complete_source_inverse": true
+  },
+  "CLI": {
+    "modes": ["audit", "project"],
+    "consumer_argument": "repeat --consumer ROLE=PATH",
+    "audit_stale_or_unsupported_exit": 2,
+    "projected_source_consistency_required": true,
+    "fresh_output_checked_before_source_inputs": true,
+    "output_roots": ["installed project .boom", "installed project target", "installed project dist"],
+    "repository_root_override": false
+  },
+  "separate_requirements": [
+    "complete UFMP tables and their physical object bindings",
+    "full source and canonical machine validation",
+    "instruction-immediate delta authorization",
+    "actual image integration and execution"
+  ],
+  "no_assembler_linker_SourceV_Java_VM_Main_or_historical_module_import": true
+}
