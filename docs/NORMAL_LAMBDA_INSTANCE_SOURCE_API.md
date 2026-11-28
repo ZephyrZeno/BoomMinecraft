@@ -120,3 +120,25 @@ keeps that pending dependency in its receipt; complete image composition must
 prove the new dispatcher's unique actual definition. The appended Rust API
 also has an exact immutable snapshot/inverse for every original source byte.
 The new dispatcher has not yet been accepted by an original Main run.
+
+## Unbound Function reference oracle
+
+A development JDK compares the original CP110 metafactory with the actual
+540-byte generated hidden Class in the same lookup, module and loader domain.
+Nine functional cases per implementation, plus three direct reference
+observations, pass in both default and `-Xint` modes; the two complete stdout
+streams are identical. Original Properties/PropertySource constructors use two
+controlled property names. Return contents, override selection, null-input
+behavior and wrong-type exceptions, including their messages, agree. A direct
+default-interface call produces an empty Collection and remains a separate
+observation. No environment or unrelated game data is enumerated.
+
+Factory identity is recorded separately: the original metafactory reuses its
+noncapturing instance in this test, while the generated factory allocates a
+fresh instance. The [Java 21 LambdaMetafactory contract](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/invoke/LambdaMetafactory.html)
+permits either a new or a suitable existing function object and does not
+guarantee identity-sensitive results across implementations. This permitted
+choice is not reported as byte-identical factory behavior. Direct MethodHandle
+null-call messages are also preserved separately from hidden-function messages.
+These JDK observations do not establish AOT typed-exception/message fidelity or
+Minecraft startup.
