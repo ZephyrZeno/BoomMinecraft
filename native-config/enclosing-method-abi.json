@@ -1,0 +1,68 @@
+{
+  "schema": "ENCM128_v1",
+  "pool_bytes": 128,
+  "pool_abi": 1,
+  "row_bytes": 32,
+  "exports": {"pool": "boom_enclosing_method_pool", "service": "boom_enclosing_method_service"},
+  "calling_convention": "Windows x64 normal native service(Context32*,argv{canonical Class mirror},Pool128*,op0) -> normal Object[3] or NULL",
+  "pool": {
+    "0": "DWORD ENCM magic 0x454e434d",
+    "4": "DWORD ABI1",
+    "8": "DWORD source-proven type-row capacity",
+    "12": "DWORD row bytes32",
+    "16": "QWORD actual JCLS144 pool",
+    "24": "QWORD actual bound heap-cell address",
+    "32": "QWORD readonly per-type Row32 directory",
+    "40": "QWORD normal source String layout",
+    "48": "QWORD normally selected String Class descriptor",
+    "56": "QWORD actual Object[] TYPE",
+    "64": "QWORD actual byte-array heap tag",
+    "72": "DWORD original String.value packed offset",
+    "76": "DWORD original String.coder packed offset",
+    "80": "DWORD compact Strings enabled0/1",
+    "84": "DWORD pool bytes128",
+    "88": "DWORD original source Class count",
+    "92": "DWORD reserved0",
+    "96": "QWORD reserved0 x4"
+  },
+  "row": {
+    "0": "DWORD status:0 no attribute,1 enclosing method,2 enclosing class only,3 unsupported metadata",
+    "4": "DWORD enclosing holder type ID, UINT32_MAX if absent",
+    "8": "QWORD UTF16LE method-name source or0",
+    "16": "QWORD UTF16LE method-descriptor source or0",
+    "24": "DWORD method-name UTF16 units",
+    "28": "DWORD method-descriptor UTF16 units"
+  },
+  "semantics": {
+    "no_attribute_or_primitive_or_array": "NULL",
+    "method_index_zero": "Fresh Object[3] containing canonical enclosing Class mirror,NULL,NULL",
+    "method_index_nonzero": "Fresh Object[3] containing canonical enclosing Class mirror,new normal String(name),new normal String(descriptor)",
+    "holder_resolution": "Original defining-loader namespace resolution; no global-name substitution or represented/enclosing Class initialization",
+    "namespace_capacity": "Directory and active JCLS capacities need not equal. Normal typeid validates the receiver in active JCLS; the source directory separately bounds its row; an enclosing holder must exist in the active JCLS. This permits a source-proven generated tail to remain unbound in a smaller component image.",
+    "text": "Original modified UTF8 is decoded by the existing raw Class parser, then projected as UTF16LE including surrogate code units",
+    "allocation_order": "After any needed normal String class ensure and metadata validation: fresh Object[3], canonical holder mirror, fresh name String, fresh descriptor String"
+  },
+  "temporary_references": {
+    "GC_domain": "Existing explicit quiescent nonmoving collector only; collection cannot overlap an active Java/native call",
+    "callbacks": "The only Java initializer callback is normal String.ensure before temporary array/String allocation",
+    "after_first_temporary_oop": "Only noncollecting boom_heap_alloc,boom_object_new,boom_java_class_load and the local pure MASM String factory; no Java callback or safepoint",
+    "canonical_holder": "boom_java_class_load publishes canonical Class mirrors to the existing permanent JCLS root span",
+    "returned_array": "Elements are published into the fresh normal reference array as constructed; caller obtains result in the ordinary native return path",
+    "failure": "Return NULL with original error Context; unreturned partial objects remain owned by the normal heap and are collectible after quiescence",
+    "automatic_or_concurrent_GC_supported": false
+  },
+  "errors": {
+    "existing_kind_or_pending": "Preserve all32 Context bytes and return NULL",
+    "VMplan": "Opaque Context+24, never interpreted or cleared",
+    "native_allocation_failure": "Builtin OOM kind3, no fabricated Throwable/caller",
+    "unknown_type_or_unresolved_source_holder": "Explicit unsupported kind20; never pretend no attribute",
+    "invalid_schema": "Builtin kind7"
+  },
+  "additional_oop_roots": [],
+  "source_api": "Explicit original summary/classes/selection/normalFrames/layouts/runtime-type archive plus optional generated expansion; all raw Class/MUTF8 and loader resolution use the existing original source readers",
+  "source_verification_scope": "Optional exact existing full SourceV link, separate from raw metadata projection, machine equality and native behavior",
+  "future_GC_boundary": "Any future automatic collection, safepoint or Java callback after temporary allocation requires explicit temporary-root integration before it is supported",
+  "original_Java_Code_changed": false,
+  "registered_pack": false,
+  "runtime_accepted": false
+}
