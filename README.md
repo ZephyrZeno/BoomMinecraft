@@ -30,7 +30,9 @@ v145 新增[正常 BootLoader 模块发布](docs/NORMAL_BOOTLOADER_MODULE.md)，
 
 [可选并行汇编](docs/PARALLEL_DIAGNOSTIC_ASSEMBLY.md)已接通开发启动验证流程：23 组样本约 434 MB 初始化汇编拆成 48 个完整源单元，八个工作者的汇编阶段为 4.843 秒。该数字只衡量构建阶段；完整来源与链接校验另行执行，不代表游戏运行性能。[新增三组正式验证](docs/NATIVE_RUNTIME_26.md)覆盖四个引用操作、库名映射和受限库加载，包括原 Java 构造器、八线程及真实资源清理。
 
-[捕获引用的 Lambda](docs/REFERENCE_CAPTURE_LAMBDAS.md)已通过独立组件验证；[四维字段命名空间](docs/UNSAFE_FIELD_NAMESPACE_SOURCE_API.md)守卫也已修正。[公开实例方法引用接口](docs/NORMAL_LAMBDA_INSTANCE_SOURCE_API.md)随后补上 class52041/CP90 的 `Set → Consumer`，四组实际组件验证合计 142 次报告调用，包含错误顺序、已有异常保护、闭包保活／释放和四个 OS 线程隔离。新的 266 对象镜像通过完整 PE 独立重链接；实际 Main 越过 CP90，25.469 秒后退出 86，全部资源清理通过，新停止点为同类 CP110 的 `PropertySource.getPropertyNames → Function`，尚缺其普通接口分派入口。[长期追加接口](docs/NORMAL_LAMBDA_APPEND_SOURCE_API.md)另已批量生成 1,796 个新站点，适配器、十组运行时元数据和容量／根引用整合已通过机器检查；完整批次尚未链接，独立的 `BiPredicate` 原类准入仍在完整来源验证。Main 初始化、帮助输出、客户端和世界仍未完成。
+[捕获引用的 Lambda](docs/REFERENCE_CAPTURE_LAMBDAS.md)已通过独立组件验证；[四维字段命名空间](docs/UNSAFE_FIELD_NAMESPACE_SOURCE_API.md)守卫也已修正。[公开实例方法引用接口](docs/NORMAL_LAMBDA_INSTANCE_SOURCE_API.md)随后补上 class52041/CP90 的 `Set → Consumer`，四组实际组件验证合计 142 次报告调用，包含错误顺序、已有异常保护、闭包保活／释放和四个 OS 线程隔离。新的 266 对象镜像通过完整 PE 独立重链接；实际 Main 越过 CP90，25.469 秒后退出 86，全部资源清理通过，新停止点为同类 CP110 的 `PropertySource.getPropertyNames → Function`，尚缺其普通接口分派入口。[长期追加接口](docs/NORMAL_LAMBDA_APPEND_SOURCE_API.md)另已批量生成 1,796 个新站点，适配器、十组运行时元数据和容量／根引用整合已通过机器检查；完整批次尚未链接；独立的 `BiPredicate` 原类准入已通过完整来源及两组机器检查，尚未并入当前来源版本。Main 初始化、帮助输出、客户端和世界仍未完成。
+
+后续 267 对象镜像已通过完整 PE 独立重链接，并加入按原接收者覆盖关系生成的 `PropertySource.getPropertyNames` 接口分派。独立 Function 组件通过 146 次报告调用和两次 pending 保护调用，包含四个真实 OS 线程及十六个新函数对象；实际功能接收者为 PropertiesPropertySource，其余三条分派行保留来源／机器证明。实际 Main 越过 CP110 工厂，停止于同方法 CP118 的 `Set.addAll → Consumer`，观察流程 35.031 秒、退出 86，资源清理和输入一致性检查通过。新的 27 类追加已通过字节码和调用适配器 COFF 校验，运行时元数据与整图接入仍在进行；这些结果均未记作游戏启动完成。详见[实例引用验证记录](docs/NORMAL_LAMBDA_INSTANCE_SOURCE_API.md#actual-function-execution-and-the-next-main-stop)。
 
 首个目标版本为 Java 版 1.21.1，完成原版后再推进模组兼容。类加载器身份、变换链和优化失效边界提前纳入设计。启动器提供“启动游戏”入口，输入准备、翻译和构建由启动流程调用。
 

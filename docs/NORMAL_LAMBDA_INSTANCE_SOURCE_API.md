@@ -142,3 +142,54 @@ choice is not reported as byte-identical factory behavior. Direct MethodHandle
 null-call messages are also preserved separately from hidden-function messages.
 These JDK observations do not establish AOT typed-exception/message fidelity or
 Minecraft startup.
+
+## Actual Function execution and the next Main stop
+
+The 267-object current26 image passes an independent whole-PE comparison,
+receipt SHA256 `74427c3fadc139630e8bb331d15dc7c181768e88a77770cf9d7f97b5246f40d9`.
+Its isolated Function component passes 32 basic, 2 pending-setup and 112 thread
+report entries, 146 in total, plus two explicit pending-guard calls. Original
+Properties and PropertiesPropertySource constructors populate controlled keys;
+the original Function interface thunk reaches SAM 530914 and the new dispatcher,
+then the original PropertySource override and Collection size/contains methods.
+Four real OS threads use normal Java Thread/FLS ownership and sixteen distinct
+Function objects. All three runs pass twelve cleanup checks and unchanged-input
+checks. The final local handoff is
+`.boom/instance-function-component-v454-a/final-handoff-b.json`, SHA256
+`48ce423b3543d687545364752a152d4efd20bbec5be1a91403543adee960f756`.
+
+Wrong-type and null inputs retain built-in Context kinds 12/4 at SAM PCs 2/5;
+this does not establish materialized Java exceptions or exact JDK messages.
+A separately constructed real NPE remains byte-identical across factory and
+interface pending guards. Functional receiver tests cover PropertiesPropertySource;
+the other three source dispatch rows have not received equivalent execution
+tests. This unbound Function retains no receiver field, and no capture-retention
+GC result is claimed.
+
+The first component fixture accidentally bound Collection.add 62420/table12398
+as its contains observer. The returned unmodifiable Collection correctly threw
+a Java exception. That failure is retained; its exact exception subtype was not
+captured. A new component adds the already linked original contains thunk,
+`boom_batch_call_4621_36_185`, for declaration 62415/table12392. All 267 object
+references and the original worker remain unchanged; actual/canonical DLLs are
+independently compared again. Expected values and error checks were not relaxed.
+
+Actual original Main advances beyond the CP110 factory and stops at CP118,
+`Set.addAll(Collection)boolean` adapted to a captured `(Set)Consumer` in the
+same `reload()V` method, at original PC 51. The observation takes 35.031 seconds,
+exits 86 without a timeout and passes cleanup flags 7, zero held monitors/registry
+lock, unchanged inputs and all 117 tool identities. Its execution receipt is
+`.boom/native-main-runs/v451-instance-function-a/execution.json`, SHA256
+`24a1d530fc2d130e1509a84a728c412d271467a6eecc0fb7b41cd578fa62d801`.
+Advancing beyond factory creation does not establish that Main has executed the
+lazy stream's Function SAM; the isolated component provides that separate evidence.
+
+The next 27-Class source append preserves every current26 record, ID and Class
+byte. Independent bytecode checks pass for its captured Set field and Collection
+argument cast at PC 6, interface invocation at PC 9 and discarded boolean result.
+The adapter passes actual/canonical COFF and prefix checks. It reuses original
+Set.addAll declaration 66277, thunk `boom_batch_call_5135_280_185` and table13030;
+the complete 2,092-row table is retained. Unselected receiver Class/body gaps
+remain visible and are not claimed executable. Runtime metadata, capacity/root
+integration and a complete image run remain pending. Main Class initialization,
+Main execution, help output, the client and world creation remain unfinished.
