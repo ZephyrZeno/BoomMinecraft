@@ -18,6 +18,9 @@ __pycache__/
 *.[pP][sS]1
 *.[pP][sS][mM]1
 *.[pP][sS][dD]1
+*.[pP][sS]1[xX][mM][lL]
+*.[pP][sS][sS][cC]
+*.[pP][sS][rR][cC]
 
 # One-off Python work belongs in ignored local directories.
 /tmp/
