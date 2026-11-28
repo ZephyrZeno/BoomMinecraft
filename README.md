@@ -34,6 +34,8 @@ v145 新增[正常 BootLoader 模块发布](docs/NORMAL_BOOTLOADER_MODULE.md)，
 
 后续 267 对象镜像已通过完整 PE 独立重链接，并加入按原接收者覆盖关系生成的 `PropertySource.getPropertyNames` 接口分派。独立 Function 组件通过 146 次报告调用和两次 pending 保护调用，包含四个真实 OS 线程及十六个新函数对象；实际功能接收者为 PropertiesPropertySource，其余三条分派行保留来源／机器证明。实际 Main 越过 CP110 工厂，停止于同方法 CP118 的 `Set.addAll → Consumer`，观察流程 35.031 秒、退出 86，资源清理和输入一致性检查通过。新的 27 类追加已通过字节码和调用适配器 COFF 校验，运行时元数据与整图接入仍在进行；这些结果均未记作游戏启动完成。详见[实例引用验证记录](docs/NORMAL_LAMBDA_INSTANCE_SOURCE_API.md#actual-function-execution-and-the-next-main-stop)。
 
+后续 27 类、267 对象镜像已通过完整 PE 独立重链接。CP118 的捕获 `Set.addAll → Consumer` 组件通过 219 次报告调用和两次 pending 保护调用，覆盖集合合并、四个真实 OS 线程及闭包唯一根的静止回收验证；撤根后五个观察对象均不再属于堆。实际 Main 越过 CP118，停止于 CP119 的 `Objects.nonNull → Predicate` 跨模块静态引用，观察流程 25.703 秒、退出 86，全部资源清理及输入检查通过。该站点的新来源规则仍在独立准备，Main 初始化、帮助输出、客户端和世界仍未完成。
+
 首个目标版本为 Java 版 1.21.1，完成原版后再推进模组兼容。类加载器身份、变换链和优化失效边界提前纳入设计。启动器提供“启动游戏”入口，输入准备、翻译和构建由启动流程调用。
 
 - [架构设计](docs/DESIGN.md)

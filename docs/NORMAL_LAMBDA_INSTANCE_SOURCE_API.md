@@ -193,3 +193,44 @@ the complete 2,092-row table is retained. Unselected receiver Class/body gaps
 remain visible and are not claimed executable. Runtime metadata, capacity/root
 integration and a complete image run remain pending. Main Class initialization,
 Main execution, help output, the client and world creation remain unfinished.
+
+## Captured addAll Consumer execution
+
+The 27-Class, 267-object image now passes independent whole-PE byte equality,
+receipt SHA256 `3cb88934c43b1b0681cb945c82d60714a7c5f38dcae93e160973bb023b5c406e`.
+The CP118 component retains the complete original Set table and calls through
+Consumer, generated SAM 530917 and the original interface thunk. Original
+HashSet constructors and observers verify union contents, repeated additions
+whose boolean result is discarded, and separate captured Sets. Its four
+scenarios report 56 basic, 2 pending-setup, 138 thread and 23 collection calls,
+219 in total, plus two direct pending-guard calls. Four real OS threads use
+normal Java Thread/FLS ownership and sixteen fresh closures. Each scenario
+passes twelve cleanup checks and unchanged-input checks.
+
+Wrong Collection arguments report built-in Context kind 12 at SAM PC 6; a null
+captured receiver reports kind 4 at PC 9. Materialized Java exceptions and exact
+JDK messages are not established. A real original typed NPE remains unchanged
+across the two pending guards. A nonnull receiver with a null Collection was
+not tested.
+
+At quiescent collection boundaries, every round uses the complete fifteen root
+spans plus one fixture closure root. The closure, captured Set, its HashMap and
+two key Strings remain live across two collections. Withdrawing that root makes
+all five fail the heap's membership query; reclaimed addresses are not
+dereferenced. The final collection frees twelve objects, rather than claiming
+that only those five existed. Properties, PropertySource and the temporary
+Collection are not claimed captured. This verifies explicit quiescent
+collection, not automatic or active-frame collection. The final local component
+handoff is `.boom/set-addall-component-v473-a/handoff-a.json`, SHA256
+`5c7f670b0712fdb954719c0d848e8ec4c1da2231718c1a522ac3e8d4072ba044`.
+
+Actual original Main advances beyond CP118 and stops at CP119, a noncapturing
+`()Predicate` factory for `Objects.nonNull(Object)boolean`, in `reload()V` at
+original PC 67. The observation takes 25.703 seconds, exits 86 without a timeout
+and passes cleanup flags 7, zero held monitors/registry lock, unchanged inputs
+and all 117 tool identities. File mappings, leases and owned native allocations
+are closed. Its receipt is
+`.boom/native-main-runs/v477-set-addall-scoped-a/execution.json`, SHA256
+`b22c56dff562377d11c74f596cdbc8f8441374125d1a505bf9ee1908bda6bc1e`.
+Main Class initialization, its method body, help output, the client and world
+creation remain unfinished.
