@@ -29,7 +29,8 @@ field has a genuine Field64 row, declaring-Class range, UTF-16 name, FMAP
 address function and runtime field-pointer entry. The normal runtime row
 records the payload size and reference prefix. All 190 field pages remain
 accounted for:
-some are replaced metadata units and 93 are unchanged parent objects. Every
+some belong to replaced metadata units, while 93 middle pages remain in one
+unchanged parent COFF object. Every
 old field record and name offset is retained. The Class/lookup metadata,
 three Frames and actual dispatch tables are extended from the real current
 image, preserving its later ordinary ResolvedMethodName addition.

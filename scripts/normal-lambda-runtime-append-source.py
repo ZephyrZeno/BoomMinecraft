@@ -283,6 +283,8 @@ def project_units(sources, prefix, aggregate, current_units, dispatch_selection,
     old_pages, new_pages = ((len(rows)+1023)//1024 for rows in (old_fields, new_fields))
     if old_pages != new_pages:
         edit.replace(pages_body(old_pages), pages_body(new_pages), 'UFMP:page-pointer-tail')
+        edit.externs(f'boom_java_unsafe_field_page{page}' for page in
+                     range(old_pages, new_pages))
     plans.append(edit.plan(type_capacity=newcap, name_units=len(new_arena), field_capacity=newfc,
                            appended_class_ranges=new_ranges[oldcap:], old_rows_unchanged=True))
 
