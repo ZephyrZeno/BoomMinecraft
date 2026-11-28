@@ -296,14 +296,17 @@ relocations and the actual count. The existing diagnostic `.data`, `.rdata` and
 actual linked diagnostic catalogue. The source-machine verification SHA is
 `0dc0cb3f7b2c791f88cba593619971c976482f6ea93a71b35485ed80ae22bebd`.
 
-This is a source and machine preparation result. The new normal Class path has
-not yet executed, no new whole Main image has been linked or run, and the
-257-object cleanup failure remains the latest original Main observation.
-VM allocation must eventually ensure the normal RMN class and create its normal
-object without invoking the Java constructor. Method resolution, the native
-owner and rooted canonical records, MethodHandle invocation, and the new entry
-lifecycle still require component and actual Main verification. This admission
-does not prove any of those capabilities or Minecraft startup.
+At this source/machine checkpoint the new normal Class path had not executed
+and no new whole Main image had been linked or run; the 257-object cleanup
+failure was the latest original Main observation. This admission alone did not
+prove the native owner, method resolution, invocation or Minecraft startup.
+
+The later [ordinary static method service](METHOD_HANDLE_METHODS.md) executes
+the normal RMN initialization/allocation path in a separate component and
+keeps the original Java payload unchanged. Its C Main independently relinks
+260 objects and actually advances to `PreviewFeatures.isPreviewEnabled()Z`,
+with complete cleanup. Full MethodHandle invocation and game startup remain
+unfinished; the source checkpoint and subsequent runtime evidence are separate.
 
 ## Checking namespace capacity consumers
 

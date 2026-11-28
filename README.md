@@ -10,9 +10,11 @@ An experimental AOT compiler, assembly runtime, and launcher for Minecraft: Java
 
 后续引用字段 CAS 桥已逐项核对 46 个原始常量池调用点及 81 处已选择字节码调用。251 对象映像的完整 PE 独立重链接通过；实际原生 Main 不再停在上述 VarHandle 缺口，推进到 `Class.getDeclaredFields0`。CAS 独立组件另通过 8 个 OS 线程、128 次争用和精确调用／异常验证。[正常字段反射汇编服务](docs/NORMAL_FIELDS.md)已通过 12 组、972 次原版调用；接入[反射字段的 Unsafe 偏移查询](docs/UNSAFE_REFLECTED_FIELDS.md)后，255 对象映像独立重链接及实际资源清理通过，推进到 `Striped64` 的 long 类型 `VarHandle.weakCompareAndSetRelease`。完整 Main、客户端和世界仍未完成；这不代表全部 CAS 调用点或完整 VarHandle 家族已执行验收。
 
-[int/long VarHandle 比较桥](docs/PRIMITIVE_VARHANDLE_COMPARISONS.md)已接入 19 个原 CP 调用点，独立原版 LongAdder、AtomicBoolean 与 8 线程争用验证通过。257 对象镜像通过完整 PE 独立重链接，但实际运行退出70，严格清理验证失败。只读捕获定位到方法句柄对 `ServiceLoader.load(Class, ClassLoader)` 的静态方法解析；当前方法域及 VM 原生 ResolvedMethodName 状态仍待实现，失败记录没有计作启动成功。
+[int/long VarHandle 比较桥](docs/PRIMITIVE_VARHANDLE_COMPARISONS.md)已接入 19 个原 CP 调用点，独立原版 LongAdder、AtomicBoolean 与 8 线程争用验证通过。257 对象镜像通过完整 PE 独立重链接，但实际运行退出70，严格清理验证失败。只读捕获定位到方法句柄对 `ServiceLoader.load(Class, ClassLoader)` 的静态方法解析；该失败记录对应当时尚未实现的方法域及 VM 原生 ResolvedMethodName 状态，没有计作启动成功。
 
-后续来源选择已正常准入 `ResolvedMethodName` 原类及构造器，新的完整校验覆盖 81,477 个 Java 方法和 220,046 个生成函数，此前全部方法与函数保持一致。其原版初始化函数、类描述符和新增的一个普通失败根槽已通过独立汇编与完整 COFF 核对；尚未执行新运行时或新 Main，方法句柄解析与调用仍待完成。具体边界见[正常类准入记录](docs/NORMAL_LAMBDA_EXPANSION.md#normal-resolvedmethodname-source-admission)。
+后续来源选择已正常准入 `ResolvedMethodName` 原类及构造器，新的完整校验覆盖 81,477 个 Java 方法和 220,046 个生成函数，此前全部方法与函数保持一致。其原版初始化函数、类描述符和新增的一个普通失败根槽已通过独立汇编与完整 COFF 核对；此来源／机器准备阶段尚未执行新运行时或新 Main，后续运行结果另行记录。具体边界见[正常类准入记录](docs/NORMAL_LAMBDA_EXPANSION.md#normal-resolvedmethodname-source-admission)。
+
+[普通静态方法解析汇编服务](docs/METHOD_HANDLE_METHODS.md)现已通过真实 `ServiceLoader` 调用方、共享 RMN、fresh VMInfo、8 个 OS 线程和异常／pending Context 验证，并修复了应用加载器来源映射。260 对象、15 段根引用的新原版镜像通过完整 PE 独立重链接；实际 Main 越过原方法解析缺口，资源清理全部通过，新的停止点是 `PreviewFeatures.isPreviewEnabled()` 原生接口。完整 MethodHandle 调用、Main 帮助输出、客户端与世界仍未完成。
 
 [方法枚举](docs/NORMAL_METHODS.md)、[原常量池读取](docs/NORMAL_CONSTANT_POOL.md)和[有界反射调用](docs/METHOD_INVOKE_STATIC.md)的独立汇编候选已通过原 Java API、JDK 对照、OS 线程与显式 GC 验证，并连同标准输出接入新 35 包的来源验证。派生启动试验已越过这些反射缺口，推进到 JDK jimage 资源读取；完整 Main 仍未完成。[资源映射联合组件](docs/JIMAGE_NATIVE_MAP.md)已实际完成原库与类初始化、真实 CPU 能力查询、原 ByteBuffer 构造和映射 getInt，8 OS 线程的 512 次调用、4 轮静止 GC、JDK 对照与完整关闭均通过独立复跑。[原 Java 批量读取](docs/JIMAGE_JAVA_BULK.md)也通过了缺口对照和接入汇编实现后的 0 至 64 KiB、目标偏移与位置检查。[Inflater 数组接口](docs/INFLATER_NORMAL.md)已有独立内核验证；原构造／end 的三声明前缀也通过了真实 System123 和三后台线程清理。
 

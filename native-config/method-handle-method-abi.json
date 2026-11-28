@@ -1,0 +1,112 @@
+{
+  "schema": "MHRO128_MHRM512_v1",
+  "ABI": 1,
+  "owner_bytes": 128,
+  "record_bytes": 128,
+  "capacity": 4096,
+  "root_cells": 8192,
+  "root_bytes": 65536,
+  "record_bank_bytes": 524288,
+  "exports": {
+    "owner": "boom_mhn_method_owner",
+    "records": "boom_mhn_method_records",
+    "roots": "boom_mhn_resolved_method_roots",
+    "owner_pool": "boom_mhn_method_owner_pool",
+    "pool": "boom_mhn_method_pool",
+    "open": "boom_mhn_method_owner_open",
+    "close": "boom_mhn_method_owner_close",
+    "resolve": "boom_mhn_mixed_resolve_external",
+    "vm_info": "boom_mhn_mixed_vm_info_external",
+    "scratch_acquire": "boom_mhn_method_scratch_acquire",
+    "scratch_set": "boom_mhn_method_scratch_set",
+    "scratch_release": "boom_mhn_method_scratch_release"
+  },
+  "functions": {
+    "open": "EAX status(RCX exactOwner128*,RDX exactOwnerPool128*) -- before Java, no heap allocation or Class initialization",
+    "close": "EAX status(RCX exactOwner128*) -- all callers ended, heap alive, explicit monitor/registry preguard before close",
+    "resolve": "Normal native handler(RCX Context32*,RDX four argvQ,R8 original registration pool*) -> same MemberName/null",
+    "vm_info": "Normal native handler(RCX Context32*,RDX argv{MemberName},R8 original registration pool*) -> normal Object[2]"
+  },
+  "owner_states": {
+    "0": "COLD",
+    "1": "OPEN",
+    "2": "CLOSING rejects new admissions, permits already admitted completion",
+    "3": "CLOSED",
+    "4": "RETAINED_FAILURE"
+  },
+  "record_states": {
+    "0": "FREE",
+    "1": "PREPARING temporary roots; preparing counter blocks close and no native lock spans a Java callback",
+    "2": "LIVE"
+  },
+  "status_codes": {
+    "0": "ok",
+    "2": "closed or busy",
+    "3": "4096-entry capacity",
+    "4": "arguments/header/bookkeeping",
+    "5": "source epoch mismatch"
+  },
+  "roots": "Exactly two ordinary strong collector cells per native Record128, interpreted by record state; no Java oops embedded in the native record.",
+  "owner_pool_bytes": 128,
+  "service_pool_bytes": 512,
+  "owner_pool_layout": {
+    "0": "magic/ABI/bytes/capacity fourDWORD",
+    "16": "heapCellQ",
+    "24": "recordsQ",
+    "32": "rootbankQ",
+    "40": "recordBytesD/rootCellsD",
+    "48": "sourceEpochQ",
+    "56": "reserved0Q",
+    "64": "RMN ClassDescriptorQ",
+    "72": "normal RMN layoutQ",
+    "80": "JCLS144Q",
+    "88": "RTYP2Q",
+    "96": "ClassMethodRange8 directoryQ",
+    "104": "originalMethodCapacityD/RMNidD/originalClassCountD/res0D",
+    "120": "actual NMTH192 poolQ"
+  },
+  "commit_layout": {
+    "0": "MethodID/holder/declslot/canonicalflags fourDWORD",
+    "16": "normal MethodRow144*",
+    "24": "backend entry0; metadata-only",
+    "32": "actual holder Class mirror",
+    "40": "fresh normal RMN candidate",
+    "48": "sourceEpoch",
+    "56": "result RMN (initial0)"
+  },
+  "incoming_Context32_pending_unchanged": true,
+  "VMplan_opaque": true,
+  "RMN_constructor_called": false,
+  "RMN_Class_ensure_required": true,
+  "no_Injected_Java_fields": true,
+  "no_Java_Class_state_writes": true,
+  "caller_not_part_of_canonical_RMN": true,
+  "reserve_publication": "All possible Java callbacks/target mirror loads precede fresh RMN allocation. object_new -> native intern publishes strong root before another Java callback. Racing unused candidates become ordinary garbage, never force-freed.",
+  "GC_scope": "Existing explicit quiescent, nonmoving collection only; no automatic/concurrent GC and no claim that arbitrary native locals are auto roots. VMInfo array is explicitly in a PREPARING root pair across Long.ensure; scratch cleanup does not inspect Context.kind.",
+  "scratch_functions": {
+    "acquire": "EAX status(owner,Scratch32*)",
+    "set": "EAX status(owner,Scratch32*,normalRoot0,normalRoot1_or0)",
+    "release": "EAX status(owner,Scratch32*) -- finally even when Context pending"
+  },
+  "Scratch32": "indexD,reserved0D,generationQ,exactRootPairQ,reserved0Q; no Java oop in this token",
+  "VMInfo_boxing": "Original native order: fresh normal Object[2], real Long Class.ensure, normal fresh Long object_new plus original value field=-2; no Java constructor/valueOf/LongCache",
+  "lifetime": "Fixed image/known source loader identities only. Close clears roots only after complete native row/root preflight and external Java/monitor quiescence. No unloading/redefinition/weak RMN cache.",
+  "supported": "Original normal MethodType + REF6/IS_METHOD; class own/super ordinary methods, interface own static methods; public/sameclass/same runtime package/protected static/validated nest member access; known source loader descriptor constraints.",
+  "unsupported": [
+    "maximally-specific inherited interface method selection when a matching method exists",
+    "custom/dynamic loaders or generated method owners/signature types beyond original descriptor prefix",
+    "nonstatic/refKind5/7/8/9 and signature-polymorphic intrinsic resolution",
+    "callable DirectMethodHandle/LambdaForm/invokeBasic/linkTo/caller binding",
+    "VerifyMethodHandles debug-only trusted-lookup extra checks and ancient relaxed access policy"
+  ],
+  "diagnostic_messages": "Typed error classes and required order; initial method-error text is generic and is not asserted exact to all original JDK diagnostics",
+  "native_Frame14_unchanged": true,
+  "registered_pack": false,
+  "whole_game_started": false,
+  "root_cells_per_record": 2,
+  "root_semantics": {
+    "FREE": "Both cells0 and the entire native Record128 zero",
+    "PREPARING": "Temporary normal VM oops: cell0 freshly allocated VMInfo Object[2], cell1 fresh Long after allocation (0 earlier). Zero roots are allowed before allocation. Not a canonical RMN cache entry.",
+    "LIVE": "cell0 canonical normal ResolvedMethodName, cell1 actual declaring-holder Class mirror; neither is the lookup caller"
+  }
+}
