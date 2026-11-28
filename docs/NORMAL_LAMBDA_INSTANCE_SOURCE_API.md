@@ -84,3 +84,39 @@ The new target needs an ordinary interface dispatch entry that is not already
 selected. Its default method body does not justify bypassing receiver overrides.
 Main Class initialization, Main execution, help output, the client and world
 creation remain unfinished.
+
+## Generating a missing interface dispatcher
+
+`compiler::batch_dispatch::project_generated_interface` accepts a complete
+original `Catalog`, its normal layouts, an explicit generated-call request and
+the provided Java/native method sets. It reuses the existing declaration
+resolution, method selection and target-record algorithms. It enumerates every
+original receiver with a normal layout before checking target availability.
+Unselected receivers are retained, and missing Java or native bodies remain
+visible in the returned target records. The caller must separately validate
+the actual generated Class/Code and its original access, module, loader and
+ordinary-target annotation contract.
+
+`render_generated_interface` reuses the existing table and site renderers with
+compiler-owned names, leaving all original numeric table IDs unchanged. The
+output contains a readonly DSPV1 table, receiver constraints and a native leaf
+thunk that jumps to the existing `boom_batch_virtual_invoke`. It allocates no
+Class IDs, defines no new dispatch kernel or object roots, and performs no
+declaring-Class initialization.
+
+For the current `PropertySource.getPropertyNames` reference, actual Rust
+projection over the locked original IR selects all four original receivers:
+52010 calls 510711, 52038 and its subclass 52043 call 510839, and 52060 calls
+511069. All three override bodies are already provided. The resolved default
+declaration 510899 is not substituted for these runtime choices. Independent
+selection and complete source reconstruction agree with the Rust output.
+Actual/canonical COFF and physical checks cover all 120 readonly bytes, seven
+ADDR64 relocations, the entire 19-byte thunk, three REL32 relocations and its
+empty native unwind record. Two existing dispatch tests also pass.
+
+The source libraries, generated caller, runtime metadata and dispatcher retain
+separate acceptance scopes. A caller compiled with an unresolved dispatcher
+keeps that pending dependency in its receipt; complete image composition must
+prove the new dispatcher's unique actual definition. The appended Rust API
+also has an exact immutable snapshot/inverse for every original source byte.
+The new dispatcher has not yet been accepted by an original Main run.

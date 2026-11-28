@@ -567,6 +567,180 @@ pub(super) fn generate(
     })
 }
 
+// Append-only API candidate for compiler/batch_dispatch.rs.  Existing generate,
+// selection_row, table_body, site_body and every legacy numeric ID stay intact.
+
+#[derive(Debug, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct GeneratedInterfaceRequest {
+    pub caller_class: usize,
+    pub caller_class_sha256: String,
+    pub caller_method: usize,
+    pub constant: u16,
+    pub symbolic_owner: usize,
+    pub name: String,
+    pub descriptor: String,
+}
+
+#[derive(Serialize)]
+pub struct GeneratedInterfaceProjection {
+    pub schema: u32,
+    pub context_bytes: usize,
+    pub site: Site,
+    pub table_symbol: String,
+    pub rows_symbol: String,
+    pub constraints_symbol: String,
+    pub rows: Vec<Row>,
+    pub targets: Vec<Target>,
+    pub array_target: Option<usize>,
+    pub array_error: u32,
+    pub numeric_table_id: Option<usize>,
+    pub original_selected_table_ids_changed: bool,
+    pub class_initialization_performed_by_dispatch: bool,
+    pub assembled: bool,
+    pub linked: bool,
+    pub runtime_abi_verified: bool,
+}
+
+/// Source-only projection.  The caller separately validates the generated
+/// Class bytes/invocation and original site access/module/loader contract.
+/// No Java codegen, assembly, Class-ID assignment, or legacy Requests mutation.
+pub fn project_generated_interface(
+    catalog: &Catalog,
+    layouts: &[Layout],
+    request: GeneratedInterfaceRequest,
+    emitted: &BTreeSet<usize>,
+    provided_natives: &BTreeSet<usize>,
+) -> Result<GeneratedInterfaceProjection> {
+    ensure!(layouts.len() == catalog.nodes.len(), "Complete original layout coverage required");
+    ensure!(
+        request.caller_class_sha256.len() == 64
+            && request.caller_class_sha256.bytes().all(|b| b.is_ascii_hexdigit()),
+        "Generated caller Class digest is invalid"
+    );
+    let symbolic = catalog.nodes.get(request.symbolic_owner)
+        .context("Invalid source symbolic interface owner")?;
+    ensure!(symbolic.access & 0x200 != 0, "Generated invokeinterface owner must be an interface");
+    let member = hierarchy::resolve_method(
+        catalog, request.symbolic_owner, &request.name, &request.descriptor, true,
+    )?;
+    ensure!(member.access & 1 != 0 && member.access & (2 | 8) == 0,
+        "Generated interface API accepts ordinary public instance declarations only");
+    let resolved = catalog.declared_method_id(&member)?;
+    let mut owners = vec![(usize::MAX, usize::MAX); catalog.methods];
+    for node in &catalog.nodes {
+        for (index, &method) in node.method_ids.iter().enumerate() {
+            owners[method] = (node.id, index);
+        }
+    }
+    let mut rows = Vec::new();
+    for node in &catalog.nodes {
+        ensure!(layouts[node.id].class_id == node.id, "Layout Class identity differs");
+        if node.access & 0x200 != 0 || layouts[node.id].candidate.is_none() {
+            continue;
+        }
+        // The existing generate() groups receivers by resolved declaration.
+        // Symbolic-owner restrictions remain in the separate site constraints.
+        if catalog.ancestors(node.id)?.contains(&member.owner) {
+            rows.push(selection_row(catalog, node.id,
+                hierarchy::select_method(catalog, node.id, member.owner, &member, true)?)?);
+        }
+    }
+    let array_target = (member.owner == catalog.root_object()?
+        && member.access & (8 | 0x400) == 0 && member.access & 1 != 0)
+        .then_some(resolved);
+    let array_error = if array_target.is_some() { 0 } else { 13 };
+    let used = rows.iter().filter_map(|row| row.target).chain(array_target).collect::<BTreeSet<_>>();
+    let mut targets = Vec::new();
+    for method in used {
+        let mut record = target(catalog, &owners, method, emitted)?;
+        record.native_binding_provided = provided_natives.contains(&method);
+        targets.push(record);
+    }
+    // Shared table identity depends on the declaration.  If a distinct source
+    // interface resolves that declaration, only its thunk/constraints differ.
+    let suffix = if request.symbolic_owner == member.owner {
+        format!("{resolved}_i")
+    } else {
+        format!("{resolved}_i_s{}", request.symbolic_owner)
+    };
+    let label = format!("boom_generated_instance_dispatch_{suffix}");
+    let site = Site {
+        label,
+        caller_class: request.caller_class,
+        class_sha256: request.caller_class_sha256,
+        constant: request.constant,
+        opcode: 185,
+        descriptor: request.descriptor,
+        resolved_method: resolved,
+        dispatch: VirtualCall {
+            symbolic_owner: request.symbolic_owner,
+            receiver_constraint: request.symbolic_owner,
+            resolved_owner: member.owner,
+            resolved_index: member.index,
+            interface: true,
+        },
+        caller_methods: BTreeSet::from([request.caller_method]),
+        table: None,
+        assembly_unit: None,
+        diagnostic: None,
+    };
+    Ok(GeneratedInterfaceProjection {
+        schema: 1, context_bytes: 32, site,
+        table_symbol: format!("boom_generated_instance_vtable_{resolved}_i"),
+        rows_symbol: format!("boom_generated_instance_rows_{resolved}_i"),
+        constraints_symbol: format!("boom_generated_instance_constraints_{suffix}"),
+        rows, targets, array_target, array_error, numeric_table_id: None,
+        original_selected_table_ids_changed: false,
+        class_initialization_performed_by_dispatch: false,
+        assembled: false, linked: false, runtime_abi_verified: false,
+    })
+}
+
+/// Render only after the source projection has been independently approved.
+/// The real production renderers produce all DSPV1 fields and instructions;
+/// this layer only gives their labels an independent compiler-owned namespace.
+pub fn render_generated_interface(projection: &GeneratedInterfaceProjection) -> Result<String> {
+    ensure!(projection.schema == 1 && projection.context_bytes == 32
+        && projection.numeric_table_id.is_none()
+        && !projection.original_selected_table_ids_changed
+        && !projection.class_initialization_performed_by_dispatch,
+        "Generated interface projection contract differs");
+    // Private renderer sentinel, never emitted, published, or assigned to a
+    // runtime table. In particular no original table 0 or selected ID is used.
+    let sentinel = usize::MAX;
+    let table = Table {
+        id: sentinel, resolved_method: projection.site.resolved_method, interface: true,
+        rows: projection.rows.iter().map(|row| Row { receiver: row.receiver, target: row.target, error: row.error }).collect(),
+        array_target: projection.array_target, array_error: projection.array_error,
+        assembly_unit: None, diagnostic: None,
+    };
+    let old_table = format!("boom_batch_vtable{sentinel}");
+    let old_rows = format!("boom_batch_vrows{sentinel}");
+    let old_constraints = format!("boom_batch_vconstraints_{}", projection.site.label);
+    let table_source = table_body(&table)?
+        .replace(&old_table, &projection.table_symbol)
+        .replace(&old_rows, &projection.rows_symbol);
+    let site_source = site_body(&projection.site, sentinel)
+        .replace(&old_table, &projection.table_symbol)
+        .replace(&old_constraints, &projection.constraints_symbol);
+    let old_proc = format!("{} PROC\n", projection.site.label);
+    ensure!(site_source.matches(&old_proc).count() == 1, "Unique production thunk PROC required");
+    let native_leaf = format!("{} PROC FRAME\n .endprolog\n", projection.site.label);
+    let site_source = site_source.replacen(&old_proc, &native_leaf, 1);
+    let mut out = String::from("OPTION CASEMAP:NONE\nEXTERN boom_batch_virtual_invoke:PROC\n");
+    let imports = BTreeSet::from([projection.site.dispatch.symbolic_owner, projection.site.dispatch.receiver_constraint]);
+    for id in imports { writeln!(out, "EXTERN boom_t{id}:BYTE")?; }
+    for target in &projection.targets { writeln!(out, "EXTERN boom_m{}:PROC", target.method)?; }
+    writeln!(out, "PUBLIC {}", projection.site.label)?;
+    out.push_str(&table_source);
+    out.push_str(&site_source);
+    out.push_str("END\n");
+    ensure!(!out.contains(&old_table) && !out.contains(&old_rows) && !out.contains(&old_constraints),
+        "No legacy numeric renderer label may escape the synthetic namespace");
+    Ok(out)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
