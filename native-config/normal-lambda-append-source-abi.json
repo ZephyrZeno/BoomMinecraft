@@ -1,0 +1,90 @@
+{
+  "schema": 1,
+  "kind": "normal_lambda_append_source_API_contract",
+  "algorithm": "normal-lambda-static-reference-v1",
+  "source_only": true,
+  "machine_or_behavior_acceptance_implied": false,
+  "source_API": {
+    "append_library": "scripts/normal-lambda-append-source.py",
+    "runtime_library": "scripts/normal-lambda-runtime-append-source.py",
+    "append_projection": "append(sources, prefix, requests, selection, explicit_provenance_and_generated_path)",
+    "append_results": ["aggregate expansion", "new generated Class bytes indexed by generated name"],
+    "runtime_projection": "project_units(sources, prefix, aggregate, current_units, dispatch_selection, diagnostic_catalogue)",
+    "runtime_results": ["source plans with exact inverse facts", "source-only metadata model"],
+    "render": "render(plans) -> role to MASM text",
+    "source_and_unit_graph_verifications_are_separate": true,
+    "assembly_link_execution_or_Main_steps": false,
+    "CLI_output_roots": [".boom", "target", "dist"],
+    "CLI_output_root_is_installed_Cargo_project": true,
+    "CLI_output_is_fresh_and_checked_before_inputs": true
+  },
+  "supported_source_domain": {
+    "bootstrap": "exact standard LambdaMetafactory.metafactory",
+    "implementation_reference_kind": 6,
+    "captures": "normal reference fields in original capture order; nullable references are accepted",
+    "parameters_and_adaptations": "the unchanged normal-lambda-source policy",
+    "boxing_primitive_parameter_adaptation_nonstatic_handles": false,
+    "implementation_Object_constructor_bootstrap_initialization": "must already be source-selected and provided",
+    "prefix": "all records, IDs and generated Class references are retained in order",
+    "new_tail_order": ["host defining loader", "host Class ID", "constant-pool index"],
+    "identity_allocation": "contiguous after the complete explicit prefix, never re-sort the prefix"
+  },
+  "normal_capture_layout": {
+    "layout_ABI": 2,
+    "reference_storage_bytes": 8,
+    "payload_bytes": "capture_count * 8",
+    "reference_prefix": "capture_count",
+    "field_offset": "capture_ordinal * 8",
+    "field_name": "c followed by capture ordinal",
+    "field_access": 4114,
+    "separate_native_capture_table": false,
+    "factory": "fresh normal object per call",
+    "SAM": "read instance fields then invoke the unchanged original implementation",
+    "automatic_GC_or_dynamic_class_unloading": false
+  },
+  "runtime_projection_roles": [
+    "runtime-globals",
+    "runtime-rows",
+    "Class-identities-and-names",
+    "Unsafe-array-scales",
+    "Unsafe-field-class-ranges",
+    "Unsafe-field-pool",
+    "Class-forName-capacity",
+    "contiguous-frames",
+    "selected-dispatch",
+    "remaining-original-diagnostics"
+  ],
+  "UFMP": {
+    "ABI": 2,
+    "pool_bytes": 128,
+    "record_bytes": 64,
+    "fields_per_page": 1024,
+    "record_offsets": {
+      "declaring_type_id_D": 0,
+      "local_field_index_D": 4,
+      "access_D": 8,
+      "kind_D": 12,
+      "UTF16_name_offset_D": 16,
+      "UTF16_name_units_D": 20,
+      "storage_bytes_D": 24,
+      "flags_D": 28,
+      "actual_FMAP_pointer_Q": 32,
+      "reserved_Q": 40,
+      "field_id_D": 48,
+      "reserved_D": 52,
+      "reserved_tail_Q": 56
+    },
+    "reference_kind": 9,
+    "reference_flag": 1,
+    "existing_cookie_and_all_original_field_ids_preserved": true,
+    "pool_type_field_capacities_and_runtime_field_pointer_tail_are_derived": true
+  },
+  "separate_integration_requirements": [
+    "all current namespace-capacity consumers must match the derived type and field capacities",
+    "active enclosing and declaring Class directories require explicit generated-tail projections",
+    "generated adapter failure-root bank and changed ordinary Class/name banks require physical root-directory integration",
+    "all unchanged parent objects, including other original UFMP page owners, remain in the exact replacement complement",
+    "no generated-Class reflection, arbitrary class loading or automatic GC support is implied by this source projection",
+    "native behavior, quiescent GC reachability, thread isolation and actual Main execution require independent validation"
+  ]
+}
