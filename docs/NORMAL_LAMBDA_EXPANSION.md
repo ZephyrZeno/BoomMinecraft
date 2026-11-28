@@ -255,6 +255,56 @@ This is an observed method-resolution capability gap. Method-domain resolution
 and its VM-owned ResolvedMethodName state remain to be implemented; the original
 zero-payload Java layout must not receive injected HotSpot fields.
 
+## Normal ResolvedMethodName source admission
+
+The required normal Class initialization dependency is now selected and has a
+new complete source verification. The new selection contains 9,731 classes,
+81,477 original Java methods and 220,046 original generated functions. Every
+previous 81,476 method/Code row and 220,043 function hash remains equal. The
+101 original base objects retain their exact hashes; the 103 selected closure
+parts were assembled again using the normal builder. This does not claim that
+those selected parts were physically reused or that the full Java batch was
+translated again.
+
+The only new original class is bootstrap `ResolvedMethodName`4985. Its original
+constructor47449 has five Code bytes, `2ab70001b1`, and the new functions are
+`boom_m47449`, `boom_m47449_body` and `boom_batch_initialize_4985`. The class has
+no Java fields, no `<clinit>`, a zero-byte object payload and the original Object
+initialization dependency. Its source Class hash is
+`ce08c2204844e9539eb5f0fd2101d927306367df6d06c3a16756fb105f8e9d7f`.
+No host-written ready state or injected Java field substitutes for this normal
+initialization path.
+
+The new selection SHA is
+`229f3ad848d2d204787b21a0b456e5fbb48f9fd3121a5a77091dae2c9dd5b365`;
+its complete source verification SHA is
+`7450319b05d2aaa742dce753d02b319ecd7451c4fed480f7535fbbfbea4409cc`.
+The new source seal SHA is
+`a3dcfcb616c6caf98c0860445db82065bb53df67ade6f6436cdbf411a4882ca4`.
+Previous native component receipts retain their actual older source identity;
+none was relabelled as a proof of the extended selection.
+
+Three actual/canonical COFF units also passed complete nondebug machine
+comparison against the source extension. They provide the exact three original
+functions, replace the dispatch metadata with the original ClassDescriptor64
+and its two original initialization-directory entries, and remove only the old
+unselected-initializer diagnostic tail. The new ordinary class failure root is
+the last cell of the ordinary source root bank, whose count changes from 29,273
+to 29,274. Physical checks verify the descriptor's initialization/failure-root
+relocations and the actual count. The existing diagnostic `.data`, `.rdata` and
+`.bss` bytes and relocations remain equal, so later observation must use that
+actual linked diagnostic catalogue. The source-machine verification SHA is
+`0dc0cb3f7b2c791f88cba593619971c976482f6ea93a71b35485ed80ae22bebd`.
+
+This is a source and machine preparation result. The new normal Class path has
+not yet executed, no new whole Main image has been linked or run, and the
+257-object cleanup failure remains the latest original Main observation.
+VM allocation must eventually ensure the normal RMN class and create its normal
+object without invoking the Java constructor. Method resolution, the native
+owner and rooted canonical records, MethodHandle invocation, and the new entry
+lifecycle still require component and actual Main verification. This admission
+does not prove any of those capabilities or Minecraft startup.
+
 ## Checking namespace capacity consumers
 
 `scripts/audit-namespace-capacities.py` derives the type capacity from the
